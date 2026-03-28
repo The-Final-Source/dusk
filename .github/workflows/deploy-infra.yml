@@ -39,7 +39,7 @@ jobs:
 
       - name: Deploy PostgreSQL
         run: |
-          sed "s|<REPO_NAME>|${{ env.REPO_NAME }}|g" \
+          sed "s|dusk|${{ env.REPO_NAME }}|g" \
             .k8s/postgres-deployment.yml | kubectl apply -f -
           kubectl rollout status deployment/${{ env.REPO_NAME }}-postgres --timeout=120s
 

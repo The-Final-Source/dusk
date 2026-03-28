@@ -20,10 +20,10 @@ ARG VITE_AUTH0_DOMAIN
 ARG VITE_AUTH0_CLIENT_ID
 ARG VITE_AUTH0_AUDIENCE
 
-RUN pnpm --filter @template/shared build
-RUN pnpm --filter @template/api build
-RUN pnpm --filter @template/hooks build
-RUN pnpm --filter @template/web build
+RUN pnpm --filter @dusk/shared build
+RUN pnpm --filter @dusk/api build
+RUN pnpm --filter @dusk/hooks build
+RUN pnpm --filter @dusk/web build
 
 FROM base AS production
 WORKDIR /app

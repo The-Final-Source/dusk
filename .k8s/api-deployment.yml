@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: <REPO_NAME>-api-service
+  name: dusk-api-service
 spec:
   type: ClusterIP
   selector:
-    app: <REPO_NAME>-api
+    app: dusk-api
   ports:
     - port: 80
       targetPort: 3001
@@ -13,12 +13,12 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: <REPO_NAME>-api
+  name: dusk-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: <REPO_NAME>-api
+      app: dusk-api
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -27,26 +27,26 @@ spec:
   template:
     metadata:
       labels:
-        app: <REPO_NAME>-api
+        app: dusk-api
     spec:
       initContainers:
         - name: wait-for-postgres
           image: busybox
-          command: ['sh', '-c', 'until nc -z <REPO_NAME>-postgres-service 5432; do echo "Waiting for postgres..."; sleep 2; done']
+          command: ['sh', '-c', 'until nc -z dusk-postgres-service 5432; do echo "Waiting for postgres..."; sleep 2; done']
         - name: run-migrations
           image: <IMAGE_NAME>
           imagePullPolicy: Never
           command: ['node', 'dist/db/migrate.js']
           envFrom:
             - secretRef:
-                name: <REPO_NAME>-secret
+                name: dusk-secret
       containers:
-        - name: <REPO_NAME>-api
+        - name: dusk-api
           image: <IMAGE_NAME>
           imagePullPolicy: Never
           ports:
             - containerPort: 3001
           envFrom:
             - secretRef:
-                name: <REPO_NAME>-secret
+                name: dusk-secret
       terminationGracePeriodSeconds: 30

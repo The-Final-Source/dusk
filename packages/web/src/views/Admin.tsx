@@ -1,4 +1,4 @@
-import { trpc } from "@template/hooks";
+import { trpc } from "@dusk/hooks";
 import { useState } from "react";
 
 const ROLES = ["user", "admin"] as const;

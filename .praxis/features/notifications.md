@@ -63,7 +63,7 @@ import {
   type RegisterPushToken,
   type NotificationListInput,
   type UpdatePushOptOut,
-} from "@template/shared";
+} from "@dusk/shared";
 ```
 
 ## Sending Notifications
@@ -183,7 +183,7 @@ Both hooks live in `packages/hooks/src/hooks/` and are re-exported from `package
 ### `useNotifications()`
 
 ```typescript
-import { useNotifications } from "@template/hooks";
+import { useNotifications } from "@dusk/hooks";
 
 const {
   notifications,   // Notification[] — current page
@@ -203,7 +203,7 @@ Automatically syncs in real-time via `useSyncSubscription` — new notifications
 ### `useNotificationToast(onNotification)`
 
 ```typescript
-import { useNotificationToast } from "@template/hooks";
+import { useNotificationToast } from "@dusk/hooks";
 
 useNotificationToast((notification) => {
   // notification: { id, title, body, actionUrl }

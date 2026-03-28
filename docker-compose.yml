@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: template_user
-      POSTGRES_PASSWORD: template_pass
-      POSTGRES_DB: template_db
+      POSTGRES_USER: dusk_user
+      POSTGRES_PASSWORD: sMlJrjwrK47eCTiLdr6OqYX79pCIqh
+      POSTGRES_DB: dusk
     ports:
       - "5432:5432"
     volumes:
