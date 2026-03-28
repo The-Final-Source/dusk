@@ -1,20 +1,167 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  # Dusk — Intent Architecture
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  ## Domain
+  A constraint satisfaction system for spec-driven AI development. The system provides:
+  1. A constraint language (Blocks + Intents) for expressing architectural intent
+  2. A solver (AI agent with lifecycle hooks) that receives constraints and produces code
+  3. A verifier (multi-agent evaluation) that checks implementations against constraints
+
+  The core problem: specs are subjective, don't compose, and aren't verifiable.
+  Intent Architecture solves all three via structured, composable, machine-verifiable constraints.
+
+  ## Tech Stack
+  - Language: TypeScript (strict mode, ES2022 target, ESM throughout)
+  - Monorepo: pnpm workspaces + Turborepo (NOT NX — RFC references NX but repo uses Turbo)
+  - Package namespace: @dusk/*
+  - API: Express + tRPC v11 + Zod validation
+  - Database: PostgreSQL 16 via Drizzle ORM (+ SQLite for local/embedded stores like adherence state)
+  - Web: React 19 + Vite 6 + Tailwind CSS 4 + React Router 7
+  - Auth: Auth0 (web: @auth0/auth0-react, mobile: expo-auth-session PKCE, API: jose JWKS)
+  - Mobile: Expo 54 + React Native 0.81 + Expo Router v6
+  - Shared types: Zod schemas in @dusk/shared, inferred TS types via z.infer
+  - Hooks: @dusk/hooks (tRPC React Query hooks, real-time sync subscriptions)
+  - Testing: Vitest (colocated tests, mock-first)
+  - Background jobs: pg-boss on Postgres
+  - Logging: pino + pino-http
+  - Real-time: tRPC WebSocket subscriptions + PostgreSQL LISTEN/NOTIFY (PgPubSub)
+  - Build: tsc for libraries, Vite for web, Expo for mobile
+  - Deploy: Self-hosted k3s, Docker images, GitHub Actions CI/CD with path filters
+
+  ## Existing Packages (fully implemented, production-ready)
+  - packages/api — Express + tRPC server. Routers: user, admin, notification, jobs.
+    Middleware: Auth0 JWT (jose), rate limiting, request logging.
+    DB: Drizzle ORM + Postgres, pg-boss job queue. PgPubSub for real-time.
+    Services: notifications (in-app + push), push adapters (console, Expo).
+    Tests: Vitest with createCaller pattern, colocated .test.ts files.
+  - packages/web — React 19 SPA. Views: Home, Profile, Users, Admin.
+    Components: AuthGuard, NavBar, NotificationList, NotificationToast.
+    Auth: Auth0Provider with refresh tokens. API: tRPC + React Query via @dusk/hooks.
+    Styles: Tailwind CSS 4 via Vite plugin. Build: Vite. Prod: Express static server.
+  - packages/shared — Zod schemas: User, Notification, PushToken, Sync events.
+    All types inferred from schemas. syncChannel() helper. Pure leaf dependency.
+  - packages/hooks — React hooks: useUsers, useNotifications, useNotificationToast,
+    useSessionSync. TRPCProvider with HTTP+WS split link. useSyncSubscription generic.
+    Depends on @dusk/api (types only via ./client subpath), @dusk/shared, @tanstack/react-query.
+  - packages/mobile — Expo 54 app. Tab navigation (Home, Users, Notifications, Health, Profile).
+    Auth: PKCE flow via expo-auth-session + SecureStore. Push: Expo notifications.
+    Native: HealthKit, Calendar, file downloads. Shares @dusk/hooks for data.
+
+  ## Packages to Build (from RFC — adjusted to actual repo architecture)
+  NOTE: The RFC proposes packages/platform/ (registry, authoring, dashboard) as separate
+  packages. Instead, platform capabilities will be distributed into the EXISTING packages:
+  - Registry API routes, block search/vetting logic → packages/api (new routers + services)
+  - Authoring UI, dashboard/visualization → packages/web (new views + components)
+  This follows the established pattern: API logic in api, UI in web, shared types in shared.
+
+  New packages to create:
+  - packages/core/schema — Types, validators, enums (Constraint, Block, Intent, SourceMap, etc.)
+    Zod schemas as source of truth. Pure leaf like shared.
+  - packages/core/parser — Read/write .block.yaml, intent.yaml, source-map.json, audit.json, ia.config.yml
+  - packages/core/graph — Intent graph traversal, cycle detection, scope resolution, tension surfacing
+  - packages/engine/composition — Blocks + intents → manifest/facets. Token budgets. Audit logging.
+  - packages/engine/embeddings — Vector embedding + cosine similarity for constraints
+  - packages/engine/source-map — PostToolUse linking pipeline (annotation → LLM → deps → path → vector)
+  - packages/delivery/mcp-server — MCP tools: get_intent_manifest, get_facet, query_constraints, get_composition_audit
+  - packages/delivery/hooks — Hook generators for Claude Code (.claude/settings.json), Cursor, etc.
+  - packages/verification/triage — Fast single-agent pre-filter for code changes
+  - packages/verification/evaluator — Multi-agent evaluation with model diversity + structured discourse
+  - packages/verification/adherence — SQLite-backed verdict state + rollup + reporting (mechanical/semantic separated)
+  - packages/verification/protocol — Bounded evaluation loop (finding set locks after round 1)
+  - packages/blocks — Canonical block library (.block.yaml files). Own package for versioning/publishing.
+  - packages/fixtures — Evaluation fixtures (todo-intents, todo-baseline, seeded-benchmark)
+  - packages/cli — Developer-facing CLI: ia init, validate, inspect, graph, compose, verify, serve, etc.
+
+  ## Key Data Entities
+  - Block: Community-authored canonical pattern (.block.yaml). Constraints + relates_to + decision_points.
+  - Intent: Project-level composition (intent.yaml). Adopts blocks, adds project constraints, relates_to other intents.
+  - Constraint: Atomic falsifiable statement. obligation (must/should/may), verifiability (mechanical/semantic).
+  - Source Map: Bidirectional constraint-to-file links (source-map.json, per intent). Content-hash linked.
+  - Composition Audit: Record of AI decisions (audit.json, per intent). Additive vs destructive categories.
+  - System Adherence State: Per-constraint verdicts (.ia/adherence/state.db, SQLite). Gitignored.
+  - Reverse Index: file → constraints lookup (.ia/cache/reverse-index.json). Derived, gitignored.
+
+  ## Architecture Principles
+  - Constraint satisfaction model (not transpilation, not a type system)
+  - Intent graph is emergent (no separate graph store), peer mesh (no mandatory root)
+  - Two-level presentation: Manifest (<600 tokens) + Facets (300-1000 tokens each)
+  - Verification separates mechanical vs semantic adherence — NEVER blended
+  - Composition distinguishes additive vs destructive AI decisions (thresholds: 0.7 vs 0.9)
+  - Source maps use multi-mechanism pipeline ordered by reliability
+  - Lifecycle hooks are deterministic (pre/post/stop), not manual invocation
+  - Bounded evaluation protocol: finding set locks after round 1, can only shrink
+  - No silent behavior — surface conflicts, truncations, staleness explicitly
+  - Honest reporting over vanity metrics
+
+  ## Established Codebase Patterns (from .praxis guides — FOLLOW THESE)
+  - Functional first: functions > classes. Classes only for long-lived mutable state with lifecycle.
+  - Zod schemas are THE source of truth for types. Derive TS types via z.infer. Never duplicate.
+  - Named exports everywhere (no default exports, except Expo Router route files).
+  - Function declarations for top-level, arrow functions for inline/callbacks.
+  - type > interface (use type for everything).
+  - Result objects for fallible internal functions, TRPCError at procedure boundaries.
+  - Factory functions (closures) over classes for config-holding objects.
+  - Config via injection, not globals. Only env.ts reads process.env directly.
+  - One concept per file. Files under 500 lines.
+  - Colocated tests: user.ts + user.test.ts side by side.
+  - Extract only when 3+ repetitions. Three similar lines > premature abstraction.
+  - Import order: node builtins → external → internal packages → relative. Blank lines between groups.
+  - Package pattern: type:module, exports field, workspace:*, tsconfig references, composite:true for libs.
+  - Barrel exports in src/index.ts. Consumers import from package name, never internal paths.
+
+  ## Engineering Philosophy
+  - Simple over complex (Fowler + Hickey mindset)
+  - Build for RIGHT, not for convenience, cost, or resource constraints
+  - Spec-driven ALWAYS — every feature starts from a spec via OpenSpec
+  - Test-driven where possible — Vitest, London School TDD (mock-first) for new code
+  - Honest over flattering — no blended metrics, no silent overrides, no vanity numbers
+  - Land the plane — full open source scale, best-practice integrated monorepo
+
+  ## Conventions
+  - Conventional commits
+  - pnpm workspace protocol for internal deps (workspace:*)
+  - ESM modules throughout (type: "module")
+  - Strict TypeScript (strict: true, ES2022)
+  - Zod for ALL external data boundaries
+  - JSON for machine-maintained files, YAML for human-authored files
+  - camelCase files (PascalCase for React components)
+  - UPPER_SNAKE_CASE for constants
+  - Procedures: verb for mutations, noun for queries, on prefix for subscriptions
+
+rules:
+  proposal:
+    - Ground every proposal in the RFC vision (docs/rfcs/001-mvp-rfc/)
+    - Identify which sprint(s) from the roadmap the change touches
+    - Include a "Non-goals" section — be explicit about what this does NOT do
+    - Include a "Verifiability" section — how will we know this works?
+    - Reference specific data entities (Block, Intent, Constraint, Source Map, etc.) by name
+    - Keep proposals under 800 words — if longer, it should be multiple changes
+    - Call out any deviation from the RFC and justify it
+    - Platform features (registry, authoring, dashboard) belong in existing api/web packages, not new platform/ packages
+  tasks:
+    - Each task must be completable in a single focused session (max 4 hours)
+    - Every task must have clear acceptance criteria referencing a spec or test
+    - Tasks that touch public APIs must include typed interface definitions (Zod schemas)
+    - Tasks that add new packages must follow .praxis/features/adding-packages.md exactly
+    - Tasks must specify which existing packages they depend on or affect
+    - Include "Test plan" — what Vitest tests prove this task is done
+    - Order tasks by dependency — no task should reference work from a later task
+    - Follow established patterns: functional first, Zod source of truth, named exports, result objects
+  delta-spec:
+    - Delta specs must reference the specific RFC section(s) they implement
+    - Include Zod schema definitions for any new data structures
+    - Include file path conventions (where things live in the monorepo)
+    - Specify which layer(s) are affected (core/engine/delivery/verification/cli or existing api/web/shared)
+    - Call out cross-package dependencies explicitly (workspace:* deps, tsconfig references)
+    - For verification-related changes, specify verifiability class handling
+    - For platform features, specify whether logic goes in api (routers/services) or web (views/components)
+  spec:
+    - Specs must be grounded in the constraint satisfaction model (constraint language, solver, verifier)
+    - Use the vocabulary from RFC Part 7 consistently (Block, Intent, Constraint, Obligation, etc.)
+    - Include data flow diagrams for any pipeline (composition, source-map, verification)
+    - Specify token budgets where applicable (manifest <600, facet 300-1000)
+    - Include error cases and what "honest reporting" looks like
+    - Reference the sprint validation checkpoints from the roadmap
+    - Follow .praxis coding guidelines: functional first, Zod schemas, named exports, result objects
