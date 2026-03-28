@@ -3,14 +3,14 @@
 **Date:** 2026-03-17
 **Version:** Roadmap v4
 **Monorepo:** NX + pnpm
-**Project:** `intent-architecture`
+**Project:** `dusk`
 
 ---
 
 ## Repository Structure
 
 ```
-intent-architecture/
+dusk/
 ├── packages/
 │   ├── core/
 │   │   ├── schema/                # Types, validators, enums
