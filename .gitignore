@@ -8,5 +8,4 @@ data/
 *.tsbuildinfo
 drizzle/meta/
 .claude-flow/
-.claude/
 .mcp.json
