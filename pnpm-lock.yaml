@@ -192,6 +192,22 @@ importers:
         specifier: ~5.9.2
         version: 5.9.3
 
+  packages/parser:
+    dependencies:
+      '@dusk/schema':
+        specifier: workspace:*
+        version: link:../schema
+      yaml:
+        specifier: ^2.7.0
+        version: 2.8.2
+    devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
   packages/schema:
     dependencies:
       zod:
