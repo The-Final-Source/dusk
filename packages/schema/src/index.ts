@@ -6,3 +6,4 @@ export * from "./constraint.js";
 export * from "./sourceMap.js";
 export * from "./audit.js";
 export * from "./block.js";
+export * from "./intent.js";
