@@ -5,3 +5,4 @@ export * from "./annotation.js";
 export * from "./constraint.js";
 export * from "./sourceMap.js";
 export * from "./audit.js";
+export * from "./block.js";
