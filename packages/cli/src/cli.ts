@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 import { Command } from "commander";
+import { initCommand } from "./commands/init.js";
+import { validateCommand } from "./commands/validate.js";
+import { inspectCommand } from "./commands/inspect.js";
 
 const program = new Command();
 
@@ -8,9 +11,8 @@ program
   .description("Dusk — constraint-driven development CLI")
   .version("0.0.1");
 
-// Commands will be added by subsequent beads
-// program.addCommand(initCommand);
-// program.addCommand(validateCommand);
-// program.addCommand(inspectCommand);
+program.addCommand(initCommand);
+program.addCommand(validateCommand);
+program.addCommand(inspectCommand);
 
 program.parse();
