@@ -16,7 +16,7 @@ describe("dusk init", () => {
   });
 
   const runInit = (dir: string) => {
-    return execSync(`node ${join(process.cwd(), "packages/cli/dist/cli.js")} init ${dir}`, {
+    return execSync(`node ${join(process.cwd(), "dist/cli.js")} init ${dir}`, {
       encoding: "utf-8",
       cwd: tempDir,
     });
