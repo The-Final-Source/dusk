@@ -1,0 +1,28 @@
+{
+  "intent": "todo-fullstack",
+  "composed_at": "2025-01-15T10:00:00Z",
+  "composition_version": "1.0.0",
+  "decisions": [
+    {
+      "type": "concern_assignment",
+      "category": "additive",
+      "source": "concern_hint",
+      "confidence": 0.92,
+      "rationale": "Assigned input-validation to API concern based on block concern_hint"
+    },
+    {
+      "type": "dedup_merge",
+      "category": "additive",
+      "source": "ai-detected",
+      "confidence": 0.87,
+      "rationale": "Merged overlapping validation constraints from api and data blocks"
+    },
+    {
+      "type": "obligation_inferred",
+      "category": "destructive",
+      "source": "ai-inferred",
+      "confidence": 0.75,
+      "rationale": "Elevated todo-soft-delete from should to must based on data retention requirements"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+id: infrastructure-containerization
+version: "1.0.0"
+layer: infrastructure
+summary: Container-based deployment with health checks and graceful shutdown
+constraints:
+  - id: container-health-endpoint
+    text: Every service must expose a /health endpoint returning 200 when ready
+    obligation: must
+    verifiability: mechanical
+  - id: graceful-shutdown
+    text: Services must handle SIGTERM and drain connections within 30 seconds
+    obligation: must
+    verifiability: semantic
+  - id: env-config
+    text: Configuration should be injected via environment variables, not config files
+    obligation: should
+    verifiability: mechanical
+  - id: resource-limits
+    text: Container resource limits may be set per-service based on profiling
+    obligation: may
+    verifiability: semantic
+relates_to:
+  - target: api-rest-conventions
+    relationship: constrains
+    rationale: Infrastructure constraints affect how API services are deployed and configured
+decision_points:
+  - id: container-runtime
+    description: Which container runtime to use
+    options: ["docker", "podman", "containerd"]
+    default: docker

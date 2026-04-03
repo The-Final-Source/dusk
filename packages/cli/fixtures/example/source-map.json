@@ -1,0 +1,38 @@
+{
+  "intent": "todo-fullstack",
+  "intent_hash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+  "synced_at": "2025-01-15T10:30:00Z",
+  "stale": false,
+  "mappings": [
+    {
+      "constraint": "input-validation",
+      "files": [
+        {
+          "path": "packages/todo-app/src/routes/todo.ts",
+          "confidence": 0.95,
+          "provenance": "annotation"
+        }
+      ]
+    },
+    {
+      "constraint": "migration-required",
+      "files": [
+        {
+          "path": "packages/todo-app/drizzle/0001_create_todos.sql",
+          "confidence": 0.9,
+          "provenance": "path-convention"
+        }
+      ]
+    },
+    {
+      "constraint": "todo-max-length",
+      "files": [
+        {
+          "path": "packages/todo-app/src/schemas/todo.ts",
+          "confidence": 0.85,
+          "provenance": "llm-classified"
+        }
+      ]
+    }
+  ]
+}
