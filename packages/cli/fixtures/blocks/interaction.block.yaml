@@ -1,0 +1,29 @@
+id: interaction-state-management
+version: "1.0.0"
+layer: interaction
+summary: Client-side state management with server synchronization
+constraints:
+  - id: server-state-cache
+    text: Server state must be managed through a query cache, not local state
+    obligation: must
+    verifiability: mechanical
+  - id: optimistic-updates
+    text: Mutations should use optimistic updates for responsive UI
+    obligation: should
+    verifiability: semantic
+  - id: loading-states
+    text: All async operations must surface loading and error states to the UI
+    obligation: must
+    verifiability: semantic
+relates_to:
+  - target: api-rest-conventions
+    relationship: depends-on
+    rationale: Client state management depends on API contract
+  - target: presentation-component-patterns
+    relationship: complements
+    rationale: State management feeds data to presentation components
+decision_points:
+  - id: state-library
+    description: Which state management approach to use
+    options: ["react-query", "swr", "zustand+react-query"]
+    default: react-query

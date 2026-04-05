@@ -1,0 +1,33 @@
+id: api-rest-conventions
+version: "1.0.0"
+layer: api
+summary: REST API conventions with input validation and structured error responses
+constraints:
+  - id: input-validation
+    text: All API inputs must be validated with a schema validator before processing
+    obligation: must
+    verifiability: mechanical
+  - id: error-format
+    text: Error responses must include a machine-readable code and human-readable message
+    obligation: must
+    verifiability: mechanical
+  - id: auth-middleware
+    text: Protected routes should use middleware-based authentication checks
+    obligation: should
+    verifiability: semantic
+  - id: rate-limiting
+    text: Public endpoints may implement rate limiting based on traffic patterns
+    obligation: may
+    verifiability: semantic
+relates_to:
+  - target: data-persistence
+    relationship: depends-on
+    rationale: API routes depend on data layer for persistence
+  - target: logic-domain-rules
+    relationship: depends-on
+    rationale: API delegates business logic to domain layer
+decision_points:
+  - id: api-framework
+    description: Which API framework to use
+    options: ["express+trpc", "fastify+trpc", "hono"]
+    default: express+trpc

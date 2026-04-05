@@ -1,0 +1,30 @@
+id: presentation-component-patterns
+version: "1.0.0"
+layer: presentation
+summary: UI component patterns with accessibility and consistent styling
+constraints:
+  - id: component-composition
+    text: Complex UI must be composed from small, single-responsibility components
+    obligation: must
+    verifiability: semantic
+  - id: a11y-labels
+    text: Interactive elements must have accessible labels or aria attributes
+    obligation: must
+    verifiability: mechanical
+  - id: style-system
+    text: Styling should use a utility-first CSS framework for consistency
+    obligation: should
+    verifiability: mechanical
+  - id: responsive-design
+    text: Components should render correctly across mobile and desktop viewports
+    obligation: should
+    verifiability: semantic
+relates_to:
+  - target: interaction-state-management
+    relationship: depends-on
+    rationale: Presentation components consume state from interaction layer
+decision_points:
+  - id: styling-approach
+    description: Which styling approach to use
+    options: ["tailwind", "css-modules", "styled-components"]
+    default: tailwind
