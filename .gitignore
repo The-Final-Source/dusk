@@ -9,3 +9,4 @@ data/
 drizzle/meta/
 .claude-flow/
 .mcp.json
+.DS_Store
