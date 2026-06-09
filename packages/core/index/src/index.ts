@@ -1,1 +1,1 @@
-export {};
+export * from "./derivedIndex.js";
