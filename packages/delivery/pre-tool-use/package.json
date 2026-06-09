@@ -17,14 +17,15 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest run",
+    "test": "tsc && vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@dusk/core-schema": "workspace:*",
     "@dusk/core-parser": "workspace:*",
     "@dusk/core-decoration": "workspace:*",
-    "@dusk/core-index": "workspace:*"
+    "@dusk/core-index": "workspace:*",
+    "@dusk/core-graph": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

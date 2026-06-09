@@ -207,6 +207,9 @@ importers:
       '@dusk/core-decoration':
         specifier: workspace:*
         version: link:../../core/decoration
+      '@dusk/core-graph':
+        specifier: workspace:*
+        version: link:../../core/graph
       '@dusk/core-index':
         specifier: workspace:*
         version: link:../../core/index

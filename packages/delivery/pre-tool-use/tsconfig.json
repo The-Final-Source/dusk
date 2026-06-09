@@ -20,6 +20,9 @@
     },
     {
       "path": "../../core/index"
+    },
+    {
+      "path": "../../core/graph"
     }
   ]
 }
