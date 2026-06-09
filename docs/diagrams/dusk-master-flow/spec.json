@@ -1,0 +1,4196 @@
+{
+  "$$primitiveVersion": 1,
+  "viewport": {
+    "width": 11200,
+    "height": 15600
+  },
+  "background": "#FAF8F4",
+  "elements": [
+    {
+      "type": "text",
+      "id": "title",
+      "x": 80,
+      "y": 60,
+      "text": "Dusk \u2014 Master Flow v9 (round-3 hardened)",
+      "fontSize": 36,
+      "fontFamily": 2,
+      "strokeColor": "#1F2E4D"
+    },
+    {
+      "type": "text",
+      "id": "subtitle-line1",
+      "x": 80,
+      "y": 120,
+      "text": "Decoration Model (focal + support \u00b7 polarity) \u00b7 Constraint Language (compose:implies \u00b7 quantifier \u00b7 typed relates_to) \u00b7 Two-Stage Tests \u00b7 Recovery Ladder \u00b7 Session Snapshot",
+      "fontSize": 16,
+      "fontFamily": 2,
+      "strokeColor": "#3F4A5C"
+    },
+    {
+      "type": "text",
+      "id": "subtitle-line2",
+      "x": 80,
+      "y": 150,
+      "text": "Main flow is top-to-bottom in the center. Sub-flows peel off LEFT (Authoring) or RIGHT (Steps 3-8). Every option / classification / user choice is shown as a real branching point with its own downstream nodes \u2014 not bullets inside a label.",
+      "fontSize": 13,
+      "fontFamily": 2,
+      "strokeColor": "#6B7280"
+    },
+    {
+      "type": "text",
+      "id": "legend-title",
+      "x": 8000,
+      "y": 60,
+      "text": "Color legend",
+      "fontSize": 14,
+      "fontFamily": 2,
+      "strokeColor": "#1F2E4D"
+    },
+    {
+      "type": "rectangle",
+      "id": "leg-sw-pipe",
+      "x": 8000,
+      "y": 90,
+      "width": 28,
+      "height": 18,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#D4DECB",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "leg-tx-pipe",
+      "x": 8040,
+      "y": 90,
+      "text": "Main pipeline step",
+      "fontSize": 12,
+      "fontFamily": 2,
+      "strokeColor": "#1F2E4D"
+    },
+    {
+      "type": "rectangle",
+      "id": "leg-sw-short",
+      "x": 8000,
+      "y": 114,
+      "width": 28,
+      "height": 18,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F4D9CC",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "leg-tx-short",
+      "x": 8040,
+      "y": 114,
+      "text": "Short-cycle sub-flow (Step 4)",
+      "fontSize": 12,
+      "fontFamily": 2,
+      "strokeColor": "#1F2E4D"
+    },
+    {
+      "type": "rectangle",
+      "id": "leg-sw-long",
+      "x": 8000,
+      "y": 138,
+      "width": 28,
+      "height": 18,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "leg-tx-long",
+      "x": 8040,
+      "y": 138,
+      "text": "Long-cycle sub-flow (Step 5)",
+      "fontSize": 12,
+      "fontFamily": 2,
+      "strokeColor": "#1F2E4D"
+    },
+    {
+      "type": "rectangle",
+      "id": "leg-sw-test",
+      "x": 8000,
+      "y": 162,
+      "width": 28,
+      "height": 18,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#E8DAF0",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "leg-tx-test",
+      "x": 8040,
+      "y": 162,
+      "text": "Test-execution sub-flow (NEW v9)",
+      "fontSize": 12,
+      "fontFamily": 2,
+      "strokeColor": "#1F2E4D"
+    },
+    {
+      "type": "rectangle",
+      "id": "leg-sw-author",
+      "x": 9700,
+      "y": 90,
+      "width": 28,
+      "height": 18,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "leg-tx-author",
+      "x": 9740,
+      "y": 90,
+      "text": "Authoring sub-flow (Step 1)",
+      "fontSize": 12,
+      "fontFamily": 2,
+      "strokeColor": "#1F2E4D"
+    },
+    {
+      "type": "diamond",
+      "id": "leg-diamond",
+      "x": 9700,
+      "y": 110,
+      "width": 28,
+      "height": 22,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "leg-tx-decision",
+      "x": 9740,
+      "y": 114,
+      "text": "Decision point",
+      "fontSize": 12,
+      "fontFamily": 2,
+      "strokeColor": "#1F2E4D"
+    },
+    {
+      "type": "rectangle",
+      "id": "leg-sw-card",
+      "x": 9700,
+      "y": 138,
+      "width": 28,
+      "height": 18,
+      "strokeColor": "#7A7A7A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "leg-tx-card",
+      "x": 9740,
+      "y": 138,
+      "text": "Reference card",
+      "fontSize": 12,
+      "fontFamily": 2,
+      "strokeColor": "#1F2E4D"
+    },
+    {
+      "type": "rectangle",
+      "id": "leg-sw-merge",
+      "x": 9700,
+      "y": 162,
+      "width": 28,
+      "height": 18,
+      "strokeColor": "#4A6A5A",
+      "backgroundColor": "#E0EBD7",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "leg-tx-merge",
+      "x": 9740,
+      "y": 162,
+      "text": "Conflict resolver",
+      "fontSize": 12,
+      "fontFamily": 2,
+      "strokeColor": "#1F2E4D"
+    },
+    {
+      "type": "ellipse",
+      "id": "user-prompt",
+      "x": 5060,
+      "y": 240,
+      "width": 280,
+      "height": 100,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#4465AB",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "User Prompt",
+        "fontSize": 18,
+        "strokeColor": "#FFFFFF"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "harness",
+      "x": 4980,
+      "y": 400,
+      "width": 440,
+      "height": 100,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Harness (Claude Code)\nroutes via dusk_implement / dusk_author",
+        "fontSize": 13,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "user-prompt",
+      "to": "harness",
+      "strokeColor": "#4A4A4A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "root-orch",
+      "x": 4980,
+      "y": 560,
+      "width": 440,
+      "height": 90,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Root Orchestrator (memory: session)\nbuilds session-snapshot index at pipeline entry",
+        "fontSize": 13,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "harness",
+      "to": "root-orch",
+      "strokeColor": "#4A4A4A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "subphase-a",
+      "x": 4660,
+      "y": 700,
+      "width": 1080,
+      "height": 46,
+      "strokeColor": "#8B6940",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Sub-phase A \u2014 Decomposition (Steps 1-3)",
+        "fontSize": 13,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "s1",
+      "x": 4980,
+      "y": 780,
+      "width": 440,
+      "height": 110,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#D4DECB",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Step 1 \u2014 Request Decomposition\nRoot builds SESSION SNAPSHOT INDEX (immutable for run)\nDecomposer walks typed relates_to (5 kinds: parent / implies\n/ conflicts / supersedes / sibling) + test-pyramid children",
+        "fontSize": 11,
+        "strokeColor": "#2E4A3A"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "root-orch",
+      "to": "s1",
+      "strokeColor": "#4A4A4A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "diamond",
+      "id": "s1-newintent",
+      "x": 4980,
+      "y": 920,
+      "width": 440,
+      "height": 110,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 3,
+      "roughness": 0,
+      "label": {
+        "text": "Any unresolved\nintent reference?\n(if yes → write checkpoint;\nreturn DuskError{kind:\nimplement_paused_for_authoring,\nresume_token}; harness drives\ndusk_author_* dialog; resume\nvia dusk_implement({resume_token}))",
+        "fontSize": 12,
+        "strokeColor": "#2E4A3A"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s1",
+      "to": "s1-newintent",
+      "strokeColor": "#4A4A4A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "s2",
+      "x": 4980,
+      "y": 1060,
+      "width": 440,
+      "height": 110,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#D4DECB",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Step 2 \u2014 Bead Decomp + Sequencing\nbuild DAG \u00b7 file-overlap edges \u00b7 cross-bead focal-claim\noverlap = HARD refusal (decomposer_bead_conflict) \u00b7\nsupport-claim overlap = warning \u00b7 independent \u2192 parallel",
+        "fontSize": 11,
+        "strokeColor": "#2E4A3A"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s1-newintent",
+      "to": "s2",
+      "strokeColor": "#4A4A4A",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "no \u00b7 all resolved",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "s3",
+      "x": 4980,
+      "y": 1210,
+      "width": 440,
+      "height": 110,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#D4DECB",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Step 3 \u2014 Worktree Creation\nfor each bead in DAG topological order:\ndecide parallel vs serial \u2192 materialize",
+        "fontSize": 11,
+        "strokeColor": "#2E4A3A"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s2",
+      "to": "s3",
+      "strokeColor": "#4A4A4A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "diamond",
+      "id": "s3-parallel-q",
+      "x": 5760,
+      "y": 1210,
+      "width": 380,
+      "height": 110,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 3,
+      "roughness": 0,
+      "label": {
+        "text": "Bead has\nparallel siblings?",
+        "fontSize": 11,
+        "strokeColor": "#2E4A3A"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s3",
+      "to": "s3-parallel-q",
+      "strokeColor": "#1F2E4D",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "per bead",
+        "fontSize": 10
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "s3-parallel",
+      "x": 6240,
+      "y": 1180,
+      "width": 700,
+      "height": 70,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#D4DECB",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "git worktree add -b dusk/<bead-id> <path> origin/main\nspawn Bead Orchestrator in worktree",
+        "fontSize": 10,
+        "strokeColor": "#2E4A3A"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s3-parallel-q",
+      "to": "s3-parallel",
+      "strokeColor": "#1F2E4D",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "label": {
+        "text": "yes",
+        "fontSize": 10
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "s3-serial",
+      "x": 6240,
+      "y": 1280,
+      "width": 700,
+      "height": 70,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#D4DECB",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Run in-place on active branch\nspawn Bead Orchestrator at current worktree",
+        "fontSize": 10,
+        "strokeColor": "#2E4A3A"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s3-parallel-q",
+      "to": "s3-serial",
+      "strokeColor": "#1F2E4D",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "label": {
+        "text": "no",
+        "fontSize": 10
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "auth-zone",
+      "x": 80,
+      "y": 700,
+      "width": 2340,
+      "height": 4980,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Authoring sub-flow \u2014 Author (memory: dialog) \u00b7 triggered when Decomposer hits an unresolved intent. Every user choice is a real branch with its own downstream path.",
+        "fontSize": 13,
+        "strokeColor": "#5C4220",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "auth-s1-hdr",
+      "x": 160,
+      "y": 770,
+      "width": 2180,
+      "height": 46,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#EFE0BB",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Stage 1 \u2014 Intake & Framing",
+        "fontSize": 12,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s1-newintent",
+      "to": "auth-s1-hdr",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "yes \u00b7 missing",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a1-1",
+      "x": 850,
+      "y": 836,
+      "width": 800,
+      "height": 70,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Receive raw user request \u2014 parse for:\nbehavior asserted \u00b7 modal force (must/should/may) \u00b7 scope \u00b7 success criteria \u00b7 failure criteria",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "auth-s1-hdr",
+      "to": "a1-1",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a1-2",
+      "x": 850,
+      "y": 926,
+      "width": 800,
+      "height": 70,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Generate candidate framing\nproposed intent path + obligation + approximate aspects + likely siblings",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a1-1",
+      "to": "a1-2",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a1-3",
+      "x": 850,
+      "y": 1016,
+      "width": 800,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Present framing to user (chat turn)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a1-2",
+      "to": "a1-3",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "diamond",
+      "id": "a1-decide",
+      "x": 880,
+      "y": 1090,
+      "width": 800,
+      "height": 130,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 3,
+      "roughness": 0,
+      "label": {
+        "text": "User confirms framing?",
+        "fontSize": 12,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a1-3",
+      "to": "a1-decide",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a1-correct",
+      "x": 1550,
+      "y": 1115,
+      "width": 800,
+      "height": 80,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "User corrects \u2192 Author updates path / aspects / siblings\nloop back to regenerate framing",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a1-decide",
+      "to": "a1-correct",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "no",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a1-correct",
+      "to": "a1-2",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "regenerate",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "auth-s2-hdr",
+      "x": 160,
+      "y": 1260,
+      "width": 2180,
+      "height": 46,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#EFE0BB",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Stage 2 \u2014 Discovery & Tension Detection",
+        "fontSize": 12,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a1-decide",
+      "to": "auth-s2-hdr",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "yes \u00b7 confirms",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a2-1",
+      "x": 850,
+      "y": 1326,
+      "width": 800,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Agent-driven text search over .ia/intents/ (grep / ripgrep / shell tools \u2014 NO semantic / vector / RAG in v1)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "auth-s2-hdr",
+      "to": "a2-1",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a2-2",
+      "x": 850,
+      "y": 1406,
+      "width": 800,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Targeted greps on key phrases from the framing + scan triple slots on hits",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a2-1",
+      "to": "a2-2",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a2-3",
+      "x": 850,
+      "y": 1486,
+      "width": 800,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Expand 1-hop relates_to from top hits \u2192 neighborhood of candidate matches",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a2-2",
+      "to": "a2-3",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "diamond",
+      "id": "a2-classify",
+      "x": 720,
+      "y": 1570,
+      "width": 1120,
+      "height": 130,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 3,
+      "roughness": 0,
+      "label": {
+        "text": "Classify each match\n(per candidate)",
+        "fontSize": 13,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a2-3",
+      "to": "a2-classify",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a2-conflict",
+      "x": 160,
+      "y": 1740,
+      "width": 500,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Direct conflict\n(existing asserts the opposite)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a2-overlap",
+      "x": 720,
+      "y": 1740,
+      "width": 500,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Scope overlap\n(existing already covers concern)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a2-gray",
+      "x": 1280,
+      "y": 1740,
+      "width": 500,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Gray area\n(related but reconcilable)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a2-adjacent",
+      "x": 1840,
+      "y": 1740,
+      "width": 500,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Adjacent concern\n(shares decorator sites)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a2-classify",
+      "to": "a2-conflict",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a2-classify",
+      "to": "a2-overlap",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a2-classify",
+      "to": "a2-gray",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a2-classify",
+      "to": "a2-adjacent",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a2-r-conflict",
+      "x": 160,
+      "y": 1830,
+      "width": 500,
+      "height": 100,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Resolution:\n\u00b7 Replace + migrate, OR\n\u00b7 Scope-bound coexist via siblings\n(user picks one)",
+        "fontSize": 10,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a2-r-overlap",
+      "x": 720,
+      "y": 1830,
+      "width": 500,
+      "height": 100,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Resolution:\n\u00b7 Merge into existing intent, OR\n\u00b7 Refine new to narrower aspect\n(user picks one)",
+        "fontSize": 10,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a2-r-gray",
+      "x": 1280,
+      "y": 1830,
+      "width": 500,
+      "height": 100,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Resolution:\n\u00b7 Refine triples to disambiguate, OR\n\u00b7 Link via relates_to\n(user picks one)",
+        "fontSize": 10,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a2-r-adjacent",
+      "x": 1840,
+      "y": 1830,
+      "width": 500,
+      "height": 100,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Resolution:\n\u00b7 Leave both, add relates_to\n\u00b7 No migration needed\n(default action)",
+        "fontSize": 10,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a2-conflict",
+      "to": "a2-r-conflict",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a2-overlap",
+      "to": "a2-r-overlap",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a2-gray",
+      "to": "a2-r-gray",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a2-adjacent",
+      "to": "a2-r-adjacent",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a2-encode",
+      "x": 850,
+      "y": 1960,
+      "width": 800,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Author encodes the user-picked resolution (merge instructions / scope predicates / new relates_to edges)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a2-r-conflict",
+      "to": "a2-encode",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a2-r-overlap",
+      "to": "a2-encode",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a2-r-gray",
+      "to": "a2-encode",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a2-r-adjacent",
+      "to": "a2-encode",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "auth-s3-hdr",
+      "x": 160,
+      "y": 2050,
+      "width": 2180,
+      "height": 46,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#EFE0BB",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Stage 3 \u2014 Industry-Practice Injection (NO canonical library lookup in v1)",
+        "fontSize": 12,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a2-encode",
+      "to": "auth-s3-hdr",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a3-1",
+      "x": 850,
+      "y": 2116,
+      "width": 800,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Identify the technology stack involved + apply industry best practices from training + skill (no runtime library lookup)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "auth-s3-hdr",
+      "to": "a3-1",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a3-2",
+      "x": 850,
+      "y": 2196,
+      "width": 800,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Grep prior intents in this project for similar shapes (Author learns from what's already authored)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a3-1",
+      "to": "a3-2",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a3-3",
+      "x": 850,
+      "y": 2276,
+      "width": 800,
+      "height": 70,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Propose canonical decomposition (parent + children outline)\nor signal 'no match \u2014 greenfield' if none fits",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a3-2",
+      "to": "a3-3",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "diamond",
+      "id": "a3-decide",
+      "x": 720,
+      "y": 2370,
+      "width": 1120,
+      "height": 130,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 3,
+      "roughness": 0,
+      "label": {
+        "text": "User response to proposal?",
+        "fontSize": 12,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a3-3",
+      "to": "a3-decide",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a3-accepts",
+      "x": 195,
+      "y": 2540,
+      "width": 650,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Accepts proposal as-is",
+        "fontSize": 12,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a3-edits",
+      "x": 925,
+      "y": 2540,
+      "width": 650,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Edits proposal (path/aspect tweaks)",
+        "fontSize": 12,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a3-rejects",
+      "x": 1655,
+      "y": 2540,
+      "width": 650,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Rejects (no match exists)",
+        "fontSize": 12,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a3-decide",
+      "to": "a3-accepts",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "label": {
+        "text": "accepts",
+        "fontSize": 10
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a3-decide",
+      "to": "a3-edits",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "label": {
+        "text": "edits",
+        "fontSize": 10
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a3-decide",
+      "to": "a3-rejects",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "label": {
+        "text": "rejects",
+        "fontSize": 10
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a3-o-accepts",
+      "x": 195,
+      "y": 2630,
+      "width": 650,
+      "height": 90,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Use proposed decomposition as scaffold\n(parent + children adopted verbatim)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a3-o-edits",
+      "x": 925,
+      "y": 2630,
+      "width": 650,
+      "height": 90,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Apply user's edits to the scaffold\n(rename paths \u00b7 adjust aspect lists \u00b7 drop children)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a3-o-rejects",
+      "x": 1655,
+      "y": 2630,
+      "width": 650,
+      "height": 90,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Greenfield path \u2014 no pretending\nAuthor drafts from scratch with no canonical structure",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a3-accepts",
+      "to": "a3-o-accepts",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a3-edits",
+      "to": "a3-o-edits",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a3-rejects",
+      "to": "a3-o-rejects",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "auth-s4-hdr",
+      "x": 160,
+      "y": 2750,
+      "width": 2180,
+      "height": 46,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#EFE0BB",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Stage 4 \u2014 Drafting (Hierarchical \u00b7 NEW v9: test pyramid)",
+        "fontSize": 12,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a3-o-accepts",
+      "to": "auth-s4-hdr",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a3-o-edits",
+      "to": "auth-s4-hdr",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a3-o-rejects",
+      "to": "auth-s4-hdr",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a4-1",
+      "x": 850,
+      "y": 2816,
+      "width": 800,
+      "height": 70,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "For each intent in the proposed set:\ndraft id (full path) + description + obligation + compose + triples + relates_to",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "auth-s4-hdr",
+      "to": "a4-1",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a4-2",
+      "x": 850,
+      "y": 2906,
+      "width": 800,
+      "height": 60,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Apply granularity rule \u2014 parent triples broad \u00b7 child triples specific \u00b7 no duplication across levels",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a4-1",
+      "to": "a4-2",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "diamond",
+      "id": "a4-is-impl",
+      "x": 720,
+      "y": 2986,
+      "width": 1120,
+      "height": 110,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 3,
+      "roughness": 0,
+      "label": {
+        "text": "Implementation intent?",
+        "fontSize": 12,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a4-2",
+      "to": "a4-is-impl",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a4-pyramid",
+      "x": 250,
+      "y": 3120,
+      "width": 900,
+      "height": 90,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Propose test-pyramid children\n<X>/unit-tests \u00b7 <X>/integration-tests \u00b7 <X>/e2e-tests\nwith canonical covers-X and no-Y triples per layer",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a4-no-pyramid",
+      "x": 1350,
+      "y": 3120,
+      "width": 900,
+      "height": 90,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Skip test-pyramid proposal\n(abstract parent intent or structural directory invariant\nwith no impl code to test)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a4-is-impl",
+      "to": "a4-pyramid",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "label": {
+        "text": "yes",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a4-is-impl",
+      "to": "a4-no-pyramid",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "label": {
+        "text": "no",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a4-layers",
+      "x": 250,
+      "y": 3240,
+      "width": 900,
+      "height": 70,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "User picks required pyramid layers\n(any subset of {unit, integration, e2e})",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a4-pyramid",
+      "to": "a4-layers",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a4-present",
+      "x": 850,
+      "y": 3340,
+      "width": 800,
+      "height": 70,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Present full intent set for user review\n(parents + children + test-pyramid children, with all triples)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a4-layers",
+      "to": "a4-present",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a4-no-pyramid",
+      "to": "a4-present",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "diamond",
+      "id": "a4-decide",
+      "x": 720,
+      "y": 3440,
+      "width": 1120,
+      "height": 130,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 3,
+      "roughness": 0,
+      "label": {
+        "text": "User accepts whole set?",
+        "fontSize": 12,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a4-present",
+      "to": "a4-decide",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a4-accept",
+      "x": 250,
+      "y": 3610,
+      "width": 900,
+      "height": 80,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Accept whole set\n\u2192 proceed to commit all intents",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "a4-defer",
+      "x": 1350,
+      "y": 3610,
+      "width": 900,
+      "height": 80,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Defer some children to follow-up\n\u2192 commit accepted subset \u00b7 record deferred as TODO",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a4-decide",
+      "to": "a4-accept",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "label": {
+        "text": "yes",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a4-decide",
+      "to": "a4-defer",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "label": {
+        "text": "defers",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "auth-s5-hdr",
+      "x": 160,
+      "y": 3720,
+      "width": 2180,
+      "height": 46,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#EFE0BB",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Stage 5 \u2014 Commit Intent Files  \u00b7  pre-commit: polarity-decision skill, typed relates_to encoding, implies-antecedent-grammar validation (round-3)",
+        "fontSize": 12,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a4-accept",
+      "to": "auth-s5-hdr",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a4-defer",
+      "to": "auth-s5-hdr",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a5-1",
+      "x": 850,
+      "y": 3786,
+      "width": 800,
+      "height": 70,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Validate each intent.yaml against the v1 schema\n(schema_version, id-matches-path, triple ids unique, compose rule valid)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "auth-s5-hdr",
+      "to": "a5-1",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a5-2",
+      "x": 850,
+      "y": 3876,
+      "width": 800,
+      "height": 70,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Write intent.yaml files atomically to .ia/intents/<path>/\n(create directories as needed \u00b7 no code files touched)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a5-1",
+      "to": "a5-2",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a5-3",
+      "x": 850,
+      "y": 3966,
+      "width": 800,
+      "height": 70,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Update relates_to on existing intents that now have new siblings (bidirectional linkage where meaningful)",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a5-2",
+      "to": "a5-3",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "a5-4",
+      "x": 850,
+      "y": 4056,
+      "width": 800,
+      "height": 70,
+      "strokeColor": "#5C4220",
+      "backgroundColor": "#F8F2E5",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Refresh derived index \u2192 new intents immediately resolvable from decorators\nNO code changes happen during authoring",
+        "fontSize": 11,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "a5-3",
+      "to": "a5-4",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "a5-4",
+      "to": "s1-newintent",
+      "strokeColor": "#5C4220",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "resume decomposition",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "subphase-b",
+      "x": 4660,
+      "y": 1430,
+      "width": 1080,
+      "height": 46,
+      "strokeColor": "#8B6940",
+      "backgroundColor": "#FAF1E5",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Sub-phase B \u2014 Per-Bead Cycles (Steps 4-6)",
+        "fontSize": 13,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "s4",
+      "x": 4980,
+      "y": 1510,
+      "width": 440,
+      "height": 110,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F4D9CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Step 4 \u2014 Short Cycle\nPair Programming Loop\nEngineer + Verifier per iteration",
+        "fontSize": 12,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s3-parallel",
+      "to": "s4",
+      "strokeColor": "#4A4A4A",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "s3-serial",
+      "to": "s4",
+      "strokeColor": "#4A4A4A",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-zone",
+      "x": 5760,
+      "y": 1510,
+      "width": 1740,
+      "height": 1860,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F4D9CC",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Short-cycle sub-flow \u00b7 Bead Orchestrator drives until Verifier accepts \u00b7 20-iter per-entry cap \u00b7 40-iter bead lifetime budget \u2192 recovery ladder",
+        "fontSize": 12,
+        "strokeColor": "#5C2A20",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-1",
+      "x": 5820,
+      "y": 1580,
+      "width": 820,
+      "height": 70,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Spawn Engineer  (memory: bead, persistent across iterations)\ninstall role file \u00b7 materialize bead memory \u00b7 scope intent set",
+        "fontSize": 11,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s4",
+      "to": "sc-1",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-2",
+      "x": 5820,
+      "y": 1664,
+      "width": 820,
+      "height": 80,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Engineer drafts diff\nevery declaration with @intent \u00b7 every statement with @intent (focal) or\n@intent-support (NL triple) or @intent-test or @intent-ignore",
+        "fontSize": 11,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-1",
+      "to": "sc-2",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "diamond",
+      "id": "sc-gate",
+      "x": 5820,
+      "y": 1764,
+      "width": 820,
+      "height": 160,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 3,
+      "roughness": 0,
+      "label": {
+        "text": "PreToolUse Gate\n10 mechanical checks (no LLM)\nwhich check failed?",
+        "fontSize": 12,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-2",
+      "to": "sc-gate",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-r1",
+      "x": 6680,
+      "y": 1750,
+      "width": 820,
+      "height": 56,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Decorator presence missing  (checks 1, 6)\n\u2192 add @intent / @intent-support / @intent-ignore",
+        "fontSize": 10,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-r2",
+      "x": 6680,
+      "y": 1810,
+      "width": 820,
+      "height": 56,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Reference resolution failure  (checks 2, 3)\n\u2192 fix intent path or aspect-id reference",
+        "fontSize": 10,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-r3",
+      "x": 6680,
+      "y": 1870,
+      "width": 820,
+      "height": 56,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Format violation  (checks 4, 5, 9)\n\u2192 fix one-per-line / ignore clauses / test path suffix",
+        "fontSize": 10,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-r4",
+      "x": 6680,
+      "y": 1930,
+      "width": 820,
+      "height": 70,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Decoration consistency / negation  (checks 7, 8, 10)\n\u2192 fix malformed support triple \u00b7 resolve @intent + @intent-support\non same intent \u00b7 rewrite predicate-slot negation as polarity: negative",
+        "fontSize": 10,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-gate",
+      "to": "sc-r1",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "label": {
+        "text": "fail",
+        "fontSize": 10
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-gate",
+      "to": "sc-r2",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "sc-gate",
+      "to": "sc-r3",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "sc-gate",
+      "to": "sc-r4",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "sc-r1",
+      "to": "sc-2",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "sc-r2",
+      "to": "sc-2",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "sc-r3",
+      "to": "sc-2",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "sc-r4",
+      "to": "sc-2",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-3",
+      "x": 5820,
+      "y": 1964,
+      "width": 820,
+      "height": 64,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Spawn fresh Verifier  (memory: none \u2014 no prior-iteration context)\ninput: diff + focal_claimants + support_claimants + intent triples",
+        "fontSize": 11,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-gate",
+      "to": "sc-3",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "all pass",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-vp-hdr",
+      "x": 5820,
+      "y": 2048,
+      "width": 820,
+      "height": 46,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#E8C6BC",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Verifier procedure \u2014 runs per (intent, aspect) being checked",
+        "fontSize": 11,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-3",
+      "to": "sc-vp-hdr",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-vp-1",
+      "x": 5820,
+      "y": 2114,
+      "width": 820,
+      "height": 60,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "1. Resolve focal_claimants[] + support_claimants[] for this aspect (index query)",
+        "fontSize": 11,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-vp-hdr",
+      "to": "sc-vp-1",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-vp-2",
+      "x": 5820,
+      "y": 2194,
+      "width": 820,
+      "height": 60,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "2. Read scoped evidence \u2014 focal lines + each support's location (NOT full body)",
+        "fontSize": 11,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-vp-1",
+      "to": "sc-vp-2",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-vp-3",
+      "x": 5820,
+      "y": 2274,
+      "width": 820,
+      "height": 60,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "3. Evaluate AFFIRMATIVE triple (LLM never sees negation) · runtime inverts post-verdict if polarity:negative · check quantifier cardinality · for compose:implies, antecedent already resolved by index lookup (deterministic, no LLM)",
+        "fontSize": 11,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-vp-2",
+      "to": "sc-vp-3",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-vp-4",
+      "x": 5820,
+      "y": 2354,
+      "width": 820,
+      "height": 60,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "4. Per-support-claim verdict: triple_verdict ∈ {matches | mismatch | vague} · aggregates into support_quality (advisory only, does NOT trigger re-draft)",
+        "fontSize": 11,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-vp-3",
+      "to": "sc-vp-4",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-vp-5",
+      "x": 5820,
+      "y": 2434,
+      "width": 820,
+      "height": 60,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "5. Aggregate per intent's compose rule (all | any | none | implies) \u2192 per-triple {focal_verdict + support_quality} (only focal_verdict: fail triggers Engineer re-draft)",
+        "fontSize": 11,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-vp-4",
+      "to": "sc-vp-5",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "diamond",
+      "id": "sc-decide",
+      "x": 5820,
+      "y": 2520,
+      "width": 820,
+      "height": 150,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 3,
+      "roughness": 0,
+      "label": {
+        "text": "Verifier accepts?",
+        "fontSize": 14,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-vp-5",
+      "to": "sc-decide",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-fb1",
+      "x": 6680,
+      "y": 2540,
+      "width": 820,
+      "height": 70,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Emit failed-triple list + evidence quotes + aggregate rationale to Engineer",
+        "fontSize": 10,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-decide",
+      "to": "sc-fb1",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "no",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-fb2",
+      "x": 6680,
+      "y": 2620,
+      "width": 820,
+      "height": 70,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#F0D4CC",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Engineer (bead memory persists) updates mental model \u00b7 revises approach",
+        "fontSize": 10,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-fb1",
+      "to": "sc-fb2",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "sc-fb2",
+      "to": "sc-2",
+      "strokeColor": "#9A4A3A",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "re-iterate",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "sc-cap",
+      "x": 6680,
+      "y": 2710,
+      "width": 820,
+      "height": 130,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Stuckness detector fires diagnosis EARLY (3-iter window of empty verdict_delta + stable failing-triple set) OR at iter-5 ceiling \u00b7 diagnosis written to bead memory \u00b7 consumed by BEAD ORCHESTRATOR only (never enters Verifier spawn) \u00b7 iter-15 early escalation \u00b7 40-iter bead lifetime \u2192 recovery ladder: L1 partial commit / L2 intent-modification proposal / L3 freeze / L4 abort",
+        "fontSize": 11,
+        "strokeColor": "#5C2A20"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "s5",
+      "x": 4980,
+      "y": 3440,
+      "width": 440,
+      "height": 110,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Step 5 \u2014 Long Cycle\nShuffle Sharding \u00b7 N=10 rounds against\naffected universe \u00b7 N=2 confirmation pass\non first reject (filter Verifier variance)",
+        "fontSize": 12,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "sc-decide",
+      "to": "s5",
+      "strokeColor": "#7BA889",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "yes \u00b7 accept",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "lc-zone",
+      "x": 5760,
+      "y": 3440,
+      "width": 1740,
+      "height": 1620,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Long-cycle regression-check sub-flow · N=10 rounds against session-snapshot universe · N=2 confirmation pass on first reject",
+        "fontSize": 12,
+        "strokeColor": "#1F2E4D",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "lc-uhdr",
+      "x": 5820,
+      "y": 3500,
+      "width": 1620,
+      "height": 46,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#C4D2E3",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Compute affected universe (v1) \u2014 two parallel set-computations that combine",
+        "fontSize": 11,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s5",
+      "to": "lc-uhdr",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "lc-direct",
+      "x": 6050,
+      "y": 3566,
+      "width": 550,
+      "height": 110,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Direct set\n\nclaims modified in this bead's diff\n(intent, aspect, claimant) tuples",
+        "fontSize": 11,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "lc-adj",
+      "x": 6660,
+      "y": 3566,
+      "width": 550,
+      "height": 110,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Adjacent set (1-hop)\n\nclaims in files importing-from\nor imported-by this bead's files",
+        "fontSize": 11,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "lc-uhdr",
+      "to": "lc-direct",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "lc-uhdr",
+      "to": "lc-adj",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "lc-union",
+      "x": 5820,
+      "y": 3700,
+      "width": 1620,
+      "height": 56,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Universe  =  direct  \u222a  adjacent     (noun-phrase-shared expansion deferred to v1.x)",
+        "fontSize": 12,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "lc-direct",
+      "to": "lc-union",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "lc-adj",
+      "to": "lc-union",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "lc-r1a",
+      "x": 5820,
+      "y": 3776,
+      "width": 1620,
+      "height": 56,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Round 1: sample one random unique (intent, aspect, claimant) from universe (session snapshot only — bead deltas excluded)",
+        "fontSize": 11,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "lc-union",
+      "to": "lc-r1a",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "lc-r1b",
+      "x": 5820,
+      "y": 3852,
+      "width": 1620,
+      "height": 56,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Spawn fresh Verifier \u2192 verdict on R1 sample \u00b7 on FIRST reject: spawn N=2 confirmation Verifiers (same tuple, distinct call-ids); \u22651/2 confirm \u2192 regression, both override \u2192 flaky verdict dismissed",
+        "fontSize": 11,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "lc-r1a",
+      "to": "lc-r1b",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "lc-r2a",
+      "x": 5820,
+      "y": 3928,
+      "width": 1620,
+      "height": 56,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Round 2: sample one random unique tuple (excluding R1) · stop early if universe exhausted",
+        "fontSize": 11,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "lc-r1b",
+      "to": "lc-r2a",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "lc-r2b",
+      "x": 5820,
+      "y": 4004,
+      "width": 1620,
+      "height": 56,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Spawn fresh Verifier \u2192 verdict on R2 sample (confirmation pass only on FIRST reject in the round set)",
+        "fontSize": 11,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "lc-r2a",
+      "to": "lc-r2b",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "lc-r3a",
+      "x": 5820,
+      "y": 4080,
+      "width": 1620,
+      "height": 56,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Rounds 3..N (default N=10): sample one random unique tuple per round (stop early when universe exhausted)",
+        "fontSize": 11,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "lc-r2b",
+      "to": "lc-r3a",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "lc-r3b",
+      "x": 5820,
+      "y": 4156,
+      "width": 1620,
+      "height": 56,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Spawn fresh Verifier per round \u2192 record verdicts \u00b7 accumulate until N rounds OR universe exhausted",
+        "fontSize": 11,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "lc-r3a",
+      "to": "lc-r3b",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "diamond",
+      "id": "lc-decide",
+      "x": 5820,
+      "y": 4240,
+      "width": 1620,
+      "height": 140,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 3,
+      "roughness": 0,
+      "label": {
+        "text": "Any confirmed regression?\n(reject + ≥1/2 confirmation = confirmed)",
+        "fontSize": 14,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "lc-r3b",
+      "to": "lc-decide",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "lc-reg1",
+      "x": 6080,
+      "y": 4400,
+      "width": 1100,
+      "height": 60,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Emit regression report (intent, aspect, claimant, failing triple)",
+        "fontSize": 11,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "lc-decide",
+      "to": "lc-reg1",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "yes · regression",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "lc-reg2",
+      "x": 6080,
+      "y": 4480,
+      "width": 1100,
+      "height": 60,
+      "strokeColor": "#3F5E7E",
+      "backgroundColor": "#DEE7F2",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Re-enter Step 4 short cycle with regressed intent added to active set",
+        "fontSize": 11,
+        "strokeColor": "#1F2E4D"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "lc-reg1",
+      "to": "lc-reg2",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "lc-reg2",
+      "to": "sc-2",
+      "strokeColor": "#3F5E7E",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "re-enter S4",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "s6",
+      "x": 4980,
+      "y": 5120,
+      "width": 440,
+      "height": 110,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#E8DAF0",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Step 6 \u2014 Test Execution  (NEW v9)\nTest Runner discovers + runs +\nverdicts test-pyramid intents",
+        "fontSize": 12,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "lc-decide",
+      "to": "s6",
+      "strokeColor": "#7BA889",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "no \u00b7 all pass",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-zone",
+      "x": 5760,
+      "y": 5120,
+      "width": 1740,
+      "height": 1880,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#E8DAF0",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Test-execution sub-flow \u00b7 TWO-STAGE satisfaction (NEW v9): Verifier validates test code FIRST, then Test Runner executes \u00b7 Livelock detector escalates via TestVerifierLivelockReport + dusk_resolve_livelock",
+        "fontSize": 12,
+        "strokeColor": "#3E2A5C",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-1",
+      "x": 6080,
+      "y": 5180,
+      "width": 1100,
+      "height": 60,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Pre-execution: Verifier evaluates test BODY against test-intent triples (two-stage satisfaction \u2014 only verified tests feed runtime execution) \u00b7 then Spawn Test Runner (memory: bead \u00b7 tools: Read + Bash[test-runner-cmd])",
+        "fontSize": 11,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s6",
+      "to": "tr-1",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-2",
+      "x": 6080,
+      "y": 5260,
+      "width": 1100,
+      "height": 60,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Filter bead's intents \u2192 test-pyramid intents (paths ending in any configured test_pyramid.suffixes \u2014 defaults: /unit-tests, /integration-tests, /e2e-tests)",
+        "fontSize": 11,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-1",
+      "to": "tr-2",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-3a",
+      "x": 6080,
+      "y": 5340,
+      "width": 1100,
+      "height": 60,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Query derived index \u2192 @intent-test-file claims \u2192 resolve test file paths",
+        "fontSize": 11,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-2",
+      "to": "tr-3a",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-3b",
+      "x": 6080,
+      "y": 5420,
+      "width": 1100,
+      "height": 60,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Query derived index \u2192 @intent-test claims \u2192 resolve individual test names within those files",
+        "fontSize": 11,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-3a",
+      "to": "tr-3b",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "diamond",
+      "id": "tr-present",
+      "x": 5820,
+      "y": 5500,
+      "width": 1620,
+      "height": 140,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 3,
+      "roughness": 0,
+      "label": {
+        "text": "Tests resolved AND Verifier-validated for each required test-intent?\n(Livelock detector fires on ≥3 iters same triple + slot-focus ≥80% + ≥3 structural approaches → TestVerifierLivelockReport)",
+        "fontSize": 12,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-3b",
+      "to": "tr-present",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-missing",
+      "x": 6080,
+      "y": 5660,
+      "width": 1100,
+      "height": 70,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Emit 'missing or invalid tests' feedback \u2192 re-enter Step 4 to have Engineer author / fix tests \u00b7 OR (if livelock detected) pause and surface TestVerifierLivelockReport for dusk_resolve_livelock(accept_test_as_is | modify_triple | escalate)",
+        "fontSize": 11,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-present",
+      "to": "tr-missing",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "no",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-missing",
+      "to": "sc-2",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-lhdr",
+      "x": 6080,
+      "y": 5760,
+      "width": 1100,
+      "height": 46,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#CCB1DC",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Group test files by pyramid layer (parallel per layer required by bead)",
+        "fontSize": 11,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-present",
+      "to": "tr-lhdr",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "yes",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-l-unit",
+      "x": 6065,
+      "y": 5830,
+      "width": 350,
+      "height": 70,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Unit layer\npnpm vitest <unit-files>\nsandbox (no DB / no network)",
+        "fontSize": 10,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-l-int",
+      "x": 6455,
+      "y": 5830,
+      "width": 350,
+      "height": 70,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Integration layer\npnpm vitest <integration-files>\nreal DB + real adapters",
+        "fontSize": 10,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-l-e2e",
+      "x": 6845,
+      "y": 5830,
+      "width": 350,
+      "height": 70,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "E2E layer\npnpm vitest <e2e-files>\nreal HTTP + DB",
+        "fontSize": 10,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-lhdr",
+      "to": "tr-l-unit",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "tr-lhdr",
+      "to": "tr-l-int",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "tr-lhdr",
+      "to": "tr-l-e2e",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-cap",
+      "x": 6080,
+      "y": 5920,
+      "width": 1100,
+      "height": 56,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Capture pass / fail / duration per test (from runner output)",
+        "fontSize": 11,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-l-unit",
+      "to": "tr-cap",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "tr-l-int",
+      "to": "tr-cap",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "tr-l-e2e",
+      "to": "tr-cap",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-7a",
+      "x": 6080,
+      "y": 5996,
+      "width": 1100,
+      "height": 56,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "For each triple 'covers-X':  \u22651 passing test annotated for aspect X?",
+        "fontSize": 11,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-cap",
+      "to": "tr-7a",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-7b",
+      "x": 6080,
+      "y": 6072,
+      "width": 1100,
+      "height": 56,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "For polarity:negative triples: affirmative claim must FAIL (runtime inversion) · For quantifier triples: matching count satisfies bound · isolation triples checked statically",
+        "fontSize": 11,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-7a",
+      "to": "tr-7b",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-verdict",
+      "x": 6080,
+      "y": 6148,
+      "width": 1100,
+      "height": 56,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Compute TestVerdict per test-intent { decision, per_triple, mapped_tests, rationale, duration }",
+        "fontSize": 11,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-7b",
+      "to": "tr-verdict",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "diamond",
+      "id": "tr-decide",
+      "x": 5820,
+      "y": 6230,
+      "width": 1620,
+      "height": 140,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 3,
+      "roughness": 0,
+      "label": {
+        "text": "All test-intents pass?",
+        "fontSize": 14,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-verdict",
+      "to": "tr-decide",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-fail1",
+      "x": 6080,
+      "y": 6390,
+      "width": 1100,
+      "height": 60,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Emit failing-tests report (test-intent, triple, file, test, result, duration)",
+        "fontSize": 11,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-decide",
+      "to": "tr-fail1",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "no",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "tr-fail2",
+      "x": 6080,
+      "y": 6470,
+      "width": 1100,
+      "height": 60,
+      "strokeColor": "#5E3E7E",
+      "backgroundColor": "#DBC5E8",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Re-enter Step 4 with failing test-intent scope highlighted",
+        "fontSize": 11,
+        "strokeColor": "#3E2A5C"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-fail1",
+      "to": "tr-fail2",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "tr-fail2",
+      "to": "sc-2",
+      "strokeColor": "#5E3E7E",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 0
+    },
+    {
+      "type": "rectangle",
+      "id": "subphase-c",
+      "x": 4660,
+      "y": 7080,
+      "width": 1080,
+      "height": 46,
+      "strokeColor": "#8B6940",
+      "backgroundColor": "#EDF1F6",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Sub-phase C \u2014 Commit & Merge (Steps 7-9)",
+        "fontSize": 13,
+        "strokeColor": "#5C4220"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "s7",
+      "x": 4980,
+      "y": 7160,
+      "width": 440,
+      "height": 130,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#D4DECB",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Step 7 \u2014 Atomic Commit\nIntent / Test-Intent / Bead-id /\nVerdict-id / Test-Verdict-id / Trace-id /\nmodel trailers \u00b7 plus (when applicable):\nPartial \u00b7 Deferred-Intent \u00b7\nVerifier-bypassed-test-intent (livelock accept)",
+        "fontSize": 10,
+        "strokeColor": "#2E4A3A"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "tr-decide",
+      "to": "s7",
+      "strokeColor": "#7BA889",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "yes \u00b7 all pass",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "s8",
+      "x": 4980,
+      "y": 7330,
+      "width": 440,
+      "height": 110,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#D4DECB",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Step 8 \u2014 Worktree Merge\ntopologically order worktree branches\n\u2192 rebase each onto main",
+        "fontSize": 11,
+        "strokeColor": "#2E4A3A"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s7",
+      "to": "s8",
+      "strokeColor": "#4A4A4A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "diamond",
+      "id": "s8-conf",
+      "x": 5760,
+      "y": 7330,
+      "width": 380,
+      "height": 110,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#FBE8A6",
+      "strokeWidth": 3,
+      "roughness": 0,
+      "label": {
+        "text": "Rebase\nconflict?",
+        "fontSize": 12,
+        "strokeColor": "#2E4A3A"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s8",
+      "to": "s8-conf",
+      "strokeColor": "#4A4A4A",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "per branch",
+        "fontSize": 10
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "cr-1",
+      "x": 6240,
+      "y": 7330,
+      "width": 760,
+      "height": 50,
+      "strokeColor": "#4A6A5A",
+      "backgroundColor": "#E0EBD7",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Spawn Conflict Resolver (memory: none)",
+        "fontSize": 11,
+        "strokeColor": "#2E4A3A"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s8-conf",
+      "to": "cr-1",
+      "strokeColor": "#4A6A5A",
+      "strokeWidth": 1,
+      "roughness": 0,
+      "label": {
+        "text": "yes",
+        "fontSize": 10
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "cr-2",
+      "x": 6240,
+      "y": 7390,
+      "width": 760,
+      "height": 50,
+      "strokeColor": "#4A6A5A",
+      "backgroundColor": "#E0EBD7",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Resolve conflicts on decorated code (git ops)",
+        "fontSize": 11,
+        "strokeColor": "#2E4A3A"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "cr-1",
+      "to": "cr-2",
+      "strokeColor": "#4A6A5A",
+      "strokeWidth": 1,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "cr-2",
+      "to": "s8",
+      "strokeColor": "#4A6A5A",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "resume",
+        "fontSize": 11
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "s9",
+      "x": 4980,
+      "y": 7490,
+      "width": 440,
+      "height": 110,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#D4DECB",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Step 9 \u2014 Return Summary to Harness\ncommits[] \u00b7 beads_summary[] \u00b7\nintents_touched[] \u00b7 test_intents_executed[]\n\u00b7 trace_ids \u00b7 duration \u00b7 cost",
+        "fontSize": 11,
+        "strokeColor": "#2E4A3A"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s8",
+      "to": "s9",
+      "strokeColor": "#4A4A4A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "arrow",
+      "from": "s8-conf",
+      "to": "s9",
+      "strokeColor": "#4A4A4A",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "label": {
+        "text": "no",
+        "fontSize": 10
+      }
+    },
+    {
+      "type": "ellipse",
+      "id": "user-receives",
+      "x": 5060,
+      "y": 7640,
+      "width": 280,
+      "height": 90,
+      "strokeColor": "#1F2E4D",
+      "backgroundColor": "#4465AB",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "label": {
+        "text": "User receives result",
+        "fontSize": 15,
+        "strokeColor": "#FFFFFF"
+      }
+    },
+    {
+      "type": "arrow",
+      "from": "s9",
+      "to": "user-receives",
+      "strokeColor": "#4A4A4A",
+      "strokeWidth": 2,
+      "roughness": 0
+    },
+    {
+      "type": "text",
+      "id": "below-band-header",
+      "x": 80,
+      "y": 7800,
+      "text": "Reference cards \u2014 decoration markers, PreToolUse gate, code style, sub-agent roles, memory scopes, MCP/slash, test pyramid",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "strokeColor": "#1F2E4D"
+    },
+    {
+      "type": "rectangle",
+      "id": "card-decorators",
+      "x": 80,
+      "y": 7860,
+      "width": 2700,
+      "height": 980,
+      "strokeColor": "#7A7A7A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Decoration markers (v9 \u00b7 round-3)\n\n@intent <path> [<clause-ids>]\n    declarations OR non-declaration statements\n    focal claim \u2014 'this is what makes\n    the clause hold'\n\n@intent-support <path> [<clause-ids>]\n                [<subj>, <pred>, <obj>]\n    non-declaration statements only\n    inline NL triple describes statement role\n    SLOTS ARE ALWAYS AFFIRMATIVE\n\n@intent-test <path>/<configured-suffix>\n    test declarations\n\n@intent-test-file <path>/<configured-suffix>\n    file-scope test claim \u00b7 top of file\n\n@intent-file / @intent-ignore  (unchanged)\n\n\u2014 Polarity (NEW v9 round-3) \u2014\nTriples carry polarity: positive | negative\n(default positive). Slots stay affirmative.\nRuntime inverts the LLM verdict post-call.\nThe LLM NEVER sees a negated question.\n\n\u2014 Negation parser rule (\u00a73.1.1) \u2014\nMatrix-predicate negation REJECTED in\npredicate slot (lexicon: not, never,\nfails to, lacks, excludes, omits, forbids,\nprohibits, prevents, denies, devoid of, \u2026).\nConstituent negation inside noun phrases\n('a function with no required arguments')\nis LEGAL in subject/object slots.\n\n\u2014 Quantifier (NEW v9) \u2014\nquantifier: at-least-one (default) | each |\nexactly-one | at-most-one | none |\nat-least-N | at-most-N \u00b7 with optional scope:.",
+        "fontSize": 12,
+        "fontFamily": 2,
+        "strokeColor": "#1F2E4D",
+        "textAlign": "left",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "card-pretooluse",
+      "x": 2820,
+      "y": 7860,
+      "width": 2700,
+      "height": 980,
+      "strokeColor": "#7A7A7A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "PreToolUse gate \u2014 10 mechanical checks\n(no LLM \u00b7 no semantic analysis)\n\n  1. Decorator present on every exported decl\n  2. Every intent path resolves\n  3. Every aspect/clause id resolves to a triple\n  4. One intent per line\n  5. @intent-ignore has both because=(...)\n      and reason=\"...\"\n  6. Every statement inside a decorated   (v9)\n      declaration is decorated\n  7. @intent-support has a valid           (v9)\n      3-slot triple\n  8. No statement carries both @intent     (v9)\n      and @intent-support for the same intent\n  9. @intent-test/-test-file path ends in  (v9)\n      any configured test_pyramid.suffix\n 10. No matrix-predicate negation in     (round-3)\n      @intent-support's predicate slot \u2014\n      author must use polarity: negative instead\n\nDecorate-or-decompose (S \u2286 D) is NOT in the\ngate (agentic). REPROMOTED to Sprint 9 as\n/dusk-doctor --static-analysis for drift\ndetection \u2014 runs off the write path.\n\n\u2014 dusk init merge strategy (round-3) \u2014\nWrites hook with _dusk_marker: 'dusk-pre-tool-\nuse-gate' + _dusk_managed: 'v1' as idempotency\nanchor. On conflict with existing non-Dusk\nPreToolUse entry matching Write/Edit: prompts\nuser [1] append (recommended), [2] replace\n(writes .claude/settings.json.bak), [3] abort.\nNever silent clobber. dusk doctor --check-hook\n[--repair] verifies installation.\n\nGate is HARD: failed check \u2192 write rejected \u2192\nEngineer re-drafts. No 'warning' mode.",
+        "fontSize": 12,
+        "fontFamily": 2,
+        "strokeColor": "#1F2E4D",
+        "textAlign": "left",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "card-codestyle",
+      "x": 5560,
+      "y": 7860,
+      "width": 2700,
+      "height": 980,
+      "strokeColor": "#7A7A7A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Decoration-completeness mandate (DESIGN)\n\nEvery line, call, assignment, statement,\nexpression, and lambda body \u2014 and their\ncontents \u2014 must be covered by intent\ndecorators appropriate to their participation.\n\nWhen a code unit's contents include\noperations whose intent participation\ndiffers from the unit's decoration, the\nunit is DECOMPOSED so each sub-operation\ncan be decorated appropriately.\n\nv1 enforcement (round-3):\n  \u00b7 Engineer proactively applies the mandate\n    (role prompt + decoration-completeness skill)\n  \u00b7 Verifier surfaces unsatisfied aspects when\n    sub-operations participate in undeclared intents\n  \u00b7 /dusk-doctor --static-analysis (REPROMOTED to v1, Sprint 9)\n    runs S\u2286D call-graph check off the write path \u2014 drift detection,\n    not real-time enforcement. Conservative default; --strict-unknowns\n    surfaces undecorated callees.\n  \u00b7 NOT in the PreToolUse gate (agentic)\n\nExamples\n  pubsub.publish(syncChannel(\"n\"), event)\n    \u2192 channel-resolution intent \u2260 publish\n      intent \u2192 EXTRACT syncChannel call\n\n  db.insert(x).values(y).returning()\n    \u2192 all steps share intent footprint\n      \u2192 keep as one statement\n\nLanguage-agnostic: the rule speaks about\nintent participation, not syntactic shape.\nTypeScript, Python, Go, Rust, SQL \u2014 same\nrule.",
+        "fontSize": 11,
+        "fontFamily": 2,
+        "strokeColor": "#1F2E4D",
+        "textAlign": "left",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "card-roles",
+      "x": 8300,
+      "y": 7860,
+      "width": 2820,
+      "height": 980,
+      "strokeColor": "#7A7A7A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Sub-agent roles (9) \u00b7 memory \u00b7 tool scope (advisory in v1)\n\n1. Root Orchestrator   session   spawn + builds session-snapshot index\n2. Bead Orchestrator   bead      spawn + commit + diagnosis routing + livelock\n3. Decomposer          none      Read-only \u00b7 typed relates_to (5 kinds)\n4. Scout               none      Read + grep + AST\n5. Engineer            bead      Write/Edit (gated) + Read + scoped Bash\n6. Verifier            none      Read-only \u00b7 fresh per call \u00b7 polarity-aware\n7. Test Runner         bead      Read + Bash(test-runner-cmd)\n8. Author              dialog    Authoring + Read \u00b7 polarity-decision skill\n9. Conflict Resolver   none      Git ops + R/W \u00b7 decorator-aware merge\n\nEngineer \u22a5 Verifier asymmetry \u2014 PROTECTED (round-3):\n  Engineer persistent per bead \u2192 accumulates context via\n      structured DUAL-CHANNEL bead memory (impl + test-authoring)\n  Verifier fresh per call \u2192 spawn payload IDENTICAL across iters\n      Diagnosis goes to Bead Orchestrator ONLY (never Verifier)\n  Validated by fresh-Verifier audit (3 axes incl. citation precision)\n\nKey skills (round-3):\n  verifier \u00b7 polarity-aware-evaluation\n           \u00b7 implies-evaluation (deterministic antecedents)\n           \u00b7 quantifier-checking \u00b7 test-body-evaluation\n  engineer \u00b7 convergence-diagnosis \u00b7 test-approach-taxonomy\n  author   \u00b7 polarity-decision \u00b7 typed-relates-to\n           \u00b7 implies-antecedent-grammar\n  orch.    \u00b7 livelock-escalation-routing\n\nTool/skill scoping ADVISORY in v1 \u2014 PreToolUse gate provides\nthe actual safety boundary (hard sandbox deferred to v1.x).\nSub-agents spawn via Claude Code Task tool with subagent_type:\ndusk-<role>; Dusk materializes memory + injects skills BEFORE\nthe spawn call.",
+        "fontSize": 12,
+        "fontFamily": 2,
+        "strokeColor": "#1F2E4D",
+        "textAlign": "left",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "card-memory",
+      "x": 80,
+      "y": 8900,
+      "width": 3540,
+      "height": 720,
+      "strokeColor": "#7A7A7A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Sub-agent memory scopes (v9 \u00b7 round-3 hardened)\n\nmemory: none \u2014 Fresh per invocation. Spawn payload IDENTICAL\n   across iterations (no diagnosis leak). Used by: Verifier,\n   Decomposer, Scout, Conflict Resolver.\n\nmemory: bead \u2014 Persists across short-cycle iters + long-cycle\n   samples + test-execution feedback. Used by: Engineer,\n   Test Runner, Bead Orchestrator. STRUCTURED DUAL-CHANNEL format:\n     - Current diagnosis (Bead-Orchestrator-scoped routing signal)\n     - Approaches tried (impl)\n     - Approaches tried (test-authoring) with Triple-slot focus tag\n     - Verifier signals (last 3 verdicts)\n     - Intent set in scope \u00b7 Files being modified\n   Mechanical/templated compaction \u2014 NEVER LLM-summarized.\n   File at .ia/runtime/beads/<bead-id>/<role>.md.\n\nmemory: dialog \u2014 Author's 5-stage flow.\n   .ia/runtime/dialogs/<dialog-id>/. 24h GC TTL.\n\nmemory: session \u2014 Root Orchestrator.\n   .ia/runtime/session/<role>.md.\n\nImplement checkpoint (round-3 \u2014 NOT a memory scope):\n   .ia/runtime/implement/<resume_token>.json. 24h TTL. Survives\n   harness crashes. Drives dusk_implement pause/resume contract.\n\nSub-agent spawn mechanism:\n   Claude Code Task tool with subagent_type: dusk-<role>. Dusk\n   materializes memory + injects skills BEFORE the spawn call.",
+        "fontSize": 12,
+        "fontFamily": 2,
+        "strokeColor": "#1F2E4D",
+        "textAlign": "left",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "card-mcp",
+      "x": 3660,
+      "y": 8900,
+      "width": 3540,
+      "height": 720,
+      "strokeColor": "#7A7A7A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Integration surface \u2014 MCP + slash (round-3)\n\nMCP tools (mutating + flow):\n  dusk_implement({request? | resume_token?})   pipeline OR resume\n  dusk_author_start({request})         \u2192 dialog_id + first question\n  dusk_author_continue({dialog_id, response})  loop until finalized\n  dusk_author_finalize({dialog_id})    \u2192 intents_created\n  dusk_resolve_livelock({bead_id, verb})  accept_test_as_is\n                                          | modify_triple | escalate\n  dusk_cancel({bead_id?, reason})  \u2192 CancelResult (cooperative)\n  dusk_verify({diff, intents?})    \u2192 Verdict (ad-hoc)\n\nRead-only fallback tools (paired with MCP resources):\n  dusk_list_intents / dusk_get_intent\n  dusk_list_traces / dusk_list_beads / dusk_get_bead\n  dusk_list_implement_checkpoints \u00b7 dusk_status \u00b7 dusk_inspect\n\nMCP resources (preferred when host browses):\n  dusk://intents \u00b7 dusk://intents/<path> \u00b7 dusk://traces/recent\n  dusk://beads/active \u00b7 dusk://beads/<id> \u00b7 dusk://implement-checkpoints\n\nSlash commands (user-facing):\n  /dusk-init \u00b7 /dusk-author \u00b7 /dusk-status \u00b7 /dusk-verify\n  /dusk-test \u00b7 /dusk-benchmark \u00b7 /dusk-doctor\n  /dusk-doctor --static-analysis (S\u2286D drift detection)\n  /dusk-doctor --check-hook [--repair]\n\nHarness contract \u2014 4 capabilities (round-3, reduced from 5):\n  spawn-by-type (Task tool) \u00b7 PreToolUse hook (per-session)\n  MCP host \u00b7 filesystem trace emission\n  (Skill scoping is Dusk-owned, not harness-provided.)\n\nEvery MCP tool returns success OR DuskError {kind, recoverable,\nrecovery_hint, \u2026}. Pause/resume + cancellation are FIRST-CLASS\nsemantics, not afterthoughts.",
+        "fontSize": 12,
+        "fontFamily": 2,
+        "strokeColor": "#1F2E4D",
+        "textAlign": "left",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "card-testpyramid",
+      "x": 7240,
+      "y": 8900,
+      "width": 3880,
+      "height": 720,
+      "strokeColor": "#7A7A7A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Test pyramid encoding (v9 \u00b7 round-3)\n\nReserved child-intent suffixes (CONFIGURABLE via\ndusk.config.yml > test_pyramid.suffixes \u2014 defaults below):\n  <impl-intent>/unit-tests          pure \u00b7 no DB \u00b7 no network\n  <impl-intent>/integration-tests   cross-component \u00b7 real DB\n  <impl-intent>/e2e-tests           full journey \u00b7 real HTTP + DB\n  (extensible: contract-tests, property-tests, fuzz-tests, \u2026)\n\nTest intent triples (affirmative + polarity per round-3):\n  covers-X        'the suite include a passing case verifying \u2026'\n  isolated-from-Y polarity: negative on 'depends on Y'\n  count-bounds    quantifier: exactly-one + scope: per inserted row\n\nTwo-stage satisfaction (NEW v9 \u2014 round-3):\n  1. Verifier evaluates the test BODY against the test-intent\n     triples (does the test body actually verify what the triple\n     claims?). A trivially-passing test FAILS this check.\n  2. Test Runner executes only Verifier-validated tests.\n\nLivelock detection (round-3):\n  Same triple \u22653 iters + slot-focus \u226580% concentration +\n  \u22653 structural test approaches (mock-call-order, time-spy,\n  state-observation, snapshot-of-events, instrumented-mock, \u2026)\n  \u2192 TestVerifierLivelockReport \u2192 user resolves via\n  dusk_resolve_livelock(accept_test_as_is | modify_triple |\n  escalate).\n\nHierarchical satisfaction: parent X satisfied iff\n  (X's triples pass via two-verdict {focal+support}) AND\n  (every test-child satisfies BOTH stages).",
+        "fontSize": 12,
+        "fontFamily": 2,
+        "strokeColor": "#1F2E4D",
+        "textAlign": "left",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "text",
+      "id": "below-band-header-2",
+      "x": 80,
+      "y": 9700,
+      "text": "Below \u2014 commit format, observability schema, what's new in v9 vs v8, and the worked decoration example",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "strokeColor": "#1F2E4D"
+    },
+    {
+      "type": "rectangle",
+      "id": "card-commit",
+      "x": 80,
+      "y": 9760,
+      "width": 3540,
+      "height": 720,
+      "strokeColor": "#7A7A7A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Atomic commit format (Conventional Commits + trailers)\n\nfeat(api): add cursor decoding for paginated lists\n\nImplements cursor decode with explicit\nquery-param shape and typed\nCursorState|DecodeError return per\nthe new intent.\n\nIntent: api/pagination/cursor-only/cursor-decode\n         [query-param, return-payload, error-on-malformed]\nIntent: api/auth-required [authorization-required]\nTest-Intent: .../cursor-decode/unit-tests\nTest-Intent: .../cursor-decode/integration-tests\nBead-id: bd_2026052600001\nVerdict-id: vd_2026052600001\nTest-Verdict-id: tv_2026052600001       (round-3)\nTrace-id: tr_2026052600001\nVerifier-model: claude-sonnet-4-6\nTest-Runner-model: claude-sonnet-4-6\nLong-cycle-samples: 10                  (round-3, was 3)\nTest-Suites-passed: 2\n\n\u2014 Conditional trailers (round-3) \u2014\nPartial: true                              when commit via\nDeferred-Intent: <intent-path>             Recovery Ladder L1\nVerifier-bypassed-test-intent:             when livelock resolved\n   <test-intent-path>[<triple-id>]         via accept_test_as_is\n\n\u2014 Subject + body are human prose.\n\u2014 One commit per bead. Step 8 rebase recognizes Partial: true\n  trailers and suppresses snapshot_drift warnings on deferred\n  intents.",
+        "fontSize": 11,
+        "fontFamily": 2,
+        "strokeColor": "#1F2E4D",
+        "textAlign": "left",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "card-observability",
+      "x": 3660,
+      "y": 9760,
+      "width": 3540,
+      "height": 720,
+      "strokeColor": "#7A7A7A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Observability \u2014 trace event schema (v9 \u00b7 round-3)\n\ntype SubAgentTrace = {\n  schema_version: 1,                    (v9)\n  trace_id, bead_id?, parent_trace_id?,\n  role: '\u2026' (9 roles incl. test-runner),\n  invocation_site: '\u2026' (incl. test-execution),\n  model, prompt_tokens, completion_tokens,\n  latency_ms, cost_usd,\n  input_summary?, output_summary?,\n\n  // Index coherency (round-3)\n  index_snapshot_id?,\n\n  // Long-cycle confirmation pass (round-3)\n  confirmation_of_trace_id?,\n  confirmation_pass_outcome?:\n     'confirmed_reject' | 'flaky_verdict_dismissed',\n\n  // Stuck-bead debugging (round-3, short-cycle only)\n  iteration_number?,\n  verdict_delta_from_prior?,\n  failing_triple_set?,\n  engineer_change_summary?,\n\n  // Bead Orchestrator traces only (asymmetry guarantee)\n  convergence_diagnosis_present?,\n  stuckness_detector_state?,\n  verifier_livelock_signal?:\n    {failing_triple, slot_focus, structural_approach_count},\n\n  // Verifier-only\n  agreement_with_pair?, ground_truth?,\n  test_runner_command?, test_pass_count?, test_fail_count?,\n  skills_loaded?\n}\n\nTraces \u2192 .ia/observability/traces.jsonl\nVerifier traces NEVER carry diagnosis fields\n(diagnosis lives in Bead Orchestrator scope only).",
+        "fontSize": 11,
+        "fontFamily": 2,
+        "strokeColor": "#1F2E4D",
+        "textAlign": "left",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "card-whatsnew",
+      "x": 7240,
+      "y": 9760,
+      "width": 3880,
+      "height": 720,
+      "strokeColor": "#7A7A7A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "What's new in v9 round-3 (key hardenings)\n\nConstraint language\n  \u00b7 Polarity field replaces affirmative-only-by-rewriting.\n    Slots stay affirmative; runtime inverts post-LLM.\n    LLM NEVER sees negation. Matrix/constituent parser rule.\n  \u00b7 compose: implies with CLOSED antecedent vocabulary\n    (is decorated with \u00b7 claims any aspect of \u00b7 is enclosed by\n    a decoration of). Antecedents evaluated by deterministic\n    INDEX LOOKUP, never LLM-judged.\n  \u00b7 quantifier vocab on triples + optional scope:.\n  \u00b7 Typed relates_to (5 kinds: parent \u00b7 implies \u00b7 conflicts \u00b7\n    supersedes \u00b7 sibling). refines collapsed into parent.\n  \u00b7 Schema version 2 \u00b7 automatic v8 migration.\n\nPipeline & runtime\n  \u00b7 Session-snapshot index (immutable for run) + per-bead\n    in-memory delta. Reads carry index_snapshot_id.\n  \u00b7 Stuckness detector early-fires diagnosis; iter-5 fallback.\n  \u00b7 Diagnosis to BEAD ORCHESTRATOR only \u2014 Verifier spawn\n    payload is identical across iterations (asymmetry protected).\n  \u00b7 40-iter bead lifetime budget + 4-level recovery ladder\n    (partial commit \u2192 intent-modification proposal \u2192 freeze \u2192 abort).\n  \u00b7 Long cycle: N=10 + N=2 confirmation pass on first reject\n    (filters Verifier variance).\n  \u00b7 File-overlap + cross-bead focal/support overlap in DAG.\n\nVerification\n  \u00b7 Per-triple verdict split: focal_verdict + support_quality.\n  \u00b7 Per-support-claim verdict (matches | mismatch | vague).\n  \u00b7 Fresh-Verifier audit: 3 axes (variance + similarity +\n    CITATION PRECISION). No LLM-judge in the audit itself.\n  \u00b7 Two-stage test satisfaction: Verifier validates test body\n    BEFORE Test Runner executes.\n  \u00b7 TestVerifierLivelockReport + dusk_resolve_livelock.\n\nIntegration surface\n  \u00b7 Harness contract: 4 capabilities (was 5). Tool/skill scoping\n    is ADVISORY in v1; PreToolUse gate provides safety.\n  \u00b7 Sub-agent spawn via Claude Code Task tool.\n  \u00b7 dusk_implement pause/resume via disk checkpoint + resume_token\n    (DuskError{kind: implement_paused_for_authoring}).\n  \u00b7 dusk_author_* continuation pattern (start/continue/finalize).\n  \u00b7 dusk_cancel: cooperative \u2014 drains in-flight Task calls,\n    ordered cleanup, distinguishes cancelled[] from preserved[].\n  \u00b7 dusk_resolve_livelock + paired list/get tools + MCP resources.\n  \u00b7 DuskError envelope on every MCP tool.\n  \u00b7 dusk init writes hook with _dusk_marker idempotency anchor +\n    conflict-prompting three-option merge. Never silent clobber.",
+        "fontSize": 11,
+        "fontFamily": 2,
+        "strokeColor": "#1F2E4D",
+        "textAlign": "left",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "text",
+      "id": "code-example-header",
+      "x": 80,
+      "y": 10560,
+      "text": "Worked decoration example \u2014 excerpt from packages/api/src/services/notifications/index.ts (RFC App. B)",
+      "fontSize": 22,
+      "fontFamily": 2,
+      "strokeColor": "#1F2E4D"
+    },
+    {
+      "type": "rectangle",
+      "id": "code-callout",
+      "x": 80,
+      "y": 10620,
+      "width": 3540,
+      "height": 540,
+      "strokeColor": "#9A4A3A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "Reading the example\n\nThe function declaration claims FIVE intents:\n  notifications/send (primary, with aspects)\n  db/use-drizzle-orm (cross-cutting \u00b7 touched)\n  sync/pubsub-on-create (cross-cutting \u00b7 touched)\n  observability/structured-logging (cross-cutting)\n  error-handling/observable-failures (cross-cutting)\n\nInside the body, every statement is decorated:\n  @intent          when the statement IS the focal\n                       achievement of an aspect\n  @intent-support  when the statement contributes\n                       (with NL triple describing role)\n\nKey structural moves (Engineer's discipline):\n  \u00b7 syncChannel(\"notification\") extracted ABOVE the loop\n      (loop-invariant hoist \u00b7 check 8)\n  \u00b7 the event object extracted from the publish call args\n      (no nested user fn call \u00b7 check 8)\n  \u00b7 inArray(...) predicates extracted before Drizzle chains\n  \u00b7 Date.now() extracted to a named const\n  \u00b7 getLogger() extracted; payload object extracted;\n      then logger.info(payload, msg)\n  \u00b7 let sent/skipped/failed collapsed to one counters obj\n  \u00b7 else-if chain flattened with continue\n\nVerifier reads SCOPED \u2014 per aspect, not whole function:\n  for publish-sync-per-insert it reads ~4 lines\n  (focal + 3 support claims), not the 90-line body.",
+        "fontSize": 11,
+        "fontFamily": 2,
+        "strokeColor": "#1F2E4D",
+        "textAlign": "left",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "rectangle",
+      "id": "code-snippet",
+      "x": 3660,
+      "y": 10620,
+      "width": 7460,
+      "height": 540,
+      "strokeColor": "#7A7A7A",
+      "backgroundColor": "#FDFBF7",
+      "strokeWidth": 1,
+      "strokeStyle": "dashed",
+      "roughness": 0,
+      "roundness": {
+        "type": 3
+      },
+      "label": {
+        "text": "sendNotification \u2014 clean-decoration excerpt (publish loop section)\n\n// @intent notifications/send [persist-first]\n// @intent-support db/use-drizzle-orm [typed-queries-only]\n//                  [\"the insert chain\", \"uses\", \"Drizzle's typed insert with values and returning to write notifications atomically\"]\nconst inserted = await db.insert(notifications).values(rows).returning();\n\n// @intent-support sync/pubsub-on-create [event-per-insert]\n//                  [\"the channel resolution\", \"computes\", \"the sync channel name for the notification entity via syncChannel\"]\nconst notificationChannel = syncChannel(\"notification\");\n\n// @intent-support notifications/send [publish-sync-per-insert]\n//                  [\"the publish loop\", \"iterates\", \"over each inserted notification to emit a sync event\"]\nfor (const notification of inserted) {\n  // @intent-support notifications/send [publish-sync-per-insert]\n  //                  [\"the timestamp capture\", \"captures\", \"the current epoch milliseconds for the event emission timestamp\"]\n  const timestamp = Date.now();\n\n  // @intent-support notifications/send [publish-sync-per-insert]\n  //                  [\"the event payload\", \"constructs\", \"a SyncEvent carrying the created action, the inserted notification data, and the captured timestamp\"]\n  const event: SyncEvent<typeof notification> = { action: \"created\", data: notification, timestamp };\n\n  // @intent notifications/send [publish-sync-per-insert]\n  // @intent-support sync/pubsub-on-create [event-per-insert]\n  //                  [\"the channel publish call\", \"delivers\", \"the prepared sync event onto the resolved notification channel via pubsub\"]\n  await pubsub.publish(notificationChannel, event);\n}",
+        "fontSize": 10,
+        "fontFamily": 2,
+        "strokeColor": "#1F2E4D",
+        "textAlign": "left",
+        "verticalAlign": "top"
+      }
+    },
+    {
+      "type": "text",
+      "id": "closing-note",
+      "x": 80,
+      "y": 11220,
+      "text": "Closing \u2014 v9 round-3 hardens the model into measurable properties. Polarity moves negation outside the LLM call. compose: implies makes conditional rules deductive (antecedents are facts, consequents are judgments). The session snapshot makes parallel reads deterministic. The recovery ladder converts thrashing into productive partial commits. The N=2 confirmation pass filters Verifier variance from regression detection. Three-axis fresh-Verifier audit makes the Engineer \u22a5 Verifier asymmetry falsifiable. The diagnosis routes to the Bead Orchestrator only \u2014 the Verifier remains genuinely fresh. Build for right. Land the plane.",
+      "fontSize": 13,
+      "fontFamily": 2,
+      "strokeColor": "#3F4A5C",
+      "width": 11020
+    }
+  ]
+}
