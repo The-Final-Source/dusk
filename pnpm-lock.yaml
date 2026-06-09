@@ -134,6 +134,9 @@ importers:
 
   packages/core/graph:
     dependencies:
+      '@dusk/core-parser':
+        specifier: workspace:*
+        version: link:../parser
       '@dusk/core-schema':
         specifier: workspace:*
         version: link:../schema
