@@ -874,6 +874,8 @@ The PreToolUse gate (v8: 5 mechanical checks) gains five new checks in v9, for a
 
 A write that fails any check is rejected with a structured error and the Engineer sees the rejection in its next iteration. The gate is hard — there is no "warning" mode.
 
+**The 10 checks emit 12 typed rejection kinds.** Several checks split into more than one `Rejection.kind` (App. A.8) because they detect distinct failure shapes the Engineer's feedback channel must distinguish: check 1 → `missing_decorator` (declaration) **and** `missing_statement_decorator` (statement, v9 check 6); check 2 → `unresolved_intent_path` **and** `unresolved_aspect_id`; check 5 → `missing_ignore_because`, `missing_ignore_reason`, **and** `invalid_ignore_predicate`; check 7 → `missing_support_triple` **and** `malformed_support_triple`. The mapping is 10 mechanical checks → 12 rejection kinds; conformance is verified per-kind (one fixture per kind), not per-check.
+
 **Why the gate stays mechanical.** The decorate-or-decompose mandate (Ch. 4.5) is the design rule for code style — but it requires *semantic* understanding of intent participation to enforce (the `S ⊆ D` check needs call-graph + decorator lookup + comparison of intent sets). That's an agentic computation, not a parser pass. We keep the gate purely mechanical and defer mandate enforcement to:
 
 1. **Engineer proactivity.** The Engineer's role prompt + skills (`dusk/engineer/decoration-completeness`, `dusk/engineer/statement-extraction`, `dusk/engineer/support-triple-authoring`) instruct it to apply the mandate as it drafts code — extract nested calls when their intent participation diverges, hoist loop-invariants, separate object construction from use, etc.
@@ -1269,11 +1271,13 @@ After all parallel beads' commits land on their worktree branches, the Root Orch
 
 ## Chapter 7: The Verifier — Model & Observability
 
-### 7.1 Single mid-tier model for v1
+### 7.1 Single frontier-tier model for v1 (determinism-first)
 
-All Verifier calls use a single mid-tier performant model. Engineer calls use the same model tier in v1. **Test Runner uses the same model tier** for verdict computation (it primarily runs a deterministic test runner; LLM use is for verdict aggregation and triple satisfaction judgment).
+v1 uses a **single frontier-tier model** across all roles. The earlier "mid-tier" framing is superseded: v1 is **not built to scale**, and the priority is *determinism and judgment quality*, not cost. Leaning on a frontier model — combined with the polarity/quantifier/antecedent machinery that moves the hardest logic *outside* the LLM call — is what makes single-shot structural verdicts stable enough to test against. Engineer, Verifier, and Test Runner all default to the same frontier tier in v1.
 
-The default model is a runtime configuration knob; v1 ships with a sensible default and supports swapping.
+**`temperature: 0` for verdict calls.** Verifier and Test-Runner verdict computations run at temperature 0, so the LLM-mediated portion of the pipeline is as close to deterministic as the model allows. (The two places the architecture deliberately *wants* sampling variance — the §7.5 fresh-Verifier audit and the §6.5 N=2 confirmation pass — are handled with explicit N and statistical thresholds, not single-shot asserts.)
+
+**Tier-down is an optimization, deferred to efficacy testing.** Whether a cheaper/faster model suffices per role (e.g., a frontier Verifier + a faster Engineer) is established by the Sprint-9 benchmark (§7.3, §7.5), not guessed up front. The default model is a runtime configuration knob (`dusk.config.yml > models`) with per-role overrides; v1 ships with a frontier default and supports swapping. We optimize the model substrate once we are measuring the system's efficacy — not before.
 
 ### 7.2 Benchmarking trace stream
 
@@ -1305,7 +1309,7 @@ Traces are written to `.ia/observability/traces.jsonl` (gitignored, ring-buffere
 
 ### 7.3 Benchmarking commercial models
 
-A primary v1 goal is to benchmark commercial mid-tier agents head-to-head. Available as both shell CLI and slash command:
+A primary v1 goal is to benchmark commercial agents head-to-head — across tiers, including the mid-tier candidates a future tier-down (§7.1, App. D.21) would use. Available as both shell CLI and slash command:
 
 ```bash
 dusk benchmark --models "claude-sonnet,gpt-mid,gemini-flash" \
@@ -1438,7 +1442,7 @@ v1 ships with the Test Runner configured for one test runner per project (Vitest
 
 ### 8.9 Beyond-PreToolUse static analysis (new in v9)
 
-The 9 PreToolUse checks are mechanical and run per write. Three deeper checks live in `/dusk-doctor` (out-of-band):
+The 10 PreToolUse checks (§4.6; 12 typed rejection kinds) are mechanical and run per write. Three deeper checks live in `/dusk-doctor` (out-of-band):
 
 - **Decorate-or-decompose static analysis (REPROMOTED to v1, Sprint 9).** The `S ⊆ D` mandate from §4.5 needs offline enforcement to catch decoration erosion over time. Originally deferred to v1.x; reviewer feedback pulled it back. Mechanically: build call-graph + decorator lookup, compute `S` (intent participations of called sub-operations) and `D` (intent set in unit's decorators) per decorated unit, flag where `S ⊄ D`. Run weekly during dogfooding; framed as **drift detection**, not real-time enforcement. Surface erosion trends as actionable signal — decoration density per package, decorate-or-decompose violation count over time.
 - **Cross-bead claim overlap detection (NEW v9 — preventive, Sprint 5).** "No two beads have overlapping focal claims for the same aspect" is moved from v1.x deferred into Sprint 5 as a **Decomposer-time precondition**, not a post-hoc check. Decomposer refuses to issue a bead DAG where two beads would write conflicting focal claims; the conflict is reported back as a request for the Author to disambiguate the intents.
@@ -1511,7 +1515,7 @@ Output schema same in both cases. The `focal_claimants` and `support_claimants` 
 **Honest v1 stance.** The role-frontmatter `tools:` field declares what each sub-agent *should* use. Claude Code today does not provide hard sandboxing on agent-level tool scopes — the harness honors the declared list as an advisory bias, not a containment boundary. v1 ships with this looser model.
 
 Concretely in v1:
-- The Verifier's role prompt + frontmatter declare `tools: [Read]`. If a misbehaving Verifier issues a Write, the PreToolUse gate (Ch. 4.6) still runs its 9 mechanical checks on the diff — so misbehavior is bounded even without spawn-time tool sandboxing.
+- The Verifier's role prompt + frontmatter declare `tools: [Read]`. If a misbehaving Verifier issues a Write, the PreToolUse gate (Ch. 4.6) still runs its 10 mechanical checks on the diff — so misbehavior is bounded even without spawn-time tool sandboxing.
 - The Engineer's `tools: [Read, Write, Edit, Bash(<scoped>)]` is advisory. The Engineer is instructed (in its role prompt + skills) to use only the listed tools.
 - The Test Runner's `tools: [Read, Bash(<test-runner-cmd>)]` is advisory.
 
@@ -2129,10 +2133,22 @@ type SubAgentTrace = {
 
   // Skill usage (NEW v9 — for skill-scope post-hoc audit per §9.7)
   skills_loaded?: string[];                      // e.g. ["dusk/engineer/statement-extraction"]
+
+  // Test/benchmark-mode raw-prompt capture (NEW — board round 4).
+  // The verbatim assembled system prompt handed to the Task tool. Populated
+  // ONLY in test/benchmark mode (cost-gated; production traces omit it). This
+  // is the observable surface that makes the asymmetry/polarity/two-path
+  // guarantees falsifiable: the no-diagnosis-leak check (§9.6.1), the
+  // "LLM never sees negation" check (§3.1), and the consequent-only check for
+  // compose: implies (§3.2.1) all assert against raw_prompt, not against the
+  // lossy input_summary. The relevant invariant is STRUCTURAL ("no
+  // iteration-specific or diagnosis content in the payload"), not byte-identity
+  // across iterations — behavioral freshness is measured empirically by §7.5.
+  raw_prompt?: string;
 };
 ```
 
-**Note on diagnosis routing.** `convergence_diagnosis_present` appears on **Bead Orchestrator** traces only. Verifier traces NEVER carry the diagnosis field — the Verifier's spawn payload is identical across all iterations, preserving the Engineer ⊥ Verifier asymmetry validated by §7.5.
+**Note on diagnosis routing.** `convergence_diagnosis_present` appears on **Bead Orchestrator** traces only. Verifier traces NEVER carry the diagnosis field, and a Verifier's `raw_prompt` (in test mode) contains **no iteration-specific or diagnosis content** — preserving the Engineer ⊥ Verifier asymmetry validated by §7.5. The earlier "spawn payload identical across iterations" framing is superseded by this structural no-leak property: byte-identity is both too strong (breaks on benign field reordering) and too weak (identical payloads can still yield correlated verdicts — which is exactly why §7.5's three-axis audit exists).
 
 ### A.7 Atomic commit format
 
@@ -2155,6 +2171,8 @@ Test-Suites-passed: <count>
 ```
 
 ### A.8 PreToolUse rejection types
+
+The 10 mechanical checks of §4.6 map onto the **12 typed rejection kinds** below (some checks emit more than one kind — see §4.6). Conformance testing is per-kind: one fixture per kind.
 
 ```typescript
 type Rejection =
@@ -2700,7 +2718,7 @@ The Test Runner discovers this file via `@intent-test-file`, runs Vitest scoped 
 | 8 sub-agent roles | **9 roles.** Test Runner added; persistence semantics formalized via `memory:` frontmatter. |
 | Sub-agent persistence implicit in role descriptions | **Explicit `memory:` frontmatter** with four scopes: `none`, `bead`, `dialog`, `session`. Verifier explicitly `memory: none`. |
 | No sub-agent skill system | **Role-bound skills under `.claude/skills/dusk/<role>/<skill>.md`.** Shipped baseline + project-specific extension. |
-| PreToolUse: 5 mechanical checks | **9 checks.** Decoration completeness, support-triple validity, focal/support contradiction, test-pyramid path validation. The agentic `S ⊆ D` decorate-or-decompose check is intentionally NOT in the gate — the mandate stays in §4.5 but enforcement is via Engineer proactivity + Verifier unsatisfied-aspect surfacing. |
+| PreToolUse: 5 mechanical checks | **10 checks** (12 typed rejection kinds). Decoration completeness, support-triple validity, focal/support contradiction, test-pyramid path validation, matrix-predicate negation in support triples (check 10). The agentic `S ⊆ D` decorate-or-decompose check is intentionally NOT in the gate — the mandate stays in §4.5 but enforcement is via Engineer proactivity + Verifier unsatisfied-aspect surfacing. |
 | Atomic commit trailers (Intent, Bead-id, Verdict-id, Trace-id, Verifier-model, Long-cycle-samples) | **Extended with Test-Intent, Test-Runner-model, Test-Suites-passed.** |
 | `/dusk-doctor` slash command | **Extended to validate decoration completeness across project.** |
 | Test handling | **Test pyramid encoded via reserved child-intent suffixes (`/unit-tests`, `/integration-tests`, `/e2e-tests`); Test Runner role executes; verdicts roll up to parent intent satisfaction.** |
@@ -2714,7 +2732,7 @@ The Test Runner discovers this file via `@intent-test-file`, runs Vitest scoped 
 | Schema version 1 | **`schema_version: 2`** for v9 intents. |
 | Engineer ⊥ Verifier asymmetry asserted | **Fresh-Verifier audit benchmark** (§7.5) added to Sprint 9 — makes the asymmetry falsifiable, not just asserted. |
 | Engineer bead memory format unspecified | **Structured bead-memory format** (§9.6.1) — `Current diagnosis` / `Approaches tried` / `Verifier signals` / `Intent set in scope` / `Files being modified`, with compaction at >3 verdict entries. |
-| Short-cycle: 20-iter cap with no learning signal | **Iter-5 forced convergence diagnosis + iter-15 early escalation** added (§6.4). The diagnosis flows into Verifier spawn payloads on iter ≥ 6. |
+| Short-cycle: 20-iter cap with no learning signal | **Iter-5 forced convergence diagnosis + iter-15 early escalation** added (§6.4). The diagnosis is consumed by the **Bead Orchestrator only** — it NEVER enters the Verifier's spawn payload (see the round-3 row below and §6.4 / §9.6.1). Earlier drafts leaked it into the Verifier on iter ≥ 6; that was corrected — the Verifier stays genuinely fresh per call, and a test-mode `raw_prompt` capture (App. A.6) makes the no-leak property falsifiable. |
 | Long-cycle: N=3 samples | **N=10 with sequential early-stop** (§6.5). Higher confidence; stops on first reject. |
 | Cross-cutting intent claim overlap (no pre-emptive check) | **Decomposer-time check moved into Sprint 5** (§8.9). Prevents two parallel beads from issuing conflicting focal claims at DAG construction. |
 | Bead DAG dependencies from `relates_to` only | **File-overlap edges added** (§6.2). Decomposer serializes any two beads whose predicted file impact overlaps. |
@@ -2793,7 +2811,11 @@ The Test Runner discovers this file via `@intent-test-file`, runs Vitest scoped 
 
 **D.20 (resolved in v9).** Negation detection rule: AST-aware matrix-vs-constituent distinction. Predicate slot uses the full lexicon (matrix-predicate negation rejected); subject and object slots reject only sentence-level negation auxiliaries attached to a matrix verb. Constituent negation inside noun phrases (`"a function with no required arguments"`, `"a sandboxed environment free of network access"`) is legal. POS-aware lightweight tagger (~200 LOC, no ML dependency).
 
-Items genuinely still open: **D.4** (heterogeneous models), **D.15** (canonical test-intent triples), **D.16** (polyglot test runner).
+**D.21 (resolved — implementation board round 4).** v1 model posture is **frontier-tier, determinism-first**, not mid-tier (§7.1). All roles default to a single frontier model; Verifier/Test-Runner verdict calls run at `temperature: 0`. v1 is not built to scale; tier-down/cost optimization is deferred to the Sprint-9 efficacy benchmark. Rationale: a frontier model + the polarity/quantifier/deterministic-antecedent machinery that moves hard logic outside the LLM call makes single-shot structural verdicts stable enough to test without scale-grade retry infrastructure.
+
+**D.22 (resolved — implementation board round 4).** Engineer ⊥ Verifier freshness is asserted as a **structural no-leak property over a test-mode `raw_prompt` capture** (App. A.6) plus the empirical §7.5 audit — NOT as "byte-identical spawn payload across iterations." Byte-identity is both too strong (breaks on benign field reordering) and too weak (identical payloads can still produce correlated verdicts). Control-flow behavior that reacts to verdicts (budgets, stuckness, confirmation pass, livelock, recovery ladder) is tested with a **scripted-verdict Verifier double** (zero model calls); verdict-correctness is tested against the real frontier model. The features that need sampling variance (the §7.5 audit, the §6.5 confirmation pass) use explicit-N statistical thresholds, with the audit's pass bars **pre-registered** (calibrated on a held-out split, frozen before scoring).
+
+Items genuinely still open: **D.4** (heterogeneous models — now framed as a Sprint-9 tier-down optimization per D.21), **D.15** (canonical test-intent triples), **D.16** (polyglot test runner).
 
 ---
 
@@ -2835,7 +2857,7 @@ What's left to keep right in v9 builds on v8's four load-bearing items and adds 
 1. **Triples are crisp assertions, not paragraphs in three boxes.** (v8)
 2. **Engineer and Verifier truly run in independent contexts.** (v8) — now enforced via `memory:` frontmatter, not implicit.
 3. **The affected universe for shuffle sharding is correctly computed.** (v8)
-4. **The PreToolUse gate hard-blocks every write that fails the mechanical checks.** (v8) — now 9 checks, including decoration completeness. The agentic decorate-or-decompose check is intentionally NOT in the gate; the mandate is enforced via Engineer proactivity + Verifier surface area.
+4. **The PreToolUse gate hard-blocks every write that fails the mechanical checks.** (v8) — now 10 checks (12 typed rejection kinds), including decoration completeness. The agentic decorate-or-decompose check is intentionally NOT in the gate; the mandate is enforced via Engineer proactivity + Verifier surface area.
 5. **The Engineer applies the decorate-or-decompose mandate proactively.** (v9) — code is structured so every unit's intent participation is covered by its decoration; sub-operations whose intent participation diverges are extracted to their own decorated units. The PreToolUse gate (check 8) catches edge cases; the Engineer's skill set drives the discipline.
 6. **`@intent-support` triples accurately describe their statements.** (v9) — vague or wrong triples produce false-positive support claims that mislead verification. The Verifier flags low-confidence support claims; the Engineer iterates.
 

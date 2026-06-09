@@ -46,7 +46,7 @@ v4 was written for the v6/v7 architecture: blocks compose into intents, constrai
 - 9 sub-agent role files under `.claude/agents/dusk-*.md`
 - Sub-agent skill scaffolding under `.claude/skills/dusk/<role>/`
 - Bead memory materialization under `.ia/runtime/beads/<bead-id>/<role>.md`
-- PreToolUse gate with 9 mechanical checks (5 from v8 + 4 new for decoration completeness). The agentic `S ⊆ D` decorate-or-decompose check is intentionally NOT in the gate — mandate enforced via Engineer proactivity + Verifier surface area
+- PreToolUse gate with 10 mechanical checks (5 from v8 + 5 new for decoration completeness; 12 typed rejection kinds). The agentic `S ⊆ D` decorate-or-decompose check is intentionally NOT in the gate — mandate enforced via Engineer proactivity + Verifier surface area
 - Worktree management (Step 3) and Conflict Resolver (Step 8)
 - Test Runner role + `/dusk-test` slash command + Test-Intent commit trailers
 - Author role + 5-stage dialog flow + branching decisions (classify, user-response, accept-or-defer)
@@ -67,7 +67,7 @@ These are decisions made by the proposal that the roadmap inherits without furth
 | Engineer ⊥ Verifier asymmetry — falsifiable + protected | Proposal §9.2, §6.4, §7.5 | Engineer persists per bead. Verifier fresh per call. **Diagnosis flows to the Bead Orchestrator only — NEVER into the Verifier's spawn payload.** Asymmetry validated by fresh-Verifier audit benchmark in Sprint 9 with three axes (variance + rationale similarity + citation precision). Falsifiable, not asserted. |
 | Sub-agent memory in frontmatter + structured dual-channel | Proposal §9.5, §9.6, §9.6.1 | Each role's `memory:` scope is declarative. Bead memory has a structured **dual-channel** format — `Approaches tried (impl)` + `Approaches tried (test-authoring)`. Compaction is **mechanical/templated only**, never LLM-summarized. Each approach carries a `Triple-slot focus` field for §3.4.1 livelock routing. |
 | Sub-agent skills (advisory in v1) | Proposal §9.7 | Skills organized by role under `.claude/skills/dusk/<role>/<skill>.md`. Role prompt instructs which to load. Hard scoping deferred to v1.x. |
-| Single mid-tier model in v1 (per-role override available) | Proposal §7.1, §9.5 | All roles default to one mid-tier model. The `model:` frontmatter field per role + `dusk.config.yml` override exists from Sprint 3 — Sprint 9 benchmark establishes whether asymmetric models (frontier-tier Verifier + faster Engineer) are warranted. |
+| Single **frontier-tier** model in v1, determinism-first (per-role override available) | Proposal §7.1, §9.5, App. D.21 | All roles default to one **frontier-tier** model; Verifier/Test-Runner verdict calls run at `temperature: 0`. v1 is not built to scale — frontier-model determinism is the priority, and tier-down/cost optimization is deferred to the Sprint-9 efficacy benchmark (which establishes whether a cheaper Engineer / faster role is warranted). The `model:` frontmatter field + `dusk.config.yml` override exists from Sprint 3. |
 | Test pyramid via configurable suffixes | Proposal §3.4 | `<intent>/unit-tests`, `/integration-tests`, `/e2e-tests` are v1 defaults. **Extensible via `dusk.config.yml`** for contract/property/etc. layers. |
 | Bead-id format | Proposal App. D.8 | `<prefix>_<14-digit-yyyymmddhhmmss><3-digit-seq>`. Used for Bead-id, Verdict-id, Trace-id, Test-Verdict-id. |
 | Worktree branch naming | Proposal App. D.9 | `dusk/<bead-id>`. One branch per parallel bead. |
@@ -113,7 +113,7 @@ dusk/
 │   │   └── index/                   # derived index — forward / reverse / focal+support / test-discovery queries
 │   │
 │   ├── delivery/
-│   │   ├── pre-tool-use/            # PreToolUse hook — 9 mechanical checks (gate)
+│   │   ├── pre-tool-use/            # PreToolUse hook — 10 mechanical checks (gate)
 │   │   └── mcp-server/              # MCP tools: dusk_implement, dusk_author, dusk_status, dusk_inspect, dusk_verify
 │   │
 │   ├── runtime/
@@ -257,10 +257,12 @@ runtime:
   traces: .ia/observability/traces.jsonl
 
 models:
-  default: claude-sonnet-4-6          # used by all roles in v1
+  default: claude-opus-4-8            # frontier-tier default — v1 is determinism-first, not scale-first (§7.1, App. D.21)
+  verdict_temperature: 0              # Verifier/Test-Runner verdict calls run at temp 0 for determinism
   # Per-role overrides available from Sprint 3; defaults to `default` if unset.
-  # Sprint 9 benchmark establishes whether asymmetric models are warranted.
-  overrides: {}                       # e.g. { verifier: claude-opus-4-1 }
+  # Tier-down (cheaper Engineer / faster role) is a Sprint-9 efficacy-benchmark
+  # optimization, not a v1 default. We optimize once we are measuring efficacy.
+  overrides: {}                       # e.g. { engineer: claude-sonnet-4-6 } once benchmarked
 
 test_runner:
   command: pnpm vitest                # how the Test Runner invokes tests
@@ -280,6 +282,17 @@ sanity:
 ```
 
 Anything not in this file uses runtime defaults. Authors do not configure decoration markers, role files, or the gate — those are framework-fixed.
+
+---
+
+## Test & determinism posture (v1 — not built to scale)
+
+Added in implementation board round 4. v1 prioritizes determinism over scale; the test substrate reflects that.
+
+- **Frontier model + `temperature: 0` for verdict calls.** Combined with the polarity/quantifier/deterministic-antecedent machinery (which moves the hardest logic *outside* the LLM call), single-shot structural verdicts are stable enough to assert on without scale-grade retry infrastructure.
+- **Two test categories, kept apart.** *Control-flow / orchestration* tests (iteration budgets, stuckness detector, the N=2 confirmation pass and its flake-dismissal, livelock detection, the recovery ladder, cancel/drain) are driven by a **scripted-verdict Verifier double** — a test seam that returns a pre-scripted verdict sequence — so they assert pure control-flow predicates with **zero model calls**. *Verdict-correctness* tests (does the real Verifier reject offset pagination, fail a misdescribed support triple, etc.) run against the **real frontier model** on curated fixtures, asserting only structural outcomes. The double is a Sprint-1 deliverable (alongside an **injectable clock** for TTL/GC/drain determinism and **test-mode `raw_prompt` capture** in the Sprint-3 spawn pipeline).
+- **Variance-dependent features use statistical thresholds.** The §7.5 fresh-Verifier audit and the §6.5 confirmation pass genuinely need sampling variance; their tests use explicit-N statistical thresholds (audit N≥10; pass bars **pre-registered** — calibrated on a held-out split, frozen before scoring), never single-shot hard asserts. The confirmation pass's *mechanism* is tested with the Verifier double; its real-model *flake rate* is characterized non-gating in Sprint 9.
+- **Pragmatic, not scale-ready, CI.** Deterministic tests (the bulk) run on every change; the smaller real-model behavior cohort runs against the configured frontier model on demand and in the Sprint-9 benchmark / Sprint-10 dogfood. We do not build scale-grade test tiering for v1 — that is an optimization for when efficacy testing begins.
 
 ---
 
@@ -507,7 +520,7 @@ Baseline skill files under `.claude/skills/dusk/<role>/` per the table above. Ea
   8. Aggregate per the intent's `compose` rule (all / any / none / implies) → per-triple `{focal_verdict, support_quality}` + aggregate rationale.
 - Output schema per RFC App. A.4 — gains `implies_antecedent_held?` field for implies intents; `per_triple[]` splits into `focal_verdict` + `support_quality`; support claims carry per-claim `triple_verdict`.
 - By default, only failing/low-confidence supports are enumerated in `support_claims[]`; passing supports become a count `support_pass_count`.
-- Verifier role spawned per call with `memory: none`. **Spawn payload identical across iterations** — does NOT receive the Engineer's convergence diagnosis.
+- Verifier role spawned per call with `memory: none`. **Payload carries no iteration-specific or diagnosis content** (structural no-leak, verified against test-mode `raw_prompt` — not byte-identity per board round 4) — does NOT receive the Engineer's convergence diagnosis.
 
 `packages/delivery/mcp-server`
 - MCP server scaffolding (HTTP or stdio per Claude Code's MCP transport).
@@ -578,18 +591,20 @@ Three sprints decompose the 9-step pipeline. Sprint 5 builds Steps 1-4 (decompos
     - Engineer drafts diff with full decoration.
     - PreToolUse gate runs (10 checks from Sprint 2).
     - On gate fail: Engineer fixes, re-draft. Iteration continues.
-    - On gate pass: spawn fresh Verifier (memory: none, spawn payload identical across iterations).
+    - On gate pass: spawn fresh Verifier (memory: none; payload carries no iteration-specific or diagnosis content — structural no-leak verified against test-mode `raw_prompt`, not byte-identity).
     - Verifier evaluates per Sprint 4 procedure — polarity inverted at runtime, `implies` antecedents evaluated by index lookup.
     - On `focal_verdict: fail` on any triple: emit failed-triple list + evidence + aggregate rationale → Engineer (bead memory persists) → re-draft. `support_quality: low_confidence` is advisory only — does NOT trigger re-draft.
     - On all focal_verdicts pass: exit short cycle.
   - **iter-15 early escalation** — if not converged, surface to user with diagnosis from bead memory as the escalation payload.
-- **Per-bead 40-iter lifetime budget + 4-level recovery ladder (NEW v9 — RFC §6.4.1)**. Sprint 5 implements Level 1 + Level 4:
+- **Per-bead 40-iter lifetime budget + the COMPLETE 4-level recovery ladder (NEW v9 — RFC §6.4.1).** *(Board round 4: all four levels land in Sprint 5, not split to Sprint 9 — the split shipped a contract where a zero-satisfiable bead hard-aborted (`recoverable: false`) when the RFC says it should be `bead_intent_revision_needed` (`recoverable: true`).)* The level fired at exhaustion is a pure function of `(intents_satisfied, partial_commit_valid, freeze_writable)`:
   - **Level 1 — Partial commit** (≥1 intent satisfied AND partial commit valid). Commit subset with `Partial: true` + `Deferred-Intent: <path>` trailers. Deferred intents written to `.ia/runtime/beads/<bead-id>/deferred.yaml`. Worktree merges normally; Sprint 7 rebase logic recognizes `Partial: true` and suppresses `snapshot_drift` warnings for deferred-intent additions.
-  - **Level 4 — Hard abort** if Level 1 conditions don't hold (Sprint 5 implementation). Returns `DuskError{kind: "bead_aborted", recoverable: false}`. Levels 2 + 3 wire in Sprint 9 (require Author flow + freeze artifact infrastructure).
+  - **Level 2 — Intent-modification proposal** (no intents satisfied OR partial commit invalid). The Engineer's final iteration produces `.ia/runtime/beads/<bead-id>/intent-proposal.yaml` aggregating ALL lifetime diagnoses. Returns `DuskError{kind: "bead_intent_revision_needed", recoverable: true}`. The *artifact + recoverable error* ship here; the *recovery action* it points to (`dusk_author_continue`) is wired in Sprint 8.
+  - **Level 3 — Operator-actionable freeze** (Level 2's proposal generation itself fails). Worktree preserved; `freeze-state.md` carries bead memory + last 3 verdicts + diagnosis history. Returns `DuskError{kind: "bead_frozen", recoverable: false}`; user inspects + `dusk implement --resume <bead-id>`.
+  - **Level 4 — Hard abort** (Level 3 cannot serialize freeze state — disk error). Returns `DuskError{kind: "bead_aborted", recoverable: false}`.
 
 `packages/runtime/implement-checkpoint` (NEW v9 — RFC §10.1.1)
 - Pause/resume contract. Module owns checkpoint format + read/write/GC operations.
-- Checkpoint file: `.ia/runtime/implement/<resume_token>.json` carrying `{original_request, scope_hint, decomposer_partial_state, intents_resolved_so_far, intents_still_unresolved, created_at, last_touched_at}`.
+- Checkpoint file: `.ia/runtime/implement/<resume_token>.json` carrying `{original_request, scope_hint, decomposer_partial_state, intents_resolved_so_far, intents_still_unresolved, created_at, last_touched_at}`; the Decomposer-pause error derives `{suggested_dialog_seed, unresolved_refs}` from `intents_still_unresolved`. **This JSON shape is the frozen cross-proposal interface (board round 4):** Sprint 8's Author flow *consumes* this file, so Sprint 5 pins the shape; Sprint 8 enriches `suggested_dialog_seed`'s content without changing the shape.
 - `resume_token` format: `rt_<14-digit-yyyymmddhhmmss><3-digit-seq>` per RFC App. D.8.
 - Lifetime 24h since `last_touched_at`. Single-use: on successful resume, deleted as the pipeline transitions out of Step 1.
 
@@ -608,7 +623,7 @@ MCP extension:
 - `dusk_implement` — accepts `{request?, resume_token?, scope_hint?}` (exactly one of `request` or `resume_token`). On resume, reads checkpoint and continues from Step 1.
 - `dusk_cancel({bead_id?, reason})` → `CancelResult`.
 
-**Sprint 5 done means.** Given a small change request with pre-authored intents, `dusk_implement` correctly: builds the session-snapshot index, runs the Decomposer with typed-`relates_to` semantics, builds the bead DAG with file-overlap + focal/support overlap detection (focal=hard refusal, support=warning), creates worktrees, runs the short cycle to Verifier acceptance with the stuckness detector firing on synthetically-blocked beads, and returns. The Verifier's spawn payload is verified to be identical across all iterations (no diagnosis leak — protects the asymmetry). `dusk_implement({resume_token})` resumes a paused run correctly. `dusk_cancel` drains, cleans, and reports per the contract. Level 1 partial commit fires when 1 of 2 intents succeeds in a synthetic 40-iter-exhaust test; Level 4 fires when neither does.
+**Sprint 5 done means.** Given a small change request with pre-authored intents, `dusk_implement` correctly: builds the session-snapshot index, runs the Decomposer with typed-`relates_to` semantics, builds the bead DAG with file-overlap + focal/support overlap detection (focal=hard refusal, support=warning), creates worktrees, runs the short cycle to Verifier acceptance with the stuckness detector firing on synthetically-blocked beads (driven via the scripted-verdict Verifier double), and returns. The Verifier's payload is verified to carry no iteration-specific or diagnosis content (no leak — protects the asymmetry; checked against test-mode `raw_prompt`). `dusk_implement({resume_token})` resumes a paused run correctly. `dusk_cancel` drains, cleans, and reports per the contract. **The complete 4-level recovery ladder fires on synthetic exhaustion fixtures:** Level 1 partial commit when 1 of 2 intents succeeds; Level 2 `bead_intent_revision_needed` (with `intent-proposal.yaml`) when none do; Level 3 freeze when proposal generation fails; Level 4 abort when freeze can't serialize. The lifetime-budget/stuckness/recovery tests are deterministic via the scripted-verdict Verifier double + injectable clock.
 
 ---
 
@@ -862,10 +877,7 @@ Two sprints. Sprint 9 instruments and benchmarks. Sprint 10 dogfoods on real cod
 - **`dusk doctor --gc-implement-checkpoints` (NEW v9 — RFC §10.1.1)** — garbage-collect implement checkpoints older than 24h since `last_touched_at`. Matches dialog GC pattern.
 - Output: structured doctor report with severity (error / warning / info) per finding.
 
-**Recovery Ladder Levels 2 + 3 wire-up (NEW v9 — `packages/runtime/recovery-ladder`)**:
-- Sprint 5 implemented Levels 1 and 4. Sprint 9 wires Levels 2 + 3 once the Author flow (Sprint 8) and observability fixtures (this sprint) are in place.
-- **Level 2 — Intent-modification proposal**: when 40-iter budget exhausts AND Level 1 conditions don't hold, the Engineer's final iteration produces a structured `intent-proposal.yaml` aggregating ALL diagnoses across the bead's lifetime (not just the last) — which triple seems unsatisfiable, proposed affirmative rephrasings, scope-narrowing suggestions. Written to `.ia/runtime/beads/<bead-id>/intent-proposal.yaml`. Returns `DuskError{kind: "bead_intent_revision_needed", recoverable: true, recovery_hint: "review intent-proposal.yaml and invoke dusk_author_continue"}`.
-- **Level 3 — Operator-actionable freeze**: when Level 2's proposal generation itself fails. Worktree preserved; bead memory + last 3 verdicts + diagnosis history serialized to `.ia/runtime/beads/<bead-id>/freeze-state.md`. Returns `DuskError{kind: "bead_frozen", recoverable: false}`. User can inspect, manually fix, and `dusk implement --resume <bead-id>`.
+**Recovery Ladder — all four levels shipped in Sprint 5 (board round 4):** the earlier plan to wire Levels 2 + 3 here was reversed, because the split produced a Sprint-5 contract where a zero-satisfiable bead hard-aborted (`recoverable: false`) when RFC §6.4.1 requires `bead_intent_revision_needed` (`recoverable: true`). All four levels (L1 partial commit → L2 intent-modification proposal → L3 freeze → L4 abort) now land in Sprint 5; Sprint 8 wires only L2's *recovery action* (`dusk_author_continue` consuming `intent-proposal.yaml`). Sprint 9 only *consumes* recovery artifacts in the dogfood traces — it no longer implements recovery.
 
 `packages/fixtures/seeded-violations/`
 - Synthetic codebase with seeded violations across four classes:
@@ -883,7 +895,7 @@ Two sprints. Sprint 9 instruments and benchmarks. Sprint 10 dogfoods on real cod
 - Decorated per RFC App. B (the canonical clean-decoration rewrite).
 - Used as a fixture for `dusk verify` regression testing — every PR validates the worked example still verifies cleanly.
 
-**Sprint 9 done means.** Trace stream emits one event per sub-agent call with all v9 fields (`index_snapshot_id`, `confirmation_of_trace_id`, `confirmation_pass_outcome`, `stuckness_detector_state`, `verifier_livelock_signal`, dual-channel `failing_triple_set`, etc.). `/dusk-benchmark` produces per-model accuracy data across all 4 violation classes. **Fresh-Verifier audit produces interpretable three-axis data** (variance + similarity + citation-precision) on the curated fixture set AND organic confirmation-pass data from the dogfood pipeline. **`/dusk-doctor --static-analysis` catches all seeded `S ⊄ D` violations and produces a baseline density report** with conservative + `--strict-unknowns` modes. Recovery Ladder Levels 2 + 3 fire correctly on synthetic exhaustion scenarios. `dusk doctor --gc-implement-checkpoints` reaps stale checkpoints per the 24h TTL. The worked example verifies cleanly under `dusk verify`. Detection-rate baselines established and documented.
+**Sprint 9 done means.** Trace stream emits one event per sub-agent call with all v9 fields (`index_snapshot_id`, `confirmation_of_trace_id`, `confirmation_pass_outcome`, `stuckness_detector_state`, `verifier_livelock_signal`, dual-channel `failing_triple_set`, etc.). `/dusk-benchmark` produces per-model accuracy data across all 4 violation classes. **Fresh-Verifier audit produces interpretable three-axis data** (variance + similarity + citation-precision) on the curated fixture set AND organic confirmation-pass data from the dogfood pipeline. **`/dusk-doctor --static-analysis` catches all seeded `S ⊄ D` violations and produces a baseline density report** with conservative + `--strict-unknowns` modes. The fresh-Verifier audit scores against **pre-registered** pass bars (calibrated on a held-out split, frozen before the known-bad set is scored), with explicit numeric bars on all three axes and N≥10. (The full recovery ladder was already gated in Sprint 5.) `dusk doctor --gc-implement-checkpoints` reaps stale checkpoints per the 24h TTL. The worked example verifies cleanly under `dusk verify`. Detection-rate baselines established and documented.
 
 ---
 
@@ -1009,7 +1021,7 @@ Two sprints. Sprint 9 instruments and benchmarks. Sprint 10 dogfoods on real cod
 | 3 | All 9 role files spawn with correct memory + tool scope + skill set. Verifier confirmed memory: none. Engineer's bead memory persists across simulated iterations. Skills scoped per role (no cross-role leakage). |
 | 4 | Verifier procedure produces correct per-triple verdicts on the worked example. `dusk_inspect` returns correct hierarchical satisfaction. `dusk_verify` works ad-hoc. Verifier's input is scoped (focal + support only, not full body). |
 | 5 | `dusk_implement` runs Steps 1-4 end-to-end on a small request. Decomposer correctly walks parents/adjacents/test-children. Bead DAG topologically correct. Parallel/serial decision correct. Short cycle converges or hits 20-iter cap with escalation. Gate-fail and Verifier-reject loopbacks work. |
-| 6 | Long-cycle universe computation includes all three sets correctly. 3 rounds with fresh Verifier each. Test Runner discovers test files via index + invokes vitest with scoped file list. TestVerdict computed from runner output. Missing-tests and failing-tests both re-enter Step 4. |
+| 6 | Long-cycle universe computation correct for direct ∪ adjacent. N=10 rounds with fresh Verifier each + N=2 confirmation pass on first reject (mechanism tested via the scripted-verdict Verifier double). Test Runner discovers test files via index + invokes vitest with scoped file list. TestVerdict computed from runner output. Missing-tests and failing-tests both re-enter Step 4. |
 | 7 | Full 9-step pipeline produces one commit per bead with all trailers. Parallel beads merge in topological order. Conflict Resolver resolves decorator conflicts. Return summary has all required fields. |
 | 8 | `dusk_author` runs the 5-stage flow for a fresh intent. All branching decisions (classify, user-response, accept-or-defer) surface to user. Stage 5 commits atomically. Decomposer resumes correctly after authoring. Tested against a real intent-creation scenario in a dusk package. |
 | 9 | Trace stream emits one event per sub-agent call. `/dusk-benchmark` produces per-model accuracy data on seeded-violations fixture. `/dusk-doctor` clean on a clean repo. Worked example verifies cleanly. Detection-rate baselines documented. |
@@ -1115,6 +1127,22 @@ This roadmap incorporates feedback from THREE board rounds. Each row names the c
 | Test-Verifier livelock surfaced as opaque "tests failed convergence" | Architecture + LLM/AI | **`TestVerifierLivelockReport` + `dusk_resolve_livelock`** (§3.4.1). 3-condition detector; user resolves via `accept_test_as_is` / `modify_triple` / `escalate`. |
 | `parent` vs `refines` `relates_to` kinds would be conflated by authors | Constraint Lang | **Collapsed to single `parent` kind** (5 typed kinds remain). Path hierarchy expresses narrowing. |
 | Affirmative-only lexicon was incomplete (`fails to`, `excludes`, `lacks`, …) | LLM/AI + Constraint Lang | Lexicon expansion → 18 markers. Combined with the polarity model and matrix/constituent rule, the lexicon catches author errors (write `polarity: negative` instead) without forcing awkward circumlocutions. |
+
+### Round 4 — implementation-plan board review (applied to the v9 implementation plan + this roadmap + the proposal)
+
+A five-member board (Lead Architect, Principal Engineer, Lead AI/LLM Engineer, Lead Constraint-Language Engineer, Martin Fowler) reviewed the per-phase implementation plan; all five returned Approve-with-changes. Resolutions span all three docs. Scaling guidance: **v1 is not built to scale** — it leans on frontier-model determinism and optimizes the substrate during efficacy testing, so the board's "scale-ready CI" recommendation is applied only as a pragmatic posture.
+
+| Risk | Reviewers | Round-4 response |
+|---|---|---|
+| Freshness asserted "byte-identical spawn payload" against a lossy `input_summary` — too strong (breaks on reordering) and too weak (identical payloads still correlate) | Fowler + LLM/AI | **Test-mode `raw_prompt` capture** (App. A.6); freshness reframed to **structural no-leak** + the §7.5 audit. (App. D.22) |
+| Recovery Ladder split (Sprint 5 L1+L4 / Sprint 9 L2+L3) shipped a contract where a zero-satisfiable bead hard-aborted (`recoverable:false`) vs RFC's `bead_intent_revision_needed` (`recoverable:true`) | Architecture + Principal Eng | **All four levels moved to Sprint 5.** Sprint 9 no longer implements recovery; Sprint 8 wires only L2's author-driven recovery action. |
+| No model-nondeterminism policy; tests written as if single-shot LLM asserts are stable; CI not runnable as written | Principal Eng + LLM/AI | **Frontier-tier default + `temperature: 0`** (§7.1, App. D.21); **scripted-verdict Verifier double + injectable clock** for control-flow tests; pragmatic (not scale-ready) CI. (Test & determinism posture section.) |
+| Confirmation-pass / flake / budget / livelock tests can't be made deterministic against a real model | Principal Eng + LLM/AI | Mechanism tested via the Verifier double; real-model flake *rate* characterized non-gating in Sprint 9. |
+| `compose: implies` antecedents: only 1 of 3 predicates tested; no set-complement; no no-LLM-fallback test | Constraint Lang | Added plan tests P2-T6b/c, P2-T7b (all 3 predicates + negative-polarity antecedent + ambiguous→structural-error, zero LLM calls). |
+| Quantifier `≤`/`none` family + `scope` binding untested; gate test conflated 10 checks with 12 rejection kinds | Constraint Lang | Plan tests for the full quantifier family + `scope`; **gate test re-pivoted to one fixture per rejection kind**; RFC §4.6/A.8 state the 10→12 mapping. |
+| The verdict split's loop consequence (low-confidence ≠ re-draft) was tested nowhere | Fowler (contrarian) | Added plan test P3-T29; the audit's pass bars are now **pre-registered** with numeric bars on all three axes (N≥10). |
+
+Two RFC doc defects corrected in passing: the stale App. C row claiming the diagnosis "flows into Verifier spawn payloads on iter ≥ 6", and the 10-checks-vs-12-rejection-kinds count drift (also `9 checks` → `10 checks` references reconciled).
 
 ---
 
