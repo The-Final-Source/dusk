@@ -1,0 +1,14 @@
+schema_version: 2
+id: error-handling/explicit-not-silent
+description: Failures are surfaced explicitly, never swallowed.
+obligation: must
+compose: all
+triples:
+  - id: surface-errors
+    subject: fallible operations
+    predicate: surface
+    object: failures explicitly to the caller or the structured log
+  - id: typed-failures
+    subject: service-layer functions
+    predicate: return
+    object: a typed Result describing success or the specific failure

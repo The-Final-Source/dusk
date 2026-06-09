@@ -1,0 +1,14 @@
+schema_version: 2
+id: api/idempotency
+description: Write endpoints honor an idempotency key.
+obligation: must
+compose: all
+triples:
+  - id: validate-key
+    subject: write endpoints
+    predicate: validate
+    object: an idempotency key on the Idempotency-Key header
+  - id: store-key
+    subject: write endpoints
+    predicate: persist
+    object: the idempotency key and response under a stable lookup

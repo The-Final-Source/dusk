@@ -1,0 +1,18 @@
+schema_version: 2
+id: api/pagination/cursor-only/cursor-decode
+description: Cursor decoding validates input and produces a typed state.
+obligation: must
+compose: all
+triples:
+  - id: query-param
+    subject: the cursor decode function
+    predicate: accept
+    object: a single string query parameter named cursor
+  - id: return-payload
+    subject: the cursor decode function
+    predicate: return
+    object: a typed CursorState or a typed DecodeError
+  - id: error-on-malformed
+    subject: the cursor decode function
+    predicate: return
+    object: a typed DecodeError on malformed input

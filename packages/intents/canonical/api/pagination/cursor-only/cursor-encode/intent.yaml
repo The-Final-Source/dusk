@@ -1,0 +1,14 @@
+schema_version: 2
+id: api/pagination/cursor-only/cursor-encode
+description: Cursor encoding produces an opaque token from a typed state.
+obligation: must
+compose: all
+triples:
+  - id: opaque-token
+    subject: the cursor encode function
+    predicate: produce
+    object: an opaque base64url-encoded cursor token
+  - id: roundtrip
+    subject: the cursor encode function
+    predicate: produce
+    object: a token that the cursor decode function accepts

@@ -1,0 +1,14 @@
+schema_version: 2
+id: api/pagination/page-size-bound
+description: List endpoints bound page size to a safe maximum.
+obligation: must
+compose: all
+triples:
+  - id: default-size
+    subject: list endpoints
+    predicate: apply
+    object: a default page size when none is provided
+  - id: max-size
+    subject: list endpoints
+    predicate: clamp
+    object: the requested page size to a documented maximum

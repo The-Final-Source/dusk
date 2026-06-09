@@ -1,0 +1,10 @@
+schema_version: 2
+id: api/auth-required
+description: Protected endpoints require a validated bearer token.
+obligation: must
+compose: all
+triples:
+  - id: authorization-required
+    subject: protected endpoints
+    predicate: validate
+    object: a JWT bearer token via the Authorization header
