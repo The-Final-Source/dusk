@@ -9,31 +9,31 @@
 
 ## 2. intent-schema  (spec: intent-schema)
 
-- [ ] 2.1 Define Zod schemas in `packages/core/schema` — Intent, Triple (`polarity`/`quantifier`/`scope`), ComposeRule, five-kind RelatesTo, closed-vocabulary antecedent discriminated union; types via `z.infer`; path-to-id + reserved-suffix rules. Acceptance: spec "Intent schema is Zod-defined", scenarios *valid intent validates* / *path-to-id mismatch rejected* / *implies antecedent closed vocabulary*; Test: schema validation tests over valid + malformed fixtures.
-- [ ] 2.2 Implement the forward-migration loader (`negated→polarity`, flat `relates_to→sibling`, `refines→parent`) with a deprecation warning per construct. Acceptance: **P1-T1** / spec *Older intent corpora migrate forward*; Test: integration test loading a real legacy fixture asserting the three transforms + warnings.
+- [x] 2.1 Define Zod schemas in `packages/core/schema` — Intent, Triple (`polarity`/`quantifier`/`scope`), ComposeRule, five-kind RelatesTo, closed-vocabulary antecedent discriminated union; types via `z.infer`; path-to-id + reserved-suffix rules. Acceptance: spec "Intent schema is Zod-defined", scenarios *valid intent validates* / *path-to-id mismatch rejected* / *implies antecedent closed vocabulary*; Test: schema validation tests over valid + malformed fixtures.
+- [x] 2.2 Implement the forward-migration loader (`negated→polarity`, flat `relates_to→sibling`, `refines→parent`) with a deprecation warning per construct. Acceptance: **P1-T1** / spec *Older intent corpora migrate forward*; Test: integration test loading a real legacy fixture asserting the three transforms + warnings.
 
 ## 3. intent-parser  (spec: intent-parser)
 
-- [ ] 3.1 Implement read (`intent.yaml`→Intent) and canonical deterministic write (stable field + triple ordering) with atomic temp+rename. Acceptance: **P1-T2** round-trip + **P1-T20** atomic write / spec *round-trip losslessly and atomically*; Test: round-trip integration + simulated-crash-between-temp-and-rename test.
-- [ ] 3.2 Implement `negation-detector.ts` (POS-aware matrix/constituent rule, closed lexicon, no ML) with the ~40-case corpus. Acceptance: **P1-T3** / spec *Negation detection follows the matrix/constituent rule*; Test: **unit-only** corpus test (pure transform, no I/O).
-- [ ] 3.3 Implement antecedent-grammar validation for `compose: implies` (closed vocab + resolvable refs, else `decoration_parse_error`). Acceptance: **P1-T4** / spec *implies antecedent grammar validated at load*; Test: integration test rejecting behavioral/type-system antecedents, accepting a decorator-fact antecedent.
+- [x] 3.1 Implement read (`intent.yaml`→Intent) and canonical deterministic write (stable field + triple ordering) with atomic temp+rename. Acceptance: **P1-T2** round-trip + **P1-T20** atomic write / spec *round-trip losslessly and atomically*; Test: round-trip integration + simulated-crash-between-temp-and-rename test.
+- [x] 3.2 Implement `negation-detector.ts` (POS-aware matrix/constituent rule, closed lexicon, no ML) with the ~40-case corpus. Acceptance: **P1-T3** / spec *Negation detection follows the matrix/constituent rule*; Test: **unit-only** corpus test (pure transform, no I/O).
+- [x] 3.3 Implement antecedent-grammar validation for `compose: implies` (closed vocab + resolvable refs, else `decoration_parse_error`). Acceptance: **P1-T4** / spec *implies antecedent grammar validated at load*; Test: integration test rejecting behavioral/type-system antecedents, accepting a decorator-fact antecedent.
 
 ## 4. intent-graph  (spec: intent-graph)
 
-- [ ] 4.1 Recursive load + path-id resolution + upward/downward traversal + typed `relates_to` resolution (all five kinds). Acceptance: spec *graph resolves hierarchy and typed edges*; Test: traversal integration over a fixture tree asserting ancestors/descendants + per-kind edge recording.
-- [ ] 4.2 Cycle detection on `relates_to` edges of any kind. Acceptance: **P1-T7** / spec *Cycle detection*; Test: cyclic-fixture rejection naming both intents.
-- [ ] 4.3 Test-pyramid children resolution (`X/<configured-suffix>`). Acceptance: spec *Test-pyramid children resolution*; Test: pyramid-child resolution over a configured suffix.
+- [x] 4.1 Recursive load + path-id resolution + upward/downward traversal + typed `relates_to` resolution (all five kinds). Acceptance: spec *graph resolves hierarchy and typed edges*; Test: traversal integration over a fixture tree asserting ancestors/descendants + per-kind edge recording.
+- [x] 4.2 Cycle detection on `relates_to` edges of any kind. Acceptance: **P1-T7** / spec *Cycle detection*; Test: cyclic-fixture rejection naming both intents.
+- [x] 4.3 Test-pyramid children resolution (`X/<configured-suffix>`). Acceptance: spec *Test-pyramid children resolution*; Test: pyramid-child resolution over a configured suffix.
 
 ## 5. decoration-parser  (spec: decoration-parser)
 
-- [ ] 5.1 Parse the six markers over TypeScript into decoration records (inline support triple + `because`/`reason` ignore clause). Acceptance: **P1-T8** / spec *six decorator markers parse to structured records*; Test: parse a fixture exercising all six markers, asserting one record per occurrence with all fields + `file:line`.
-- [ ] 5.2 Parse `.intent` directory files (one claim per line). Acceptance: **P1-T16** / spec *.intent directory-scope files*; Test: directory-claim parse + multi-claim-line rejection.
+- [x] 5.1 Parse the six markers over TypeScript into decoration records (inline support triple + `because`/`reason` ignore clause). Acceptance: **P1-T8** / spec *six decorator markers parse to structured records*; Test: parse a fixture exercising all six markers, asserting one record per occurrence with all fields + `file:line`.
+- [x] 5.2 Parse `.intent` directory files (one claim per line). Acceptance: **P1-T16** / spec *.intent directory-scope files*; Test: directory-claim parse + multi-claim-line rejection.
 
 ## 6. derived-index  (spec: derived-index)
 
-- [ ] 6.1 Build the in-memory index + the five queries (forward / reverse / focal+support / aspect-rollup / test-discovery). Acceptance: **P1-T6** / spec *answers all decoration queries*; Test: focal/support scoping integration over an App.B-style fixture (returns only that aspect's focal+support; excludes other aspects).
-- [ ] 6.2 Hierarchical satisfaction rollup through test-pyramid children. Acceptance: **P1-T5** / spec *satisfaction rolls up through test children*; Test: rollup integration — unsatisfied child blocks parent, satisfying it flips parent to satisfied.
-- [ ] 6.3 Configurable test-pyramid suffixes end-to-end (config → graph resolution → test-discovery layer keying). Acceptance: **P1-T17** / spec *suffixes configurable end-to-end*; Test: add `contract-tests`, assert resolution + layer keying.
+- [x] 6.1 Build the in-memory index + the five queries (forward / reverse / focal+support / aspect-rollup / test-discovery). Acceptance: **P1-T6** / spec *answers all decoration queries*; Test: focal/support scoping integration over an App.B-style fixture (returns only that aspect's focal+support; excludes other aspects).
+- [x] 6.2 Hierarchical satisfaction rollup through test-pyramid children. Acceptance: **P1-T5** / spec *satisfaction rolls up through test children*; Test: rollup integration — unsatisfied child blocks parent, satisfying it flips parent to satisfied.
+- [x] 6.3 Configurable test-pyramid suffixes end-to-end (config → graph resolution → test-discovery layer keying). Acceptance: **P1-T17** / spec *suffixes configurable end-to-end*; Test: add `contract-tests`, assert resolution + layer keying.
 
 ## 7. pretooluse-gate  (spec: pretooluse-gate)
 
