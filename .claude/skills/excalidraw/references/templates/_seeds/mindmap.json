@@ -1,0 +1,20 @@
+{
+  "diagram": {
+    "title": "Mindmap seed template",
+    "viewport": { "width": 1600, "height": 700 },
+    "elements": [
+      {
+        "layout": "tree",
+        "x": 700, "y": 80, "spacing": 60, "rowSpacing": 120,
+        "connectChildren": true,
+        "items": [
+          { "id": "root", "type": "ellipse", "width": 240, "height": 100, "label": "Topic" },
+          { "id": "b1", "type": "rectangle", "width": 200, "height": 80, "label": "Branch A" },
+          { "id": "b2", "type": "rectangle", "width": 200, "height": 80, "label": "Branch B" },
+          { "id": "b3", "type": "rectangle", "width": 200, "height": 80, "label": "Branch C" },
+          { "id": "b4", "type": "rectangle", "width": 200, "height": 80, "label": "Branch D" }
+        ]
+      }
+    ]
+  }
+}

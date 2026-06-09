@@ -1,0 +1,20 @@
+{
+  "diagram": {
+    "title": "Flowchart seed template",
+    "viewport": { "width": 1200, "height": 900 },
+    "elements": [
+      { "id": "start", "type": "ellipse", "x": 500, "y": 60, "width": 200, "height": 80, "label": "Start" },
+      { "id": "step1", "type": "rectangle", "x": 500, "y": 200, "width": 200, "height": 80, "label": "Collect input" },
+      { "id": "decide", "type": "diamond", "x": 500, "y": 340, "width": 200, "height": 120, "label": "Valid?" },
+      { "id": "process", "type": "rectangle", "x": 500, "y": 520, "width": 200, "height": 80, "label": "Process" },
+      { "id": "retry", "type": "rectangle", "x": 220, "y": 380, "width": 200, "height": 80, "label": "Show error" },
+      { "id": "end", "type": "ellipse", "x": 500, "y": 660, "width": 200, "height": 80, "label": "End" },
+      { "type": "arrow", "start": { "id": "start" }, "end": { "id": "step1" } },
+      { "type": "arrow", "start": { "id": "step1" }, "end": { "id": "decide" } },
+      { "type": "arrow", "start": { "id": "decide" }, "end": { "id": "process" }, "label": "yes" },
+      { "type": "arrow", "start": { "id": "decide" }, "end": { "id": "retry" }, "label": "no" },
+      { "type": "arrow", "start": { "id": "retry" }, "end": { "id": "step1" } },
+      { "type": "arrow", "start": { "id": "process" }, "end": { "id": "end" } }
+    ]
+  }
+}

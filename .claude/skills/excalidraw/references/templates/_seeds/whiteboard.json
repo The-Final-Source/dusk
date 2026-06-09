@@ -1,0 +1,15 @@
+{
+  "diagram": {
+    "title": "Whiteboard seed template",
+    "viewport": { "width": 1400, "height": 900 },
+    "elements": [
+      { "id": "concept", "type": "ellipse", "x": 500, "y": 200, "width": 360, "height": 180, "label": { "text": "the idea", "fontSize": 28 } },
+      { "id": "q1", "type": "text", "x": 120, "y": 120, "text": "what if?", "fontSize": 24 },
+      { "id": "q2", "type": "text", "x": 1000, "y": 140, "text": "but how?", "fontSize": 24 },
+      { "id": "note", "type": "rectangle", "x": 500, "y": 480, "width": 360, "height": 120, "label": "open question →" },
+      { "type": "arrow", "start": { "id": "q1" }, "end": { "id": "concept" } },
+      { "type": "arrow", "start": { "id": "q2" }, "end": { "id": "concept" } },
+      { "type": "arrow", "start": { "id": "concept" }, "end": { "id": "note" } }
+    ]
+  }
+}

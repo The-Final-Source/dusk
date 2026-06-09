@@ -1,0 +1,24 @@
+{
+  "name": "@dusk/excalidraw-tool",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build-renderer": "tsx src/build-renderer.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@excalidraw/excalidraw": "^0.18.0",
+    "esbuild": "^0.25.0",
+    "playwright": "^1.50.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "diagram": {
+    "title": "Data flow seed template",
+    "viewport": { "width": 1600, "height": 800 },
+    "elements": [
+      {
+        "layout": "horizontal-flow",
+        "x": 80, "y": 280, "spacing": 100,
+        "items": [
+          { "id": "src", "type": "ellipse", "width": 200, "height": 100, "label": "Stripe webhook" },
+          { "id": "parse", "type": "rectangle", "width": 200, "height": 100, "label": "Parse" },
+          { "id": "enrich", "type": "rectangle", "width": 200, "height": 100, "label": "Enrich w/ user" },
+          { "id": "warehouse", "type": "ellipse", "width": 200, "height": 100, "label": "Warehouse" }
+        ]
+      },
+      { "id": "alerts", "type": "ellipse", "x": 980, "y": 560, "width": 220, "height": 100, "label": "Alerts queue" },
+      { "type": "arrow", "start": { "id": "src" }, "end": { "id": "parse" }, "label": "JSON" },
+      { "type": "arrow", "start": { "id": "parse" }, "end": { "id": "enrich" }, "label": "event" },
+      { "type": "arrow", "start": { "id": "enrich" }, "end": { "id": "warehouse" }, "label": "row" },
+      { "type": "arrow", "start": { "id": "enrich" }, "end": { "id": "alerts" }, "label": "if churn" }
+    ]
+  }
+}

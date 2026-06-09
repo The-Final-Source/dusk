@@ -1,0 +1,24 @@
+{
+  "diagram": {
+    "title": "Architecture seed template",
+    "viewport": { "width": 1600, "height": 1000 },
+    "elements": [
+      {
+        "layout": "vertical-flow",
+        "x": 600, "y": 80, "spacing": 100,
+        "items": [
+          { "id": "web", "type": "rectangle", "width": 320, "height": 100, "label": "Web (React)" },
+          { "id": "api", "type": "rectangle", "width": 320, "height": 100, "label": "API (Node)" },
+          { "id": "db", "type": "ellipse", "width": 320, "height": 100, "label": "Postgres" }
+        ]
+      },
+      { "id": "cache", "type": "ellipse", "x": 1100, "y": 280, "width": 200, "height": 100, "label": "Redis" },
+      { "type": "arrow", "start": { "id": "web" }, "end": { "id": "api" }, "label": "REST" },
+      { "type": "arrow", "start": { "id": "api" }, "end": { "id": "db" }, "label": "SQL" },
+      { "type": "arrow", "start": { "id": "api" }, "end": { "id": "cache" }, "label": "session" }
+    ],
+    "frames": [
+      { "label": "Application Tier", "children": ["web", "api"] }
+    ]
+  }
+}
