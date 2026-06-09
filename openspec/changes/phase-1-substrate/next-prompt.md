@@ -65,7 +65,7 @@ Plus: six canonical example intents under `packages/intents/canonical` (also par
 
 This phase is a **complete cutover to the v9 architecture** in `docs/rfcs/001-mvp-rfc`. Any previous (pre-v9) Dusk-tooling scaffolding is **discarded**, not coexisted-with.
 
-**DISCARD — remove these pre-v9 / v5-era tooling packages (tasks.md §1.0):** `packages/schema` (`@dusk/schema`: annotation/audit/constraint/enums), `packages/parser` (`@dusk/parser`: blockFile/auditFile/configFile/intentFile), `packages/cli` (`@dusk/cli`). They implement the **dismantled** model — Blocks, Constraints, `.block.yaml`, `audit.json`, source-maps, composition. **v9 removes all of these concepts.** Do not extend, import from, or revive them — delete them and build fresh.
+**DISCARD — the pre-v9 / v5-era tooling packages (tasks.md §1.0) — ✅ ALREADY DONE.** `packages/schema` (`@dusk/schema`), `packages/parser` (`@dusk/parser`), and `packages/cli` (`@dusk/cli`) have already been removed via `git rm` (they implemented the dismantled Blocks/Constraints/`.block.yaml`/`audit.json`/source-map model). Do not recreate or revive them. **Your first action: run `pnpm install` and accept its "remove and reinstall from scratch?" prompt** to reconcile the lockfile after the removal — then start at tasks.md §1.1. The five production app packages (`api`/`web`/`shared`/`hooks`/`mobile`) remain and must stay untouched.
 
 **KEEP — production app packages, untouched in Phase 1** (the v9 architecture explicitly keeps these; they become dogfood targets in Phase 5, so they are *not* "old scaffolding"): `packages/api`, `packages/web`, `packages/shared`, `packages/hooks`, `packages/mobile`. Before deleting the legacy tooling packages, confirm none of these app packages import them (they shouldn't — the app uses `@dusk/shared`); if one does, stop and surface it to the user rather than guessing a replacement.
 
@@ -147,7 +147,7 @@ When green, archive the change with `/openspec-archive-change` (or `openspec arc
 ## 10. ▶ BEGIN
 
 1. Read §2's documents (at minimum: `CLAUDE.md`, `openspec/config.yaml`, the plan's Phase 1 section, the change's `proposal.md` / `design.md` / `tasks.md` / `specs/*`, and `.praxis/features/adding-packages.md` + `coding-guidelines.md`).
-2. Skim the legacy `packages/schema|parser|cli` and the production packages enough to honor §4's reconciliation rule.
-3. **Run `/openspec-apply-change`** (target the `phase-1-substrate` change) and implement `tasks.md` top to bottom — writing the behavioral tests alongside the code — until the §7 cohesive-landing criteria all pass.
+2. Run `pnpm install` (accept the "reinstall from scratch?" prompt) to reconcile the lockfile after the §1.0 cutover. **Task 1.0 is already complete** (the legacy packages are gone) — begin at tasks.md §1.1.
+3. **Run `/openspec-apply-change`** (target the `phase-1-substrate` change) and implement `tasks.md` from §1.1 top to bottom — widen the `pnpm-workspace.yaml` globs for the nested `packages/core/*` layout, mirror an existing package (`packages/shared`) for `package.json`/`tsconfig.json`/`vitest.config.ts` conventions, and write the behavioral tests alongside the code — until the §7 cohesive-landing criteria all pass.
 
 Build for right. Land the plane.
