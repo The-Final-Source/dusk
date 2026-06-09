@@ -1,167 +1,186 @@
+# OpenSpec project configuration for Dusk.
+# `context` + `rules` are injected into every artifact via `openspec instructions`.
+# This config describes Dusk's current and intended desired state — keep it evergreen.
+# Design source of truth: docs/rfcs/001-mvp-rfc/ (architecture proposal, build roadmap, implementation plan).
 schema: spec-driven
 
 context: |
   # Dusk — Intent Architecture
 
-  ## Domain
-  A constraint satisfaction system for spec-driven AI development. The system provides:
-  1. A constraint language (Blocks + Intents) for expressing architectural intent
-  2. A solver (AI agent with lifecycle hooks) that receives constraints and produces code
-  3. A verifier (multi-agent evaluation) that checks implementations against constraints
+  ## Vision
+  Dusk is a constraint-satisfaction system for spec-driven AI development. The endgame is a
+  singularity where humans no longer read nor write code: they work from INTENTS via agent
+  dialog, and an exhaustive data/context harness + orchestration flow turns those intents into
+  perfectly implemented, adherent software. Many age-old practices that exist to make code
+  human-readable/writable do NOT apply here — code is authored for AI consumption. Build for
+  RIGHT, assume infinite resources/runway/scope, land the plane.
 
-  The core problem: specs are subjective, don't compose, and aren't verifiable.
-  Intent Architecture solves all three via structured, composable, machine-verifiable constraints.
+  ## The three layers
+  1. **Constraint language** — Intents (atomic, hierarchical via slash-path) + total code
+     Decoration express architectural intent as structured, composable, machine-verifiable
+     constraints. The intent IS the assertion; there is no separate "constraint" or "block" layer.
+  2. **Solver** — nine bounded sub-agent roles drive a 9-step request→commit pipeline under
+     Dusk's own orchestration; agents receive constraints and produce conforming, decorated code.
+  3. **Verifier** — multi-agent evaluation checks implementations against the full constraint set,
+     per-aspect, with scoped evidence.
 
-  ## Tech Stack
-  - Language: TypeScript (strict mode, ES2022 target, ESM throughout)
-  - Monorepo: pnpm workspaces + Turborepo (NOT NX — RFC references NX but repo uses Turbo)
-  - Package namespace: @dusk/*
-  - API: Express + tRPC v11 + Zod validation
-  - Database: PostgreSQL 16 via Drizzle ORM (+ SQLite for local/embedded stores like adherence state)
-  - Web: React 19 + Vite 6 + Tailwind CSS 4 + React Router 7
-  - Auth: Auth0 (web: @auth0/auth0-react, mobile: expo-auth-session PKCE, API: jose JWKS)
-  - Mobile: Expo 54 + React Native 0.81 + Expo Router v6
-  - Shared types: Zod schemas in @dusk/shared, inferred TS types via z.infer
-  - Hooks: @dusk/hooks (tRPC React Query hooks, real-time sync subscriptions)
-  - Testing: Vitest (colocated tests, mock-first)
-  - Background jobs: pg-boss on Postgres
-  - Logging: pino + pino-http
-  - Real-time: tRPC WebSocket subscriptions + PostgreSQL LISTEN/NOTIFY (PgPubSub)
-  - Build: tsc for libraries, Vite for web, Expo for mobile
-  - Deploy: Self-hosted k3s, Docker images, GitHub Actions CI/CD with path filters
+  ## Source-of-truth documents (docs/rfcs/001-mvp-rfc/)
+  - `intent-architecture-proposal.md` — the architecture spec (THE spec; cite § numbers).
+  - `intent-architecture-roadmap.md` — the phased build roadmap + the locked architectural-commitments table.
+  - the implementation plan (same directory) — THE CONTRACT: the phase-focused plan; each phase carries
+    integrated Khorikov behavioral tests (Pn-Tn) and cohesive-landing gates. Every OpenSpec change maps to one phase.
+  Always ground a change in these. Cite the architecture spec's § and the plan's phase + test slugs.
 
-  ## Existing Packages (fully implemented, production-ready)
-  - packages/api — Express + tRPC server. Routers: user, admin, notification, jobs.
-    Middleware: Auth0 JWT (jose), rate limiting, request logging.
-    DB: Drizzle ORM + Postgres, pg-boss job queue. PgPubSub for real-time.
-    Services: notifications (in-app + push), push adapters (console, Expo).
-    Tests: Vitest with createCaller pattern, colocated .test.ts files.
-  - packages/web — React 19 SPA. Views: Home, Profile, Users, Admin.
-    Components: AuthGuard, NavBar, NotificationList, NotificationToast.
-    Auth: Auth0Provider with refresh tokens. API: tRPC + React Query via @dusk/hooks.
-    Styles: Tailwind CSS 4 via Vite plugin. Build: Vite. Prod: Express static server.
-  - packages/shared — Zod schemas: User, Notification, PushToken, Sync events.
-    All types inferred from schemas. syncChannel() helper. Pure leaf dependency.
-  - packages/hooks — React hooks: useUsers, useNotifications, useNotificationToast,
-    useSessionSync. TRPCProvider with HTTP+WS split link. useSyncSubscription generic.
-    Depends on @dusk/api (types only via ./client subpath), @dusk/shared, @tanstack/react-query.
-  - packages/mobile — Expo 54 app. Tab navigation (Home, Users, Notifications, Health, Profile).
-    Auth: PKCE flow via expo-auth-session + SecureStore. Push: Expo notifications.
-    Native: HealthKit, Calendar, file downloads. Shares @dusk/hooks for data.
+  ## Delivery model — one OpenSpec change per phase (NON-NEGOTIABLE)
+  Each plan phase is delivered as ITS OWN OpenSpec change:
+    - The change's scope = exactly that phase's Scope (no later-phase scope leaks in).
+    - A phase ships WHOLE or not at all (cohesive landing — no "we'll wire it up next phase").
+    - The phase's behavioral tests + phase-landing smoke test ARE the acceptance criteria.
+    - The phase's Cohesive landing criteria ARE the archival gate.
+    - The plan's commitment→phase coverage matrix is the cross-change ledger (every commitment
+      delivered exactly once across the changes; nothing silently dropped).
+  Phase order: 1 Substrate → 2 Runtime+Read-Path Verification → 3 Implementation Pipeline →
+  4 Intent Authoring → 5 Validation/Benchmark/Dogfood. (Phase 2's two halves, and Phase 4 alongside
+  the back half of Phase 3, may be authored in parallel per the plan's sequencing note.)
 
-  ## Packages to Build (from RFC — adjusted to actual repo architecture)
-  NOTE: The RFC proposes packages/platform/ (registry, authoring, dashboard) as separate
-  packages. Instead, platform capabilities will be distributed into the EXISTING packages:
-  - Registry API routes, block search/vetting logic → packages/api (new routers + services)
-  - Authoring UI, dashboard/visualization → packages/web (new views + components)
-  This follows the established pattern: API logic in api, UI in web, shared types in shared.
+  ## Tech stack
+  - Language: TypeScript (strict, ES2022, ESM throughout). Package namespace: @dusk/*.
+  - Monorepo: pnpm workspaces + Turborepo (NOT NX — some older design text mentions NX; the repo uses Turbo).
+  - Validation/types: Zod is THE source of truth; derive TS via z.infer; never duplicate a shape.
+  - Testing: Vitest, colocated *.test.ts, mock-first / London-school for new code.
+  - Persistence: PostgreSQL 16 via Drizzle ORM (real Postgres in integration tests).
+  - Integration surface: Dusk runs as an MCP server; sub-agents spawn via Claude Code's Task tool
+    (`subagent_type: dusk-<role>`); the only hook surface is a PreToolUse gate.
+  - Git: git worktrees per parallel bead (`dusk/<bead-id>`), topological rebase merge.
+  - Existing app packages (production-ready, untouched until the dogfooding phase): api (Express + tRPC
+    + Drizzle + pg-boss + PgPubSub), web (React + Vite + Tailwind), shared (Zod schemas, pure leaf),
+    hooks (tRPC React Query), mobile (Expo).
 
-  New packages to create:
-  - packages/core/schema — Types, validators, enums (Constraint, Block, Intent, SourceMap, etc.)
-    Zod schemas as source of truth. Pure leaf like shared.
-  - packages/core/parser — Read/write .block.yaml, intent.yaml, source-map.json, audit.json, ia.config.yml
-  - packages/core/graph — Intent graph traversal, cycle detection, scope resolution, tension surfacing
-  - packages/engine/composition — Blocks + intents → manifest/facets. Token budgets. Audit logging.
-  - packages/engine/embeddings — Vector embedding + cosine similarity for constraints
-  - packages/engine/source-map — PostToolUse linking pipeline (annotation → LLM → deps → path → vector)
-  - packages/delivery/mcp-server — MCP tools: get_intent_manifest, get_facet, query_constraints, get_composition_audit
-  - packages/delivery/hooks — Hook generators for Claude Code (.claude/settings.json), Cursor, etc.
-  - packages/verification/triage — Fast single-agent pre-filter for code changes
-  - packages/verification/evaluator — Multi-agent evaluation with model diversity + structured discourse
-  - packages/verification/adherence — SQLite-backed verdict state + rollup + reporting (mechanical/semantic separated)
-  - packages/verification/protocol — Bounded evaluation loop (finding set locks after round 1)
-  - packages/blocks — Canonical block library (.block.yaml files). Own package for versioning/publishing.
-  - packages/fixtures — Evaluation fixtures (todo-intents, todo-baseline, seeded-benchmark)
-  - packages/cli — Developer-facing CLI: ia init, validate, inspect, graph, compose, verify, serve, etc.
+  ## Model & determinism posture (NOT built to scale yet)
+  - Single FRONTIER-tier model across all roles for determinism + judgment quality; per-role override
+    via dusk.config.yml. Tier-down/cost optimization is an efficacy-benchmark decision, NOT a default.
+  - Verifier/Test-Runner verdict calls run at `temperature: 0`.
+  - Tests split into two categories: CONTROL-FLOW/orchestration tests (budgets, stuckness, confirmation
+    pass, livelock, recovery ladder, cancel) run against a SCRIPTED-VERDICT VERIFIER DOUBLE (zero model
+    calls, deterministic); VERDICT-CORRECTNESS tests run against the real frontier model on curated
+    unambiguous fixtures, asserting only structural outcomes. Variance-dependent features (the
+    fresh-Verifier audit, the confirmation pass) use explicit-N statistical thresholds (pre-registered).
+  - Shared test infra: temp-repo factory, real-hook invoker, scripted-verdict Verifier double, injectable
+    clock (Phase 1); test-mode `raw_prompt` capture on the spawn pipeline (Phase 2). CI is pragmatic,
+    not scale-ready — we optimize the substrate when efficacy testing begins.
 
-  ## Key Data Entities
-  - Block: Community-authored canonical pattern (.block.yaml). Constraints + relates_to + decision_points.
-  - Intent: Project-level composition (intent.yaml). Adopts blocks, adds project constraints, relates_to other intents.
-  - Constraint: Atomic falsifiable statement. obligation (must/should/may), verifiability (mechanical/semantic).
-  - Source Map: Bidirectional constraint-to-file links (source-map.json, per intent). Content-hash linked.
-  - Composition Audit: Record of AI decisions (audit.json, per intent). Additive vs destructive categories.
-  - System Adherence State: Per-constraint verdicts (.ia/adherence/state.db, SQLite). Gitignored.
-  - Reverse Index: file → constraints lookup (.ia/cache/reverse-index.json). Derived, gitignored.
+  ## Constraint-language model (use this vocabulary precisely)
+  - Intent: { id (= slash-path), description, obligation (must|should|may), compose (all|any|none|implies),
+    triples | (antecedent + consequent), relates_to[] }. Intent files carry a `schema_version` (migrated
+    forward automatically by the loader).
+  - Triple: { id, subject, predicate, object, polarity?, quantifier?, scope? }. Slots are ALWAYS affirmative
+    English. Negation is the structural `polarity: positive|negative` field — the runtime inverts the
+    affirmative LLM verdict post-call; THE LLM NEVER SEES NEGATION. Parser rejects matrix-predicate negation
+    in the predicate slot (matrix/constituent rule); constituent negation inside noun phrases is legal.
+  - Quantifier: at-least-one|each|exactly-one|at-most-one|none|at-least-N|at-most-N + optional `scope`.
+  - compose: implies — antecedent group uses a CLOSED predicate vocabulary ("is decorated with",
+    "claims any aspect of", "is enclosed by a decoration of") evaluated by DETERMINISTIC INDEX LOOKUP,
+    never LLM-judged; consequents are LLM-evaluated only if the antecedent holds.
+  - Typed relates_to (5 kinds): parent | implies | conflicts | supersedes | sibling.
+  - Decoration is TOTAL: every statement carries @intent (focal) / @intent-support (supporting, with inline
+    NL triple) / @intent-test / @intent-test-file / @intent-file / @intent-ignore. Focal vs support scopes
+    Verifier reading per-aspect. Derived index (forward/reverse/focal+support/aspect-rollup/test-discovery)
+    is in-memory, rebuilt at session start; session-snapshot + per-bead delta under parallel worktrees.
+  - Test pyramid via reserved child-intent suffixes (/unit-tests, /integration-tests, /e2e-tests; configurable).
+    Two-stage satisfaction: Verifier confirms the test body verifies the claim AND the Test Runner executes it.
+  - Verdict split: per-triple focal_verdict (drives re-draft) + support_quality (advisory) + per-claim
+    triple_verdict (matches|mismatch|vague). DuskError envelope on every MCP tool.
 
-  ## Architecture Principles
-  - Constraint satisfaction model (not transpilation, not a type system)
-  - Intent graph is emergent (no separate graph store), peer mesh (no mandatory root)
-  - Two-level presentation: Manifest (<600 tokens) + Facets (300-1000 tokens each)
-  - Verification separates mechanical vs semantic adherence — NEVER blended
-  - Composition distinguishes additive vs destructive AI decisions (thresholds: 0.7 vs 0.9)
-  - Source maps use multi-mechanism pipeline ordered by reliability
-  - Lifecycle hooks are deterministic (pre/post/stop), not manual invocation
-  - Bounded evaluation protocol: finding set locks after round 1, can only shrink
-  - No silent behavior — surface conflicts, truncations, staleness explicitly
-  - Honest reporting over vanity metrics
+  ## The 9-step pipeline & 9 roles
+  Pipeline: 1 request decomposition → 2 bead DAG + sequencing (file-overlap + cross-bead focal/support
+  overlap) → 3 worktrees → 4 short cycle (Engineer+Verifier pair; stuckness detector; iter-5 fallback;
+  iter-15 escalation; 40-iter lifetime budget; 4-level recovery ladder) → 5 long cycle (N=10 shuffle +
+  N=2 confirmation pass) → 6 test execution (Test Runner; two-stage; livelock detection) → 7 atomic commit
+  (Conventional Commits + structured trailers) → 8 worktree merge (Conflict Resolver) → 9 return summary.
+  Roles (memory scope in frontmatter): Root Orchestrator (session), Bead Orchestrator (bead), Decomposer
+  (none), Scout (none), Engineer (bead), Verifier (none, fresh-per-call), Test Runner (bead), Author (dialog),
+  Conflict Resolver (none). Engineer ⊥ Verifier asymmetry: diagnosis routes to the Bead Orchestrator ONLY,
+  never into the Verifier's spawn payload (structural no-leak, verified against raw_prompt + the freshness audit).
 
-  ## Established Codebase Patterns (from .praxis guides — FOLLOW THESE)
-  - Functional first: functions > classes. Classes only for long-lived mutable state with lifecycle.
-  - Zod schemas are THE source of truth for types. Derive TS types via z.infer. Never duplicate.
-  - Named exports everywhere (no default exports, except Expo Router route files).
-  - Function declarations for top-level, arrow functions for inline/callbacks.
-  - type > interface (use type for everything).
-  - Result objects for fallible internal functions, TRPCError at procedure boundaries.
-  - Factory functions (closures) over classes for config-holding objects.
-  - Config via injection, not globals. Only env.ts reads process.env directly.
-  - One concept per file. Files under 500 lines.
-  - Colocated tests: user.ts + user.test.ts side by side.
-  - Extract only when 3+ repetitions. Three similar lines > premature abstraction.
-  - Import order: node builtins → external → internal packages → relative. Blank lines between groups.
-  - Package pattern: type:module, exports field, workspace:*, tsconfig references, composite:true for libs.
-  - Barrel exports in src/index.ts. Consumers import from package name, never internal paths.
+  ## Package layout to BUILD (new packages)
+  - packages/core/{schema, parser (incl. negation-detector), graph, decoration, index}
+  - packages/delivery/{pre-tool-use (10-check gate → 12 rejection kinds), mcp-server}
+  - packages/runtime/{orchestrator (+spawn), memory, skills, tool-scope, decomposer, worktree, engineer,
+    verifier, short-cycle, long-cycle, test-runner, livelock-detection, recovery-ladder, implement-checkpoint,
+    commit, merge, conflict-resolver, author, cancel, observability, benchmark}
+  - packages/intents/canonical (documentation examples — NOT runtime-fetched)
+  - packages/fixtures/{seeded-violations (~60, with ground_truth_defect_loc), worked-example}
+  - packages/cli — the `dusk` CLI (init, validate, inspect, verify, doctor, test, implement, benchmark, roles, skills)
+  - .claude/agents/dusk-*.md (9 role files), .claude/skills/dusk/<role>/* (role-bound skills)
+  - .ia/ contract: intents/ (checked in), runtime/ (gitignored: beads, dialogs, session, implement), observability/
 
-  ## Engineering Philosophy
-  - Simple over complex (Fowler + Hickey mindset)
-  - Build for RIGHT, not for convenience, cost, or resource constraints
-  - Spec-driven ALWAYS — every feature starts from a spec via OpenSpec
-  - Test-driven where possible — Vitest, London School TDD (mock-first) for new code
-  - Honest over flattering — no blended metrics, no silent overrides, no vanity numbers
-  - Land the plane — full open source scale, best-practice integrated monorepo
+  ## Explicitly NOT part of Dusk (do NOT introduce)
+  No Blocks / .block.yaml; no composition engine / manifest / facets / token budgets; no source-map
+  pipeline / source-map.json / audit.json / PostToolUse maintainer; no embeddings / vector / RAG layer
+  (Author discovery is agent-driven grep); no triage pass; no adherence SQLite DB (satisfaction is computed
+  on-demand from the in-memory index). The CLI prefix is `dusk`. "Constraint" as a separate inner layer does
+  not exist (the Intent is the assertion). Platform features (registry/authoring/dashboard) live in the
+  EXISTING api (routers/services) + web (views) packages, not a new platform/ package.
 
-  ## Conventions
-  - Conventional commits
-  - pnpm workspace protocol for internal deps (workspace:*)
-  - ESM modules throughout (type: "module")
-  - Strict TypeScript (strict: true, ES2022)
-  - Zod for ALL external data boundaries
-  - JSON for machine-maintained files, YAML for human-authored files
-  - camelCase files (PascalCase for React components)
-  - UPPER_SNAKE_CASE for constants
-  - Procedures: verb for mutations, noun for queries, on prefix for subscriptions
+  ## Coding standards (.praxis — FOLLOW EXACTLY)
+  Functional-first (functions > classes; classes only for long-lived mutable state with lifecycle).
+  Zod schema = source of truth; z.infer for types. Named exports only (no default exports, except Expo
+  Router route files). `type` over `interface`. Result objects internally ({ success, error }); TRPCError
+  only at procedure boundaries. Factory functions (closures) over classes for config-holding objects. Config
+  via injection — only env.ts reads process.env. One concept per file; files < 500 lines; extract at 3+
+  repetitions. Colocated tests. Import order: node builtins → external → internal packages → relative.
+  camelCase files (PascalCase React components), UPPER_SNAKE_CASE constants, is/has/can booleans. Package
+  conventions: type:module, private:true, workspace:* internal deps, exports field, composite:true for libs,
+  barrel src/index.ts (consumers import from package name, never internal paths). NEVER save files to repo root.
+
+  ## Engineering philosophy
+  Simple over complex (Fowler + Hickey). Build for RIGHT (not convenience/cost/resource constraints).
+  Spec-driven ALWAYS (every feature starts from an OpenSpec change). Test-driven where possible. Honest over
+  flattering — NEVER blend mechanical and semantic adherence; no silent overrides; no vanity numbers. No
+  silent behavior — surface conflicts, truncations, staleness explicitly (DuskError / structured rejections).
 
 rules:
   proposal:
-    - Ground every proposal in the RFC vision (docs/rfcs/001-mvp-rfc/)
-    - Identify which sprint(s) from the roadmap the change touches
-    - Include a "Non-goals" section — be explicit about what this does NOT do
-    - Include a "Verifiability" section — how will we know this works?
-    - Reference specific data entities (Block, Intent, Constraint, Source Map, etc.) by name
-    - Keep proposals under 800 words — if longer, it should be multiple changes
-    - Call out any deviation from the RFC and justify it
-    - Platform features (registry, authoring, dashboard) belong in existing api/web packages, not new platform/ packages
+    - Ground the proposal in the design docs (docs/rfcs/001-mvp-rfc/) — cite the architecture spec's §
+      numbers and the implementation plan's phase + behavioral-test slugs (e.g. P2-T6).
+    - State which ONE plan phase this change delivers. A change delivers exactly one phase's Scope — never
+      a slice of one phase nor pieces of two.
+    - Include a "Non-goals" section (be explicit about deferred/out-of-scope, including anything the roadmap
+      explicitly defers).
+    - Include a "Verifiability / acceptance" section that ties success to the phase's behavioral tests and
+      its phase-landing smoke test (the contract). Name the cohesive-landing criteria as the archival gate.
+    - Reference architecture entities by name (Intent, Triple, polarity, quantifier, the implies operator, typed
+      relates_to, the 6 decoration markers, the 9 roles, the 9-step pipeline). Do NOT use removed vocabulary
+      (Blocks, manifest/facets, source-map, triage, adherence DB).
+    - Honor the determinism posture — frontier model + temperature 0; control-flow tested via the
+      scripted-verdict Verifier double; not built to scale.
+    - Keep proposals tight (~under 800 words). Call out and justify any deviation from the spec/plan.
   tasks:
-    - Each task must be completable in a single focused session (max 4 hours)
-    - Every task must have clear acceptance criteria referencing a spec or test
-    - Tasks that touch public APIs must include typed interface definitions (Zod schemas)
-    - Tasks that add new packages must follow .praxis/features/adding-packages.md exactly
-    - Tasks must specify which existing packages they depend on or affect
-    - Include "Test plan" — what Vitest tests prove this task is done
-    - Order tasks by dependency — no task should reference work from a later task
-    - Follow established patterns: functional first, Zod source of truth, named exports, result objects
-  delta-spec:
-    - Delta specs must reference the specific RFC section(s) they implement
-    - Include Zod schema definitions for any new data structures
-    - Include file path conventions (where things live in the monorepo)
-    - Specify which layer(s) are affected (core/engine/delivery/verification/cli or existing api/web/shared)
-    - Call out cross-package dependencies explicitly (workspace:* deps, tsconfig references)
-    - For verification-related changes, specify verifiability class handling
-    - For platform features, specify whether logic goes in api (routers/services) or web (views/components)
-  spec:
-    - Specs must be grounded in the constraint satisfaction model (constraint language, solver, verifier)
-    - Use the vocabulary from RFC Part 7 consistently (Block, Intent, Constraint, Obligation, etc.)
-    - Include data flow diagrams for any pipeline (composition, source-map, verification)
-    - Specify token budgets where applicable (manifest <600, facet 300-1000)
-    - Include error cases and what "honest reporting" looks like
-    - Reference the sprint validation checkpoints from the roadmap
-    - Follow .praxis coding guidelines: functional first, Zod schemas, named exports, result objects
+    - Each task is completable in one focused session (≤ ~4h) and ordered by dependency (no forward references).
+    - Every task has acceptance criteria referencing a specific behavioral test (Pn-Tn) or spec scenario,
+      plus a "Test plan" naming the Vitest tests/fixtures that prove it.
+    - Control-flow/orchestration tasks must specify the scripted-verdict Verifier double + injectable clock;
+      verdict-correctness tasks must specify the real frontier model at temperature 0 with curated fixtures.
+    - Tasks that add a package follow .praxis/features/adding-packages.md exactly and name the package path
+      (packages/core|delivery|runtime|intents|fixtures|cli/...). Specify cross-package deps (workspace:*,
+      tsconfig references) explicitly.
+    - Public-API tasks include typed Zod interfaces (source of truth). Follow functional-first, named exports,
+      Result objects, one concept per file (<500 lines).
+    - Do NOT defer anything the phase owns to "next phase" — the phase lands cohesively.
+  design:
+    - Capture the HOW for non-obvious decisions only; small changes get a brief design. Record tradeoffs.
+    - Note seams that are cross-change interfaces (e.g. the implement-checkpoint JSON shape the Author phase
+      consumes, the SubAgentTrace fields, the Verifier-double test seam) and pin their shape here.
+    - State which determinism mechanism each behavior is tested through (real model vs Verifier double).
+  specs:
+    - Delta specs ("## ADDED/MODIFIED Requirements") reference the specific architecture-spec §(s) and plan
+      phase they implement, and use WHEN/THEN/AND scenarios that map 1:1 onto the phase's behavioral tests.
+    - Ground every requirement in the constraint-satisfaction model (Intents + total decoration + the
+      9-step pipeline + the 9 roles). Use the architecture vocabulary consistently.
+    - Include Zod schema definitions for any new data structure; specify file-path conventions (the monorepo
+      layout) and which layer is affected (core / delivery / runtime / cli, or existing api/web/shared).
+    - For verification/decoration behavior, specify polarity inversion (LLM never sees negation), deterministic
+      antecedent lookup (no LLM call), the focal/support verdict split, and the mechanical-vs-semantic
+      verifiability distinction (NEVER blended).
+    - Specify error cases and what "honest reporting" looks like — the DuskError envelope and structured
+      PreToolUse rejections, not silent failure. Reference the phase's cohesive-landing criteria.
