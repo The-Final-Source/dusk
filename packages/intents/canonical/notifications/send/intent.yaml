@@ -1,0 +1,14 @@
+schema_version: 2
+id: notifications/send
+description: Notifications persist before they publish.
+obligation: must
+compose: all
+triples:
+  - id: persist-first
+    subject: the send function
+    predicate: persist
+    object: the notification row before publishing the event
+  - id: publish-sync
+    subject: the send function
+    predicate: publish
+    object: exactly one event per persisted notification

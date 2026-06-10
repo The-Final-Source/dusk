@@ -1,0 +1,10 @@
+schema_version: 2
+id: observability/structured-logging
+description: Cross-cutting structured logging is emitted at module boundaries.
+obligation: should
+compose: all
+triples:
+  - id: emit-structured
+    subject: module boundary operations
+    predicate: emit
+    object: a structured log entry with the operation name and outcome

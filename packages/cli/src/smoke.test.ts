@@ -17,15 +17,18 @@ const CANONICAL = fileURLToPath(new URL("../../intents/canonical", import.meta.u
 const hookCommand = `node ${GATE}`;
 
 describe("Phase 1 substrate — end-to-end smoke (phase-landing)", () => {
-  test("the canonical intents parse and validate (6 Phase-1 + 3 Phase-2)", () => {
+  test("the canonical intents parse and validate (6 Phase-1 + 3 Phase-2 + 3 Phase-3)", () => {
     const tree = loadIntentTree(CANONICAL);
     expect(tree.failures).toEqual([]);
-    expect(tree.intents.size).toBe(9);
+    expect(tree.intents.size).toBe(12);
     expect(tree.intents.has("api/pagination/cursor-only/cursor-decode")).toBe(true);
     // Phase-2 additions: negative-polarity, compose: implies, quantifier-bounded.
     expect(tree.intents.has("api/no-offset-pagination")).toBe(true);
     expect(tree.intents.has("api/idempotency-on-writes")).toBe(true);
     expect(tree.intents.has("sync/one-event-per-insert")).toBe(true);
+    // Phase-3 additions: file-overlap pair + test-intent fixture.
+    expect(tree.intents.has("observability/structured-logging")).toBe(true);
+    expect(tree.intents.has("notifications/send/unit-tests")).toBe(true);
   });
 
   test("substrate end-to-end on a fresh repo: init -> validate -> gate approve/block -> inspect -> check-hook", () => {

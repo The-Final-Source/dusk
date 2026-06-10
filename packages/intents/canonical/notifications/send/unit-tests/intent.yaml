@@ -1,0 +1,10 @@
+schema_version: 2
+id: notifications/send/unit-tests
+description: Unit tests cover the persist-before-publish ordering.
+obligation: must
+compose: all
+triples:
+  - id: covers-persist-first
+    subject: the unit test
+    predicate: verifies
+    object: persistence occurs before publication
