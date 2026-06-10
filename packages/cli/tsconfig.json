@@ -26,6 +26,15 @@
     },
     {
       "path": "../delivery/pre-tool-use"
+    },
+    {
+      "path": "../runtime/orchestrator"
+    },
+    {
+      "path": "../runtime/verifier"
+    },
+    {
+      "path": "../delivery/mcp-server"
     }
   ]
 }

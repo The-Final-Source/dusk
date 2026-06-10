@@ -28,7 +28,10 @@
     "@dusk/core-graph": "workspace:*",
     "@dusk/core-decoration": "workspace:*",
     "@dusk/core-index": "workspace:*",
-    "@dusk/pre-tool-use": "workspace:*"
+    "@dusk/pre-tool-use": "workspace:*",
+    "@dusk/runtime-orchestrator": "workspace:*",
+    "@dusk/runtime-verifier": "workspace:*",
+    "@dusk/mcp-server": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

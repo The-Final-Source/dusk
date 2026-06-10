@@ -1,17 +1,6 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-
-const ROLE_FILES = [
-  "dusk-root",
-  "dusk-bead",
-  "dusk-decomposer",
-  "dusk-scout",
-  "dusk-engineer",
-  "dusk-verifier",
-  "dusk-test-runner",
-  "dusk-author",
-  "dusk-conflict-resolver",
-] as const;
+import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const DEFAULT_CONFIG = `version: 1
 
@@ -22,7 +11,12 @@ test_pyramid:
   suffixes: [unit-tests, integration-tests, e2e-tests]
 `;
 
-/** Create the `.ia/*` + `.claude/agents` scaffold and a default dusk.config.yml. Idempotent. */
+/** Bundled canonical role files + skills (shipped with the CLI). */
+export function assetsDir(): string {
+  return join(dirname(fileURLToPath(import.meta.url)), "..", "assets");
+}
+
+/** Create the `.ia/*` scaffold, install the canonical agents + skills, and a default config. Idempotent. */
 export function scaffoldProject(root: string): void {
   for (const dir of [
     ".ia/intents",
@@ -32,6 +26,7 @@ export function scaffoldProject(root: string): void {
     ".ia/runtime/implement",
     ".ia/observability",
     ".claude/agents",
+    ".claude/skills/dusk",
   ]) {
     mkdirSync(join(root, dir), { recursive: true });
   }
@@ -39,8 +34,8 @@ export function scaffoldProject(root: string): void {
   const configPath = join(root, "dusk.config.yml");
   if (!existsSync(configPath)) writeFileSync(configPath, DEFAULT_CONFIG, "utf8");
 
-  for (const role of ROLE_FILES) {
-    const path = join(root, ".claude/agents", `${role}.md`);
-    if (!existsSync(path)) writeFileSync(path, `---\ndusk_role_version: 2\nname: ${role}\n---\n\n# ${role}\n\n(role stub — filled in Phase 2)\n`, "utf8");
-  }
+  // Install the nine role files and the role-bound skills from the bundled assets.
+  const assets = assetsDir();
+  cpSync(join(assets, "agents"), join(root, ".claude/agents"), { recursive: true });
+  cpSync(join(assets, "skills", "dusk"), join(root, ".claude/skills/dusk"), { recursive: true });
 }
