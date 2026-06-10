@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import type { BeadDag } from "@dusk/core-schema";
@@ -62,6 +62,49 @@ describe("11.2 — Step-8 topological rebase + worktree removal (real git)", () 
     expect(log).toContain("feat: a");
     expect(log).toContain("feat: b");
     expect(log).toContain("feat: c");
+  });
+});
+
+describe("11.4 — Conflict Resolver is spawned on a real rebase conflict (P3-T20)", () => {
+  let mg: MockGitWorktree;
+  beforeEach(() => {
+    mg = createMockGitWorktree({ files: { "src/x.ts": "export const x = 0;\n" } });
+  });
+  afterEach(() => mg.cleanup());
+
+  const commitDecorated = (path: string, decoration: string, body: string): void => {
+    writeFileSync(join(path, "src/x.ts"), `${decoration}\n${body}\n`);
+    execFileSync("git", ["add", "-A"], { cwd: path });
+    execFileSync("git", ["commit", "-q", "-m", "feat: decorate x"], { cwd: path });
+  };
+  const dagOf = (a: string, b: string): BeadDag => ({
+    nodes: [{ bead_id: a, intent_paths: [], predicted_files: [] }, { bead_id: b, intent_paths: [], predicted_files: [] }],
+    edges: [],
+  });
+
+  test("more-specific side wins: the merge resolves and lands the 2-aspect decoration", () => {
+    const a = mg.createWorktree();
+    const b = mg.createWorktree();
+    commitDecorated(a.path, "// @intent api/pagination [cursor-decode, cursor-encode]", "export const x = 1;");
+    commitDecorated(b.path, "// @intent api/pagination [cursor-decode]", "export const x = 2;");
+
+    const result = runMerge({ repoDir: mg.repoDir, dag: dagOf(a.beadId, b.beadId) });
+    expect(result.success).toBe(true); // resolver completed the merge
+    const merged = readFileSync(join(mg.repoDir, "src/x.ts"), "utf8");
+    expect(merged).toContain("[cursor-decode, cursor-encode]"); // the more-specific side won
+  });
+
+  test("equal specificity → TODO marker written + merge fails for human review", () => {
+    const a = mg.createWorktree();
+    const b = mg.createWorktree();
+    commitDecorated(a.path, "// @intent api/x [a]", "export const x = 1;");
+    commitDecorated(b.path, "// @intent api/x [a]", "export const x = 2;");
+
+    const result = runMerge({ repoDir: mg.repoDir, dag: dagOf(a.beadId, b.beadId) });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.kind).toBe("merge_conflict_unresolvable");
+    expect(readFileSync(join(mg.repoDir, "src/x.ts"), "utf8")).toContain("TODO(dusk-conflict)");
   });
 });
 

@@ -73,7 +73,8 @@ describe("9.1 — Verifier-rejected tests are excluded from the Vitest invocatio
     }));
     expect(result.success).toBe(true);
     if (!result.success || result.value.kind !== "reenter_step4") return;
-    expect(result.value.rejected).toEqual([{ test_intent_path: TEST_INTENT, triple_id: "covers-persist-first" }]);
+    expect(result.value.rejected).toHaveLength(1);
+    expect(result.value.rejected[0]).toMatchObject({ test_intent_path: TEST_INTENT, triple_id: "covers-persist-first" });
     expect(result.value.invokedFiles).not.toContain(TEST_FILE); // excluded from the argv
     expect(calls).toHaveLength(0); // Vitest never invoked
   });

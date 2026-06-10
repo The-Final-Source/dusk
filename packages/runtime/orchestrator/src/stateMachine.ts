@@ -16,6 +16,8 @@ import { decompose } from "@dusk/runtime-decomposer";
 import { loadForResume, deleteCheckpoint, type Clock as CheckpointClock } from "@dusk/runtime-implement-checkpoint";
 import { commitBead } from "@dusk/runtime-commit";
 import { runLongCycle, affectedUniverse, type ImportGraph } from "@dusk/runtime-long-cycle";
+import { detectLivelock, resolveTickPrecedence, type IterationObservation } from "@dusk/runtime-livelock-detection";
+import type { SlotFocus, TestVerifierLivelockReport } from "@dusk/core-schema";
 import { runMerge, topoOrder } from "@dusk/runtime-merge";
 import { freezeResumePath, runRecoveryLadder } from "@dusk/runtime-recovery-ladder";
 import { runShortCycle, type GateResult } from "@dusk/runtime-short-cycle";
@@ -59,7 +61,12 @@ export type RunImplementDeps = {
   rebuildIndex?: boolean;
   gate?: (engineer: SpawnOutcome) => GateResult;
   resolveCommit?: (repoDir: string, ref: string) => string;
+  /** Called when a Test-Verifier livelock is detected (the report is stored for resolution). */
+  onLivelock?: (report: TestVerifierLivelockReport) => void;
 };
+
+const SLOT_KEYWORDS: SlotFocus[] = ["subject", "predicate", "object"];
+const deriveSlot = (rationale: string): SlotFocus | null => SLOT_KEYWORDS.find((s) => rationale.toLowerCase().includes(s)) ?? null;
 
 export type RunImplementRequest = { request?: string; resumeToken?: string; scopeHint?: string[] };
 
@@ -208,6 +215,13 @@ async function processBead(input: ProcessBeadInput): Promise<RuntimeResult<Proce
   const lowConfidenceSupports: ImplementSummary["low_confidence_supports"] = [];
   let lifetimeIter = input.lifetimeStart ?? 0;
   const diagnosisHistory: string[] = [];
+  // Test-driven re-entry history feeds the livelock detector (RFC §3.4.1; 10.3).
+  const livelockObservations: IterationObservation[] = [];
+  let testReentryCount = 0;
+  const resolveTriple = (testIntentPath: string, tripleId: string): { subject: string; predicate: string; object: string; polarity: "positive" | "negative" } => {
+    const t = snapshot.index.intents.get(testIntentPath)?.triples?.find((x) => x.id === tripleId);
+    return t ? { subject: t.subject, predicate: t.predicate, object: t.object, polarity: t.polarity } : { subject: "", predicate: "", object: "", polarity: "positive" };
+  };
 
   setBeadStatus(input.run, beadId, "short_cycle", "Step 4 — short cycle");
 
@@ -295,11 +309,42 @@ async function processBead(input: ProcessBeadInput): Promise<RuntimeResult<Proce
       if (!tr.success) return tr;
       if (tr.value.kind === "reenter_step4") {
         reentered = true;
+        // Accumulate this re-entry's rejections as livelock observations.
+        testReentryCount += 1;
+        for (const r of tr.value.rejected) {
+          livelockObservations.push({
+            iter: testReentryCount,
+            test_intent_path: r.test_intent_path,
+            triple_id: r.triple_id,
+            decision: "reject",
+            slot_focus: deriveSlot(r.rationale),
+            approach_label: `test-approach-${testReentryCount}`,
+            verifier_rationale: r.rationale,
+          });
+        }
         break;
       }
       executedTestIntents.push(testIntent);
     }
-    if (reentered) continue; // a rejected test re-enters Step 4
+    if (reentered) {
+      // Tick: evaluate the livelock detector BEFORE budget exhaustion (precedence, D7).
+      const report = detectLivelock({ beadId, observations: livelockObservations, resolveTriple });
+      const tick = resolveTickPrecedence({ livelockReport: report, budgetExhausted: lifetimeIter >= deps.lifetimeMax });
+      if (tick.kind === "livelock") {
+        setBeadStatus(input.run, beadId, "paused_livelock", "Step 6 — Test-Verifier livelock");
+        deps.onLivelock?.(tick.report);
+        return err(
+          duskError("pipeline_iteration_cap_exceeded", `bead ${beadId} paused for Test-Verifier livelock; resolve via dusk_resolve_livelock`, {
+            recoverable: true,
+            bead_id: beadId,
+            step: 6,
+            details: { livelock_report: tick.report },
+            recovery_hint: "dusk_resolve_livelock({bead_id, verb: accept_test_as_is | modify_triple | escalate})",
+          }),
+        );
+      }
+      continue; // a rejected test re-enters Step 4
+    }
 
     // ---- Step 7: Atomic commit. ----
     setBeadStatus(input.run, beadId, "committing", "Step 7 — commit");

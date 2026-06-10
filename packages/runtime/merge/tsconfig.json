@@ -17,6 +17,9 @@
     },
     {
       "path": "../conflict-resolver"
+    },
+    {
+      "path": "../../core/decoration"
     }
   ]
 }

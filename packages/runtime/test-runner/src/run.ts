@@ -26,16 +26,18 @@ export type TestRunnerDeps = {
   vitestRunner?: VitestRunner;
 };
 
+export type RejectedTest = { test_intent_path: string; triple_id: string; rationale: string };
+
 export type TestRunnerOutcome =
   | { kind: "verdict"; verdict: TestVerdict; invokedFiles: string[] }
-  | { kind: "reenter_step4"; rejected: Array<{ test_intent_path: string; triple_id: string }>; invokedFiles: string[] };
+  | { kind: "reenter_step4"; rejected: RejectedTest[]; invokedFiles: string[] };
 
 export async function runTestRunner(deps: TestRunnerDeps): Promise<RuntimeResult<TestRunnerOutcome>> {
   const claims = discoverTestClaims(deps.index, deps.testIntentPath);
 
   // Stage 1 — Verifier pre-pass on each test body; collect rejected claims.
   const rejectedFiles = new Set<string>();
-  const rejected: Array<{ test_intent_path: string; triple_id: string }> = [];
+  const rejected: RejectedTest[] = [];
   for (const claim of claims) {
     const spawn = await deps.spawn({
       role: "verifier",
@@ -50,10 +52,12 @@ export async function runTestRunner(deps: TestRunnerDeps): Promise<RuntimeResult
     if (!verdict || isDuskError(verdict)) {
       return err(duskError("verifier_model_call_failed", "test pre-pass Verifier returned no verdict", { recoverable: false, bead_id: deps.beadId, step: 6 }));
     }
-    const failed = verdict.decision === "reject" || verdict.per_triple.some((t) => t.focal_verdict === "fail");
+    const failedTriple = verdict.per_triple.find((t) => t.focal_verdict === "fail");
+    const failed = verdict.decision === "reject" || failedTriple !== undefined;
     if (failed) {
       rejectedFiles.add(claim.file);
-      for (const triple_id of claim.coveredTriples) rejected.push({ test_intent_path: claim.testIntentPath, triple_id });
+      const rationale = failedTriple?.rationale ?? verdict.aggregate_rationale;
+      for (const triple_id of claim.coveredTriples) rejected.push({ test_intent_path: claim.testIntentPath, triple_id, rationale });
     }
   }
 

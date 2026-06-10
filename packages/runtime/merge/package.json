@@ -20,7 +20,8 @@
   "dependencies": {
     "@dusk/core-schema": "workspace:*",
     "@dusk/runtime-worktree": "workspace:*",
-    "@dusk/runtime-conflict-resolver": "workspace:*"
+    "@dusk/runtime-conflict-resolver": "workspace:*",
+    "@dusk/core-decoration": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

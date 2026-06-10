@@ -162,6 +162,43 @@ describe("Variant B' — L3 freeze → dusk implement --resume reloads + continu
   });
 });
 
+describe("Livelock tick — detector fires from the orchestrator tick during test re-entry (P3-T28)", () => {
+  test("3 test-driven re-entries on the same triple emit a TestVerifierLivelockReport, not a bead_* ladder error", async () => {
+    // Index: impl intent + its unit-tests child (with an @intent-test claim).
+    const livelockIndex = (): DerivedIndex =>
+      buildDerivedIndex(
+        [
+          focal("src/n.ts", 1, "notifications/send", "send", ["persist-first"]),
+          { file: "src/n.test.ts", line: 1, scope: "declaration", declaration_name: "t", marker: "intent-test", intent_path: "notifications/send/unit-tests", aspect_ids: ["covers-persist-first"], support_triple: null, ignore_clause: null },
+        ],
+        new Map([
+          ["notifications/send", mkIntent("notifications/send", "persist-first")],
+          ["notifications/send/unit-tests", mkIntent("notifications/send/unit-tests", "covers-persist-first")],
+        ]),
+      );
+    // The double accepts implementation work but REJECTS the test pre-pass with a
+    // predicate-concentrated rationale (slot-focus condition) on every re-entry.
+    const livelockFactory: VerifierFactory = makeScriptedVerdictFactory((ctx) =>
+      ctx.assembledPrompt.includes("Does the test")
+        ? { intent_path: ctx.intentPath, decision: "reject", per_triple: [], aggregate_rationale: "the test does not constrain the predicate slot" }
+        : { intent_path: ctx.intentPath, decision: "accept", per_triple: [], aggregate_rationale: "ok" },
+    );
+
+    let captured: import("@dusk/core-schema").TestVerifierLivelockReport | undefined;
+    const result = await runImplement(
+      { request: "x", scopeHint: ["notifications/send"] },
+      deps("smoke", livelockIndex, { verifierFactory: livelockFactory, onLivelock: (r) => (captured = r) }),
+    );
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    // Livelock takes precedence: a report is emitted, and NO bead_* ladder error fires.
+    expect(captured).toBeDefined();
+    expect(captured!.failing_triple_id).toBe("covers-persist-first");
+    expect(["bead_intent_revision_needed", "bead_frozen", "bead_aborted"]).not.toContain(result.error.kind);
+  });
+});
+
 describe("Variant C — cooperative cancel partitioning", () => {
   test("merged + worktree-commit + empty → correct cancelled/preserved partition", () => {
     const a = mg.createWorktree();

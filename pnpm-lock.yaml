@@ -604,6 +604,9 @@ importers:
 
   packages/runtime/merge:
     dependencies:
+      '@dusk/core-decoration':
+        specifier: workspace:*
+        version: link:../../core/decoration
       '@dusk/core-schema':
         specifier: workspace:*
         version: link:../../core/schema
