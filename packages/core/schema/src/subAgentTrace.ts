@@ -60,6 +60,17 @@ export const SubAgentTraceSchema = z
     // Bead-Orchestrator traces only — diagnosis lives here, NEVER on Verifier traces
     convergence_diagnosis_present: z.boolean().optional(),
 
+    // Phase-3 bead-lifecycle fields (Bead-Orchestrator scope). Stuckness detector
+    // firing + livelock signal live ONLY on Bead-Orchestrator traces (asymmetry).
+    stuckness_detector_state: z.object({ fired: z.boolean() }).strict().optional(),
+    verifier_livelock_signal: z.boolean().optional(),
+
+    // Long-cycle confirmation-pass correlation (design D5). The original reject
+    // trace + its N=2 confirmation spawns share `confirmation_of_trace_id`; the
+    // original event records the aggregated `confirmation_pass_outcome`.
+    confirmation_of_trace_id: z.string().optional(),
+    confirmation_pass_outcome: z.enum(["confirmed_reject", "flaky_verdict_dismissed"]).optional(),
+
     // Skill usage (advisory-scope post-hoc audit, §9.7)
     skills_loaded: z.array(z.string()).optional(),
 

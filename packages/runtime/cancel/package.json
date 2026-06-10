@@ -1,0 +1,30 @@
+{
+  "name": "@dusk/runtime-cancel",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "tsc && vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dusk/core-schema": "workspace:*",
+    "@dusk/runtime-worktree": "workspace:*",
+    "@dusk/runtime-implement-checkpoint": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "@dusk/test-harness": "workspace:*"
+  }
+}

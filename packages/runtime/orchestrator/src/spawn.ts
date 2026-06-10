@@ -3,12 +3,12 @@ import { dirname, join } from "node:path";
 
 import {
   type RuntimeResult,
-  type SubAgentRole,
   type SubAgentTrace,
-  type InvocationSite,
   type VerifierFactory,
   type VerifierResult,
   type VerifierUsage,
+  type SpawnParams,
+  type SpawnOutcome,
   duskError,
 } from "@dusk/core-schema";
 import { materializeMemory, type MemoryScope } from "@dusk/runtime-memory";
@@ -36,19 +36,10 @@ export type TaskRunner = (call: TaskCall) => Promise<TaskResult>;
 
 export type TraceSink = (trace: SubAgentTrace) => void;
 
-export type SpawnParams = {
-  role: SubAgentRole;
-  beadId?: string;
-  dialogId?: string;
-  sessionId: string;
-  /** Step-specific input contract instance, already formatted as text. */
-  input: string;
-  iterationNumber?: number;
-  invocationSite?: InvocationSite;
-  /** For verifier spawns: the intent (and optional aspect) under evaluation. */
-  intentPath?: string;
-  aspectId?: string;
-};
+// `SpawnParams` / `SpawnOutcome` are pinned in `@dusk/core-schema` (the spawn
+// seam) so Phase-3 step packages can build/consume them without importing this
+// package. Re-exported here for back-compat with existing consumers.
+export type { SpawnParams, SpawnOutcome, BoundSpawn } from "@dusk/core-schema";
 
 export type SpawnDeps = {
   rootDir: string;
@@ -61,15 +52,6 @@ export type SpawnDeps = {
   traceSink?: TraceSink;
   /** Deterministic trace-id generator (defaults to a clock + counter scheme). */
   traceId?: () => string;
-};
-
-export type SpawnOutcome = {
-  trace: SubAgentTrace;
-  assembledPrompt: string;
-  /** Present for non-verifier roles (the Task tool's output). */
-  output?: string;
-  /** Present for verifier roles (the factory's verdict or a structural error). */
-  verdict?: VerifierResult;
 };
 
 let traceCounter = 0;

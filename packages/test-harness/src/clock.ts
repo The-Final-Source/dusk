@@ -24,3 +24,10 @@ export function manualClock(startMs = 0): Clock & { advance: (ms: number) => voi
     },
   };
 }
+
+// Time constants for TTL / 24h checkpoint-expiry tests (task 1.3b).
+export const HOUR_MS = 3_600_000;
+export const DAY_MS = 24 * HOUR_MS;
+
+/** The advanceable MockClock used by Phase-3 TTL/GC/drain tests (alias of {@link manualClock}). */
+export const mockClock = manualClock;

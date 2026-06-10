@@ -420,6 +420,145 @@ importers:
         specifier: ~5.9.2
         version: 5.9.3
 
+  packages/runtime/cancel:
+    dependencies:
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
+      '@dusk/runtime-implement-checkpoint':
+        specifier: workspace:*
+        version: link:../implement-checkpoint
+      '@dusk/runtime-worktree':
+        specifier: workspace:*
+        version: link:../worktree
+    devDependencies:
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtime/commit:
+    dependencies:
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
+      '@dusk/runtime-worktree':
+        specifier: workspace:*
+        version: link:../worktree
+    devDependencies:
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtime/conflict-resolver:
+    dependencies:
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
+    devDependencies:
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtime/decomposer:
+    dependencies:
+      '@dusk/core-decoration':
+        specifier: workspace:*
+        version: link:../../core/decoration
+      '@dusk/core-graph':
+        specifier: workspace:*
+        version: link:../../core/graph
+      '@dusk/core-index':
+        specifier: workspace:*
+        version: link:../../core/index
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
+      '@dusk/runtime-implement-checkpoint':
+        specifier: workspace:*
+        version: link:../implement-checkpoint
+    devDependencies:
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtime/implement-checkpoint:
+    dependencies:
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
+    devDependencies:
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtime/livelock-detection:
+    dependencies:
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
+      '@dusk/runtime-memory':
+        specifier: workspace:*
+        version: link:../memory
+    devDependencies:
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtime/long-cycle:
+    dependencies:
+      '@dusk/core-index':
+        specifier: workspace:*
+        version: link:../../core/index
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
+    devDependencies:
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
   packages/runtime/memory:
     dependencies:
       '@dusk/core-schema':
@@ -428,6 +567,28 @@ importers:
       yaml:
         specifier: ^2.5.0
         version: 2.8.2
+    devDependencies:
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtime/merge:
+    dependencies:
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
+      '@dusk/runtime-conflict-resolver':
+        specifier: workspace:*
+        version: link:../conflict-resolver
+      '@dusk/runtime-worktree':
+        specifier: workspace:*
+        version: link:../worktree
     devDependencies:
       '@dusk/test-harness':
         specifier: workspace:*
@@ -470,7 +631,73 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
+  packages/runtime/recovery-ladder:
+    dependencies:
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
+      '@dusk/runtime-commit':
+        specifier: workspace:*
+        version: link:../commit
+    devDependencies:
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtime/short-cycle:
+    dependencies:
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
+      '@dusk/runtime-livelock-detection':
+        specifier: workspace:*
+        version: link:../livelock-detection
+      '@dusk/runtime-memory':
+        specifier: workspace:*
+        version: link:../memory
+      '@dusk/runtime-recovery-ladder':
+        specifier: workspace:*
+        version: link:../recovery-ladder
+    devDependencies:
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
   packages/runtime/skills:
+    devDependencies:
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtime/test-runner:
+    dependencies:
+      '@dusk/core-decoration':
+        specifier: workspace:*
+        version: link:../../core/decoration
+      '@dusk/core-index':
+        specifier: workspace:*
+        version: link:../../core/index
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
     devDependencies:
       '@dusk/test-harness':
         specifier: workspace:*
@@ -542,6 +769,22 @@ importers:
       '@dusk/runtime-orchestrator':
         specifier: workspace:*
         version: link:../orchestrator
+    devDependencies:
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtime/worktree:
+    dependencies:
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
     devDependencies:
       '@dusk/test-harness':
         specifier: workspace:*

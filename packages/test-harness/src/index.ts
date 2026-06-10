@@ -4,3 +4,6 @@ export * from "./clock.js";
 export * from "./traceStream.js";
 export * from "./rawPromptMatchers.js";
 export * from "./verifierFixture.js";
+export * from "./gitWorktree.js";
+export * from "./stallingFixture.js";
+export * from "./vitestReport.js";
