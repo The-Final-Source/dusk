@@ -1,2 +1,3 @@
-// @dusk/runtime-verifier-test-double — barrel export (populated per task).
-export {};
+// @dusk/runtime-verifier-test-double — scripted-verdict Verifier double (design D5).
+export * from "./scriptedVerdictFactory.js";
+export * from "./spawnCount.js";
