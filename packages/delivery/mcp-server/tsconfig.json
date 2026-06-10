@@ -41,6 +41,9 @@
     },
     {
       "path": "../../runtime/test-runner"
+    },
+    {
+      "path": "../../runtime/author"
     }
   ]
 }

@@ -30,12 +30,14 @@
     "@dusk/runtime-implement-checkpoint": "workspace:*",
     "@dusk/runtime-cancel": "workspace:*",
     "@dusk/runtime-livelock-detection": "workspace:*",
-    "@dusk/runtime-test-runner": "workspace:*"
+    "@dusk/runtime-test-runner": "workspace:*",
+    "@dusk/runtime-author": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
     "vitest": "^3.0.0",
     "@dusk/test-harness": "workspace:*",
-    "@dusk/fixtures": "workspace:*"
+    "@dusk/fixtures": "workspace:*",
+    "@dusk/runtime-recovery-ladder": "workspace:*"
   }
 }

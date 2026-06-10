@@ -18,9 +18,10 @@ import {
   type ImplementSummary,
 } from "@dusk/runtime-orchestrator";
 import { runCancel, setCancelFlag, type CancelTargets } from "@dusk/runtime-cancel";
-import { resolveLivelock, type LivelockResolution } from "@dusk/runtime-livelock-detection";
+import { resolveLivelock } from "@dusk/runtime-livelock-detection";
 import { runTestRunner, type VitestRunner } from "@dusk/runtime-test-runner";
-import type { CancelResult } from "@dusk/core-schema";
+import type { AuthorStage, CancelResult, DialogInit, LivelockResolutionVerb } from "@dusk/core-schema";
+import type { AuthorRuntime } from "@dusk/runtime-author";
 
 /**
  * The Phase-3 MCP write surface (13.1–13.4): `dusk_implement`, `dusk_cancel`,
@@ -50,6 +51,8 @@ export type WriteSurfaceDeps = {
   livelockReports?: Map<string, TestVerifierLivelockReport>;
   /** Targets the cancel pass should reap (assembled by the harness/orchestrator). */
   cancelTargets?: () => CancelTargets;
+  /** Phase 4: the Author runtime `modify_triple` opens its scoped dialog through. */
+  authorRuntime?: AuthorRuntime;
 };
 
 /** `dusk_implement({request? | resume_token?, scope_hint?})` → Step-9 summary or DuskError. */
@@ -87,16 +90,54 @@ export function duskCancel(deps: WriteSurfaceDeps, args: { bead_id?: string; rea
   return ok(result);
 }
 
-/** `dusk_resolve_livelock({bead_id, verb, payload?})` → resolution instruction or DuskError. */
-export function duskResolveLivelock(
+export type LivelockResolutionResponse =
+  | { verb: "accept_test_as_is"; bypass: { test_intent_path: string; triple_id: string } }
+  | { verb: "modify_triple"; dialog_id: string; stage: AuthorStage; next_question: string }
+  | { verb: "escalate" };
+
+/**
+ * `dusk_resolve_livelock({bead_id, verb, dialog_init?})` — Phase-4 HARD CUTOVER
+ * (design D5): the Phase-3 inline `payload` parameter is REMOVED; callers
+ * passing it receive `config_invalid` pointing at the new `dialog_init` flow.
+ * `modify_triple` opens a scoped Author dialog seeded from the report's
+ * `failing_triple` and returns the `dialog_id` for the harness to drive.
+ */
+export async function duskResolveLivelock(
   deps: WriteSurfaceDeps,
-  args: { bead_id: string; verb: "accept_test_as_is" | "modify_triple" | "escalate"; payload?: { edited_triple?: never } },
-): RuntimeResult<LivelockResolution> {
+  args: { bead_id: string; verb: LivelockResolutionVerb; dialog_init?: DialogInit; payload?: unknown },
+): Promise<RuntimeResult<LivelockResolutionResponse>> {
+  if (args.payload !== undefined) {
+    return err(
+      duskError("config_invalid", "the inline `payload` parameter was removed from dusk_resolve_livelock in Phase 4", {
+        recoverable: true,
+        bead_id: args.bead_id,
+        recovery_hint: 'modify_triple now opens a scoped Author dialog: call dusk_resolve_livelock({bead_id, verb: "modify_triple"}) and drive the returned dialog_id via dusk_author_continue / dusk_author_finalize (dialog_init seeds it automatically)',
+      }),
+    );
+  }
   const report = deps.livelockReports?.get(args.bead_id);
   if (!report) {
     return err(duskError("internal_error", `no active livelock report for bead ${args.bead_id}`, { recoverable: false, bead_id: args.bead_id }));
   }
-  return resolveLivelock(report, args.verb, args.payload as never);
+  const resolution = resolveLivelock(report, args.verb);
+  if (!resolution.success) return resolution;
+  if (resolution.value.verb !== "modify_triple") return ok(resolution.value);
+
+  if (!deps.authorRuntime) {
+    return err(
+      duskError("config_invalid", "modify_triple requires the Author runtime to be wired (Phase-4 author surface)", {
+        recoverable: false,
+        bead_id: args.bead_id,
+      }),
+    );
+  }
+  const opened = await deps.authorRuntime.start({
+    request: `Edit the failing triple of ${report.test_intent_path} (livelock on ${report.failing_triple_id})`,
+    entry_mode: "scoped_triple_edit",
+    dialog_init: { ...resolution.value.open_dialog.dialog_init, ...(args.dialog_init ?? {}) },
+  });
+  if (!opened.success) return opened;
+  return ok({ verb: "modify_triple", dialog_id: opened.value.dialog_id, stage: opened.value.stage, next_question: opened.value.next_question });
 }
 
 /** `/dusk-test <scope>` — standalone Test Runner over a scope (ephemeral synthetic bead-id). */

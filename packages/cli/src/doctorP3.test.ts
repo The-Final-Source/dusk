@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { DAY_MS, HOUR_MS, createMockGitWorktree, mockClock, type MockGitWorktree } from "@dusk/test-harness";
-import { newResumeToken, suggestedDialogSeed, writeCheckpoint } from "@dusk/runtime-implement-checkpoint";
+import { newResumeToken, writeCheckpoint } from "@dusk/runtime-implement-checkpoint";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import { cleanupWorktreesCommand, gcCheckpointsCommand, gcDialogsCommand } from "./doctorP3.js";
@@ -52,7 +52,7 @@ describe("3.4 — dusk doctor --gc-implement-checkpoints reaps stale, preserves 
   test("only the >24h checkpoint is reaped", () => {
     const now = Date.parse("2026-06-11T00:00:00.000Z");
     const clock = mockClock(now);
-    const cp = (touchedMs: number) => ({ schema_version: 1 as const, original_request: "r", decomposer_partial_state: { active_intents: [], edges: [] }, intents_resolved_so_far: [], intents_still_unresolved: ["x"], suggested_dialog_seed: suggestedDialogSeed(["x"]), unresolved_refs: ["x"], created_at: new Date(touchedMs).toISOString(), last_touched_at: new Date(touchedMs).toISOString() });
+    const cp = (touchedMs: number) => ({ schema_version: 1 as const, original_request: "r", decomposer_partial_state: { active_intents: [], edges: [] }, intents_resolved_so_far: [], intents_still_unresolved: ["x"], suggested_dialog_seed: "enriched seed for x", unresolved_refs: ["x"], created_at: new Date(touchedMs).toISOString(), last_touched_at: new Date(touchedMs).toISOString() });
     const stale = newResumeToken(mockClock(now - 30 * HOUR_MS), 1);
     const fresh = newResumeToken(mockClock(now - HOUR_MS), 2);
     writeCheckpoint(mg.repoDir, stale, cp(now - 30 * HOUR_MS));

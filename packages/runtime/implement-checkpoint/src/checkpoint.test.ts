@@ -10,7 +10,6 @@ import {
   gcCheckpoints,
   loadForResume,
   newResumeToken,
-  suggestedDialogSeed,
   writeCheckpoint,
 } from "./checkpoint.js";
 
@@ -21,7 +20,7 @@ const makeCheckpoint = (overrides: Partial<ImplementCheckpoint> = {}): Implement
   decomposer_partial_state: { active_intents: ["api/pagination"], edges: [] },
   intents_resolved_so_far: ["api/pagination"],
   intents_still_unresolved: ["api/pagination/cursor-window"],
-  suggested_dialog_seed: suggestedDialogSeed(["api/pagination/cursor-window"]),
+  suggested_dialog_seed: "enriched seed for api/pagination/cursor-window",
   unresolved_refs: ["api/pagination/cursor-window"],
   created_at: "2026-06-10T00:00:00.000Z",
   last_touched_at: "2026-06-10T00:00:00.000Z",
@@ -49,7 +48,7 @@ describe("3.1 — write/read round-trip at the documented path with rt_ token", 
     expect(read.success).toBe(true);
     if (!read.success) return;
     expect(ImplementCheckpointSchema.safeParse(read.value).success).toBe(true);
-    expect(read.value.suggested_dialog_seed).toBe("api/pagination/cursor-window");
+    expect(read.value.suggested_dialog_seed).toBe("enriched seed for api/pagination/cursor-window");
   });
 });
 

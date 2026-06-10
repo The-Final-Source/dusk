@@ -35,12 +35,24 @@ const parse = (res: unknown): unknown => {
 };
 
 describe("6.1 — the MCP server starts and lists the Phase-2 tools + resources", () => {
-  test("advertised tools and resources match exactly", async () => {
+  test("advertised tools and resources match exactly (Phase-4 adds dusk_list_dialogs + dusk://dialogs/active)", async () => {
     const client = await connect(workedContext());
     const tools = (await client.listTools()).tools.map((t) => t.name).sort();
-    expect(tools).toEqual([...PHASE2_TOOL_NAMES].sort());
+    expect(tools).toEqual([...PHASE2_TOOL_NAMES, "dusk_list_dialogs"].sort());
     const resources = (await client.listResources()).resources.map((r) => r.uri);
-    for (const uri of PHASE2_RESOURCE_URIS) expect(resources).toContain(uri);
+    for (const uri of [...PHASE2_RESOURCE_URIS, "dusk://dialogs/active"]) expect(resources).toContain(uri);
+  });
+});
+
+describe("9.1 — dusk://dialogs/active and dusk_list_dialogs agree over the transport", () => {
+  test("resource and paired tool return structurally equivalent dialog listings", async () => {
+    const ctx = workedContext();
+    const client = await connect(ctx);
+    const viaTool = parse(await client.callTool({ name: "dusk_list_dialogs", arguments: {} })) as { dialogs: unknown[] };
+    const resource = await client.readResource({ uri: "dusk://dialogs/active" });
+    const viaResource = JSON.parse((resource.contents[0] as { text: string }).text) as { dialogs: unknown[] };
+    expect(viaTool).toEqual(viaResource);
+    expect(viaTool).toEqual({ dialogs: [] });
   });
 });
 

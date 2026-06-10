@@ -117,6 +117,3 @@ export function gcCheckpoints(rootDir: string, clock: Clock): string[] {
   }
   return reaped;
 }
-
-/** Build the naive Phase-3 `suggested_dialog_seed` (design D4: raw join of refs). */
-export const suggestedDialogSeed = (unresolvedRefs: string[]): string => unresolvedRefs.join(", ");

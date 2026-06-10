@@ -38,11 +38,12 @@ is unrelated, omit it.`,
   "3": `Stage 3 — Industry-Practice Injection. From your training knowledge ONLY (no lookups),
 propose a decomposition reflecting industry practice for this domain. Present it as a proposal
 the user can accept, reject (greenfield), or selectively accept.`,
-  "4": `Stage 4 — Drafting. Draft the intent(s) as schema-v2 objects. RULES:
-- Triple slots are ALWAYS affirmative; negative meaning is expressed as polarity: "negative" — never a negated predicate.
-- Conditional rules use compose: "implies" with antecedent predicates ONLY from: "is decorated with", "claims any aspect of", "is enclosed by a decoration of"; antecedent objects must be resolvable intent paths/globs.
+  "4": `Stage 4 — Drafting. Draft the intent(s) as schema-v2 objects in draftPatch (and drafts[] for additional intents such as a conditional companion). RULES:
+- Every intent needs: id (slash-namespaced lowercase path, e.g. "api/no-offset-pagination"), description, obligation ("must"|"should"|"may"), and either triples[] (compose "all") or antecedent[]+consequent[] (compose "implies").
+- Every triple needs: id (lowercase-kebab), subject, predicate, object. Slots are ALWAYS affirmative; negative meaning is expressed as polarity: "negative" on the triple — NEVER a negated predicate (no "does not", "never", "lacks", …).
+- Conditional rules use compose: "implies" with antecedent predicates ONLY from: "is decorated with", "claims any aspect of", "is enclosed by a decoration of"; antecedent objects must be resolvable intent paths/globs (e.g. "api/write-endpoint"). Consequent triples use normal free predicates.
 - relates_to kinds are ONLY: parent | implies | conflicts | supersedes | sibling. Never "refines".
-- For an implementation intent, propose test-pyramid children (unit-tests / integration-tests / e2e-tests) and ask the user to pick a subset (reply with payload.layers).`,
+- Do NOT draft test-pyramid children yourself — the runtime derives them mechanically. Your question should ask the user to pick layers (they reply with payload.layers).`,
 };
 
 function jsonContract(stage: string): string {

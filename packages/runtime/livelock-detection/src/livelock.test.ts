@@ -1,4 +1,4 @@
-import { TestVerifierLivelockReportSchema, type Triple } from "@dusk/core-schema";
+import { TestVerifierLivelockReportSchema } from "@dusk/core-schema";
 import { describe, expect, test } from "vitest";
 
 import { detectLivelock, type IterationObservation } from "./detector.js";
@@ -82,19 +82,16 @@ describe("10.2 — dusk_resolve_livelock three-verb dispatch (P3-T18)", () => {
     expect(r.value.bypass).toEqual({ test_intent_path: "notifications/send/unit-tests", triple_id: "covers-persist-first" });
   });
 
-  test("modify_triple → carries the edited triple (inline payload)", () => {
-    const edited: Triple = { id: "covers-persist-first", subject: "the test", predicate: "asserts call order of", object: "insert before publish", polarity: "positive" };
-    const r = resolveLivelock(report, "modify_triple", { edited_triple: edited });
+  test("modify_triple → opens a scoped Author dialog seeded from the failing triple (Phase-4 rewire)", () => {
+    const r = resolveLivelock(report, "modify_triple");
     expect(r.success).toBe(true);
     if (!r.success || r.value.verb !== "modify_triple") return;
-    expect(r.value.edited_triple).toEqual(edited);
-  });
-
-  test("modify_triple without payload is a config error", () => {
-    const r = resolveLivelock(report, "modify_triple");
-    expect(r.success).toBe(false);
-    if (r.success) return;
-    expect(r.error.kind).toBe("config_invalid");
+    expect(r.value.open_dialog.entry_mode).toBe("scoped_triple_edit");
+    expect(r.value.open_dialog.dialog_init).toEqual({
+      failing_triple: { subject: "the test", predicate: "verifies", object: "persistence precedes publish", polarity: "positive" },
+      target_intent_path: "notifications/send/unit-tests",
+      failing_triple_id: "covers-persist-first",
+    });
   });
 
   test("escalate → freeze instruction", () => {

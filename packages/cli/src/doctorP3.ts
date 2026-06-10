@@ -1,8 +1,6 @@
-import { existsSync, readdirSync, rmSync, statSync } from "node:fs";
-import { join } from "node:path";
-
 import { cleanupOrphanWorktrees } from "@dusk/runtime-worktree";
 import { gcCheckpoints } from "@dusk/runtime-implement-checkpoint";
+import { gcDialogs } from "@dusk/runtime-author";
 
 /**
  * Phase-3 `dusk doctor` subcommands (3.4, 4.2, 14.6). Each is idempotent and
@@ -10,7 +8,6 @@ import { gcCheckpoints } from "@dusk/runtime-implement-checkpoint";
  */
 
 export type Clock = { now: () => number };
-const DIALOG_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** `dusk doctor --cleanup-worktrees` — reap orphaned `dusk/<bead-id>` worktrees. */
 export function cleanupWorktreesCommand(root: string): { text: string; exitCode: number } {
@@ -24,18 +21,10 @@ export function gcCheckpointsCommand(root: string, clock: Clock): { text: string
   return { text: reaped.map((t) => `reaped checkpoint ${t}\n`).join(""), exitCode: 0 };
 }
 
-/** `dusk doctor --gc-dialogs` — reap dialog directories older than 24h (by mtime). */
+/** `dusk doctor --gc-dialogs` — reap dialogs whose `last_touched_at` exceeds the
+ *  24h TTL, read from REAL dialog state (Phase 4 wires `dialog-state` in here;
+ *  unreadable directories fall back to mtime). */
 export function gcDialogsCommand(root: string, clock: Clock): { text: string; exitCode: number } {
-  const dialogsDir = join(root, ".ia/runtime/dialogs");
-  if (!existsSync(dialogsDir)) return { text: "", exitCode: 0 };
-  const reaped: string[] = [];
-  for (const entry of readdirSync(dialogsDir, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    const full = join(dialogsDir, entry.name);
-    if (clock.now() - statSync(full).mtimeMs > DIALOG_TTL_MS) {
-      rmSync(full, { recursive: true, force: true });
-      reaped.push(entry.name);
-    }
-  }
+  const reaped = gcDialogs(root, clock);
   return { text: reaped.map((d) => `reaped dialog ${d}\n`).join(""), exitCode: 0 };
 }

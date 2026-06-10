@@ -8,7 +8,7 @@ import {
   startActiveRun,
   upsertBead,
 } from "@dusk/runtime-orchestrator";
-import { newResumeToken, suggestedDialogSeed, writeCheckpoint } from "@dusk/runtime-implement-checkpoint";
+import { newResumeToken, writeCheckpoint } from "@dusk/runtime-implement-checkpoint";
 import { createTempRepo, fixedClock, type TempRepo } from "@dusk/test-harness";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
@@ -63,7 +63,7 @@ describe("14.2 — dusk_list_implement_checkpoints", () => {
       decomposer_partial_state: { active_intents: [], edges: [] },
       intents_resolved_so_far: [],
       intents_still_unresolved: ["api/missing"],
-      suggested_dialog_seed: suggestedDialogSeed(["api/missing"]),
+      suggested_dialog_seed: "enriched seed for api/missing",
       unresolved_refs: ["api/missing"],
       created_at: "2026-06-10T00:00:00.000Z",
       last_touched_at: "2026-06-10T00:00:00.000Z",

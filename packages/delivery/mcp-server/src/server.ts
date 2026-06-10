@@ -16,6 +16,7 @@ import {
   verifyQuery,
 } from "./queries.js";
 import { duskCancel, duskImplement, duskResolveLivelock, duskTest, type WriteSurfaceDeps } from "./writeSurface.js";
+import { duskAuthorContinue, duskAuthorFinalize, duskAuthorStart, listDialogsQuery, type AuthorSurfaceDeps } from "./authorSurface.js";
 
 export const PHASE2_TOOL_NAMES = [
   "dusk_status",
@@ -63,10 +64,13 @@ function resourceContents(uri: URL, result: RuntimeResult<unknown>) {
 
 export const PHASE3_WRITE_TOOL_NAMES = ["dusk_implement", "dusk_cancel", "dusk_resolve_livelock", "dusk_test"] as const;
 
-/** Build the Dusk MCP server. The read-only Phase-2 surface is always present;
- *  the Phase-3 write surface (dusk_implement / dusk_cancel / dusk_resolve_livelock
- *  / /dusk-test) is registered when `write` deps are supplied. */
-export function createDuskMcpServer(ctx: DuskContext, write?: WriteSurfaceDeps): McpServer {
+export const PHASE4_AUTHOR_TOOL_NAMES = ["dusk_author_start", "dusk_author_continue", "dusk_author_finalize"] as const;
+
+/** Build the Dusk MCP server. The read-only Phase-2 surface is always present
+ *  (Phase 4 extends it with dusk_list_dialogs ↔ dusk://dialogs/active); the
+ *  Phase-3 write surface is registered when `write` deps are supplied; the
+ *  Phase-4 author surface (dusk_author_* / /dusk-author) when `author` deps are. */
+export function createDuskMcpServer(ctx: DuskContext, write?: WriteSurfaceDeps, author?: AuthorSurfaceDeps): McpServer {
   const server = new McpServer({ name: "dusk", version: "0.0.1" });
 
   server.registerTool("dusk_status", { description: "Current state: active beads, recent verdicts, recent test runs, index stats.", inputSchema: {} }, guarded(() => statusQuery(ctx)));
@@ -107,11 +111,14 @@ export function createDuskMcpServer(ctx: DuskContext, write?: WriteSurfaceDeps):
 
   server.registerTool("dusk_list_implement_checkpoints", { description: "Outstanding paused-pipeline checkpoints.", inputSchema: {} }, guarded(() => listCheckpointsQuery(ctx)));
 
+  server.registerTool("dusk_list_dialogs", { description: "Outstanding Author dialogs (dialog_id, request, current_stage, timestamps).", inputSchema: {} }, guarded(() => listDialogsQuery(ctx.rootDir)));
+
   // Resources mirroring the paired tools (same shared query functions).
   server.registerResource("intents", "dusk://intents", { description: "All intents" }, async (uri) => resourceContents(uri, listIntentsQuery(ctx)));
   server.registerResource("traces", "dusk://traces/recent", { description: "Recent traces" }, async (uri) => resourceContents(uri, listTracesQuery(ctx)));
   server.registerResource("beads", "dusk://beads/active", { description: "Active beads" }, async (uri) => resourceContents(uri, listBeadsQuery(ctx)));
   server.registerResource("checkpoints", "dusk://implement-checkpoints", { description: "Implement checkpoints" }, async (uri) => resourceContents(uri, listCheckpointsQuery(ctx)));
+  server.registerResource("dialogs", "dusk://dialogs/active", { description: "Outstanding Author dialogs" }, async (uri) => resourceContents(uri, listDialogsQuery(ctx.rootDir)));
   server.registerResource(
     "intent",
     new ResourceTemplate("dusk://intents/{+path}", { list: undefined }),
@@ -139,13 +146,45 @@ export function createDuskMcpServer(ctx: DuskContext, write?: WriteSurfaceDeps):
     );
     server.registerTool(
       "dusk_resolve_livelock",
-      { description: "Resolve a Test-Verifier livelock (accept_test_as_is | modify_triple | escalate).", inputSchema: { bead_id: z.string(), verb: z.enum(["accept_test_as_is", "modify_triple", "escalate"]), payload: z.record(z.unknown()).optional() } },
+      {
+        description: "Resolve a Test-Verifier livelock (accept_test_as_is | modify_triple | escalate). modify_triple opens a scoped Author dialog (Phase-4 contract; the Phase-3 inline payload form is rejected).",
+        // `payload` stays declared ONLY so Phase-3-form callers reach the typed config_invalid rejection instead of a transport error.
+        inputSchema: { bead_id: z.string(), verb: z.enum(["accept_test_as_is", "modify_triple", "escalate"]), dialog_init: z.record(z.unknown()).optional(), payload: z.record(z.unknown()).optional() },
+      },
       (args) => guarded(() => duskResolveLivelock(write, args as never))(),
     );
     server.registerTool(
       "dusk_test",
       { description: "Run the Test Runner standalone over a test-intent scope; returns a TestVerdict.", inputSchema: { scope: z.string() } },
       (args) => guarded(() => duskTest(write, args.scope))(),
+    );
+  }
+
+  // ---- Phase-4 author surface (registered only when author deps are supplied). ----
+  if (author) {
+    server.registerTool(
+      "dusk_author_start",
+      {
+        description: "Open an intent-authoring dialog (RFC §5). entry_mode: full (Stage 1) | scoped_triple_edit (Stage 4, failing triple pre-loaded) | l2_recovery (Stage 3, proposal injected). Returns {dialog_id, stage, next_question}.",
+        inputSchema: { request: z.string(), entry_mode: z.string().optional(), dialog_init: z.record(z.unknown()).optional() },
+      },
+      (args) => guarded(() => duskAuthorStart(author, args))(),
+    );
+    server.registerTool(
+      "dusk_author_continue",
+      {
+        description: "Advance an authoring dialog one turn. Returns {stage, next_question} or {finalize_ready: true}.",
+        inputSchema: { dialog_id: z.string(), response: z.string(), payload: z.record(z.unknown()).optional() },
+      },
+      (args) => guarded(() => duskAuthorContinue(author, args))(),
+    );
+    server.registerTool(
+      "dusk_author_finalize",
+      {
+        description: "Atomically commit every drafted intent and destroy the dialog. Returns {intents_created[]}.",
+        inputSchema: { dialog_id: z.string() },
+      },
+      (args) => guarded(() => duskAuthorFinalize(author, args))(),
     );
   }
 

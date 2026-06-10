@@ -41,6 +41,9 @@
     },
     {
       "path": "../runtime/implement-checkpoint"
+    },
+    {
+      "path": "../runtime/author"
     }
   ]
 }

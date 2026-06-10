@@ -33,7 +33,8 @@
     "@dusk/runtime-verifier": "workspace:*",
     "@dusk/mcp-server": "workspace:*",
     "@dusk/runtime-worktree": "workspace:*",
-    "@dusk/runtime-implement-checkpoint": "workspace:*"
+    "@dusk/runtime-implement-checkpoint": "workspace:*",
+    "@dusk/runtime-author": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

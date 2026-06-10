@@ -75,26 +75,39 @@ describe("13.2 — dusk_cancel returns a CancelResult", () => {
 });
 
 describe("13.3 — dusk_resolve_livelock dispatches the verb", () => {
-  test("accept_test_as_is returns a bypass instruction", () => {
-    const report: TestVerifierLivelockReport = {
-      bead_id: "bd_x",
-      test_intent_path: "api/widget/unit-tests",
-      failing_triple_id: "covers-shape",
-      failing_triple: { subject: "s", predicate: "p", object: "o", polarity: "positive" },
-      iterations_rejected: 3,
-      engineer_attempts: [],
-      verifier_persistent_rationale: { slot_focus_distribution: { predicate: 1 }, common_phrase: "x", full_rationales: [], confidence: 1 },
-      suggested_resolutions: [],
-    };
+  const report: TestVerifierLivelockReport = {
+    bead_id: "bd_x",
+    test_intent_path: "api/widget/unit-tests",
+    failing_triple_id: "covers-shape",
+    failing_triple: { subject: "s", predicate: "p", object: "o", polarity: "positive" },
+    iterations_rejected: 3,
+    engineer_attempts: [],
+    verifier_persistent_rationale: { slot_focus_distribution: { predicate: 1 }, common_phrase: "x", full_rationales: [], confidence: 1 },
+    suggested_resolutions: [],
+  };
+  test("accept_test_as_is returns a bypass instruction", async () => {
     const d = { ...deps("w4"), livelockReports: new Map([["bd_x", report]]) };
-    const r = duskResolveLivelock(d, { bead_id: "bd_x", verb: "accept_test_as_is" });
+    const r = await duskResolveLivelock(d, { bead_id: "bd_x", verb: "accept_test_as_is" });
     expect(r.success).toBe(true);
     if (!r.success || r.value.verb !== "accept_test_as_is") return;
     expect(r.value.bypass.triple_id).toBe("covers-shape");
   });
-  test("unknown bead → internal_error", () => {
-    const r = duskResolveLivelock(deps("w5"), { bead_id: "bd_missing", verb: "escalate" });
+  test("unknown bead → internal_error", async () => {
+    const r = await duskResolveLivelock(deps("w5"), { bead_id: "bd_missing", verb: "escalate" });
     expect(r.success).toBe(false);
+  });
+  test("7.1 — the Phase-3 inline-payload form is rejected with config_invalid (hard cutover)", async () => {
+    const d = { ...deps("w7"), livelockReports: new Map([["bd_x", report]]) };
+    const r = await duskResolveLivelock(d, {
+      bead_id: "bd_x",
+      verb: "modify_triple",
+      payload: { edited_triple: { id: "covers-shape", subject: "s2", predicate: "p2", object: "o2", polarity: "positive" } },
+    } as never);
+    expect(r.success).toBe(false);
+    if (r.success) return;
+    expect(r.error.kind).toBe("config_invalid");
+    expect(r.error.message).toContain("payload");
+    expect(r.error.recovery_hint).toContain("dialog");
   });
 });
 

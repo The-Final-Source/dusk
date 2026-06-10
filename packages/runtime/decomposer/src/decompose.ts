@@ -9,9 +9,10 @@ import {
   type SupportOverlapWarning,
   type BeadDag,
 } from "@dusk/core-schema";
-import { newResumeToken, suggestedDialogSeed, writeCheckpoint } from "@dusk/runtime-implement-checkpoint";
+import { newResumeToken, writeCheckpoint } from "@dusk/runtime-implement-checkpoint";
 
 import { buildBeadDag, type Clock } from "./dag.js";
+import { enrichDialogSeed } from "./seed.js";
 import { walkRelatesTo } from "./walk.js";
 
 /**
@@ -77,8 +78,11 @@ export function decompose(input: DecomposeInput): RuntimeResult<DecomposeOutput>
 
   const walk = walkRelatesTo(seeds, input.index, suffixes);
 
-  // 5.3 — unresolved intent reference → checkpoint pause (resumable).
+  // 5.3 — unresolved intent reference → checkpoint pause (resumable). The seed
+  // is the ENRICHED Stage-1 framing (Phase-4 design D4) — `enrichDialogSeed` is
+  // the only producer of `suggested_dialog_seed`.
   if (walk.unresolvedRefs.length > 0) {
+    const seed = enrichDialogSeed(walk.unresolvedRefs, input.index, input.request);
     const token = newResumeToken(input.clock, input.resumeTokenSeq ?? 1);
     const checkpoint: ImplementCheckpoint = {
       schema_version: 1,
@@ -90,7 +94,7 @@ export function decompose(input: DecomposeInput): RuntimeResult<DecomposeOutput>
       },
       intents_resolved_so_far: walk.activeIntents,
       intents_still_unresolved: walk.unresolvedRefs,
-      suggested_dialog_seed: suggestedDialogSeed(walk.unresolvedRefs),
+      suggested_dialog_seed: seed,
       unresolved_refs: walk.unresolvedRefs,
       created_at: iso(input.clock),
       last_touched_at: iso(input.clock),
@@ -103,7 +107,7 @@ export function decompose(input: DecomposeInput): RuntimeResult<DecomposeOutput>
         details: {
           resume_token: token,
           unresolved_refs: walk.unresolvedRefs,
-          suggested_dialog_seed: suggestedDialogSeed(walk.unresolvedRefs),
+          suggested_dialog_seed: seed,
         },
         recovery_hint: `author the missing intents, then dusk_implement({resume_token: "${token}"})`,
       }),

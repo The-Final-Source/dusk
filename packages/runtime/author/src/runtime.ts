@@ -288,11 +288,45 @@ export function createAuthorRuntime(deps: AuthorRuntimeDeps): AuthorRuntime {
     return ok({ dialog_id: dialogId, stage: 1 as AuthorStage, next_question: gen.value.question });
   };
 
+  /** Typed payload validation: a malformed structured response is `author_stage_invalid_response`
+   *  and the dialog is preserved at its current stage (the user retries). */
+  const validatePayload = (state: DialogState, payload?: Record<string, unknown>): DuskError | null => {
+    if (!payload) return null;
+    const invalid = (reason: string): DuskError =>
+      duskError("author_stage_invalid_response", `response payload does not match stage ${state.current_stage}'s expectations: ${reason}`, {
+        recoverable: true,
+        details: { current_stage: state.current_stage },
+        recovery_hint: "the dialog is preserved at the same stage — retry with a well-formed payload",
+      });
+    const KINDS = [
+      "confirm_framing", "reject_framing", "resolve_tensions", "accept_practice_proposal", "selective_accept",
+      "reject_practice_proposal", "pick_pyramid_layers", "confirm_reciprocal", "decline_reciprocal", "revise_draft", "confirm_draft", "noop",
+    ];
+    if (payload.kind !== undefined && (typeof payload.kind !== "string" || !KINDS.includes(payload.kind))) {
+      return invalid(`unknown response kind "${String(payload.kind)}"`);
+    }
+    if (payload.layers !== undefined && !(Array.isArray(payload.layers) && payload.layers.every((l) => typeof l === "string"))) {
+      return invalid("payload.layers must be an array of pyramid-layer names");
+    }
+    if (payload.resolutions !== undefined && !(Array.isArray(payload.resolutions) && payload.resolutions.every((r) => typeof r === "object" && r !== null))) {
+      return invalid("payload.resolutions must be an array of { target, resolution } objects");
+    }
+    if (payload.edited_triple !== undefined) {
+      const t = payload.edited_triple as Record<string, unknown>;
+      const slotsOk = t !== null && typeof t === "object" && ["subject", "predicate", "object"].every((slot) => typeof t[slot] === "string" && (t[slot] as string).length > 0);
+      if (!slotsOk) return invalid("payload.edited_triple must carry non-empty subject/predicate/object slots");
+    }
+    return null;
+  };
+
   const continueDialog: AuthorRuntime["continue"] = (args) =>
     withDialogLock(deps.rootDir, args.dialog_id, async (): Promise<RuntimeResult<ContinueResult>> => {
       const read = readDialogState(deps.rootDir, args.dialog_id);
       if (!read.success) return read;
       const state = read.value;
+
+      const payloadError = validatePayload(state, args.payload);
+      if (payloadError) return err(payloadError);
 
       const kind: UserResponseKind = classifyUserResponse(state, args.response, args.payload, deps.pyramidSuffixes);
       const { nextState, outcome } = transition(

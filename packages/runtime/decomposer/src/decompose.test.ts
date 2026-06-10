@@ -172,7 +172,11 @@ describe("5.3 — unresolved intent reference pauses with a disk checkpoint (P3-
     const token = r.error.details?.resume_token as string;
     expect(token).toMatch(/^rt_[0-9]{14}[0-9]{3}$/);
     expect(r.error.details?.unresolved_refs).toEqual(["api/unauthored"]);
-    expect(r.error.details?.suggested_dialog_seed).toBe("api/unauthored");
+    // Phase 4: the seed is the ENRICHED Stage-1 framing, not the naive joined list.
+    const seed = r.error.details?.suggested_dialog_seed as string;
+    expect(seed).not.toBe("api/unauthored");
+    expect(seed).toContain('"api/unauthored"');
+    expect(seed).toContain("add the new behavior");
     // Checkpoint exists carrying the original request.
     expect(repo.exists(`.ia/runtime/implement/${token}.json`)).toBe(true);
     const cp = JSON.parse(repo.read(`.ia/runtime/implement/${token}.json`));
