@@ -1,20 +1,37 @@
 #!/usr/bin/env node
 import { initProject } from "./init.js";
 import { validateIntents } from "./validate.js";
-import { inspectIntent } from "./inspect.js";
+import { inspectReport } from "./inspectReport.js";
 import { checkHook } from "./checkHook.js";
+import { listRoles, renderRoles } from "./roles.js";
+import { listSkills, renderSkills } from "./skills.js";
+import { runVerify } from "./verify.js";
 import type { ConflictChoice } from "./settingsMerge.js";
 
 const HELP = `dusk — Intent Architecture CLI
 
 Usage:
-  dusk init                   Scaffold .ia/* + .claude/agents and install the PreToolUse gate
+  dusk init                   Scaffold .ia/* + .claude/{agents,skills} and install the PreToolUse gate
   dusk validate               Validate all intents (reports file:line on failure)
-  dusk inspect <intent-path>  Show an intent: triples, obligation, relations, descendants, gaps
+  dusk verify <path|scope>    Run the Verifier procedure read-only; print per-triple verdicts
+  dusk inspect <intent-path>  Hierarchical satisfaction, claim lists, test children, low-confidence supports
+  dusk roles                  List the nine installed role files (memory, model, skill count)
+  dusk skills                 Introspect installed role-bound skills, grouped by role
   dusk doctor --check-hook    Verify the gate is installed (exit 0 ok / 2 config / 3 round-trip)
                               add --repair to re-run the install for configuration issues
   dusk --help                 Show this help
 `;
+
+const HELP_TEXT: Record<string, string> = {
+  verify:
+    "dusk verify <path|scope>\n  Run the Verifier procedure read-only over the intents touching a file (or an\n  intent scope) and print per-triple verdicts. Mutates no working tree, makes no\n  commit. Requires ANTHROPIC_API_KEY.\n  Flags: --model <id>   override the verifier model\n  Example: dusk verify packages/api/src/services/notifications/index.ts\n",
+  inspect:
+    "dusk inspect <intent-path>\n  Report an intent's own-triple satisfaction, its test-pyramid children\n  satisfaction, and any low-confidence supports from the most recent verdict.\n  Flags: (none)\n  Example: dusk inspect notifications/send\n",
+  roles:
+    "dusk roles\n  Enumerate the nine installed .claude/agents/dusk-*.md role files with each\n  role's declared memory scope, model, and skill count.\n  Flags: (none)\n  Example: dusk roles\n",
+  skills:
+    "dusk skills\n  Enumerate installed role-bound skills grouped by role, matching the layout\n  under .claude/skills/dusk/<role>/.\n  Flags: (none)\n  Example: dusk skills\n",
+};
 
 const wantsHelp = (args: string[]): boolean => args.includes("--help") || args.includes("-h");
 
@@ -24,7 +41,12 @@ function promptConflict(existing: string): ConflictChoice {
   return "append";
 }
 
-function run(command: string | undefined, rest: string[]): number {
+function flagValue(args: string[], flag: string): string | undefined {
+  const i = args.indexOf(flag);
+  return i !== -1 && i + 1 < args.length ? args[i + 1] : undefined;
+}
+
+async function run(command: string | undefined, rest: string[]): Promise<number> {
   const root = process.cwd();
   if (!command || command === "help" || wantsHelp([command])) {
     process.stdout.write(HELP);
@@ -47,33 +69,32 @@ function run(command: string | undefined, rest: string[]): number {
       for (const failure of result.failures) process.stderr.write(`${failure.file}:${failure.line}  ${failure.message}\n`);
       return 1;
     }
+    case "verify": {
+      if (wantsHelp(rest) || rest.length === 0) {
+        process.stdout.write(HELP_TEXT.verify);
+        return rest.length === 0 && !wantsHelp(rest) ? 1 : 0;
+      }
+      const result = await runVerify(root, rest[0], { apiKey: process.env.ANTHROPIC_API_KEY, model: flagValue(rest, "--model") });
+      process.stdout.write(result.text);
+      return result.ok ? 0 : 1;
+    }
     case "inspect": {
       if (wantsHelp(rest) || rest.length === 0) {
-        process.stdout.write("dusk inspect <intent-path>\n");
-        return rest.length === 0 ? 1 : 0;
+        process.stdout.write(HELP_TEXT.inspect);
+        return rest.length === 0 && !wantsHelp(rest) ? 1 : 0;
       }
-      const result = inspectIntent(root, rest[0]);
-      if (!result) {
-        process.stderr.write(`inspect: intent not found: ${rest[0]}\n`);
-        return 1;
-      }
-      process.stdout.write(
-        `${JSON.stringify(
-          {
-            id: result.intent.id,
-            obligation: result.intent.obligation,
-            compose: result.intent.compose,
-            triples: (result.intent.triples ?? []).map((t) => t.id),
-            relates_to: result.intent.relates_to,
-            descendants: result.descendants,
-            testChildren: result.testChildren,
-            unsatisfiedTestChildren: result.unsatisfiedTestChildren,
-            aspectsUnclaimed: result.aspectsUnclaimed,
-          },
-          null,
-          2,
-        )}\n`,
-      );
+      const result = inspectReport(root, rest[0]);
+      process.stdout.write(result.text);
+      return result.ok ? 0 : 1;
+    }
+    case "roles": {
+      if (wantsHelp(rest)) return process.stdout.write(HELP_TEXT.roles), 0;
+      process.stdout.write(renderRoles(listRoles(root)));
+      return 0;
+    }
+    case "skills": {
+      if (wantsHelp(rest)) return process.stdout.write(HELP_TEXT.skills), 0;
+      process.stdout.write(renderSkills(listSkills(root)));
       return 0;
     }
     case "doctor": {
@@ -93,4 +114,4 @@ function run(command: string | undefined, rest: string[]): number {
 }
 
 const [command, ...rest] = process.argv.slice(2);
-process.exit(run(command, rest));
+run(command, rest).then((code) => process.exit(code));

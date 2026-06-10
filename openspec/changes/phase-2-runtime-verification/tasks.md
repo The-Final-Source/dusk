@@ -57,10 +57,10 @@
 ## 7. dusk-cli-substrate  (spec: dusk-cli-substrate — MODIFIED)
 
 - [ ] 7.1 Add `dusk verify <path>` mirroring the MCP `dusk_verify`. Acceptance: spec *Phase-2 read-path commands* / scenario *`dusk verify` runs the Verifier procedure read-only*; Test (**real frontier model**, `N=3, threshold ≥2/3`): `dusk verify` on App. B prints per-triple verdicts; working tree unchanged; no commit produced.
-- [ ] 7.2 Extend `dusk inspect` (the Phase-1 surface) to render hierarchical satisfaction + test-pyramid children satisfaction + the new `low_confidence_supports[]` field. Acceptance: scenario *`dusk inspect` reports hierarchical satisfaction and low-confidence supports*; Test: inspect after a low-confidence verdict shows the new section.
-- [ ] 7.3 Add `dusk roles` listing the nine installed role files with each role's declared `memory`, `model`, skill count. Acceptance: scenario *`dusk roles` lists the nine installed role files with their declared scopes*; Test: roles enumeration covers all nine, in a stable order.
-- [ ] 7.4 Add `dusk skills` introspecting installed role-bound skills grouped by role. Acceptance: scenario *`dusk skills` introspects the installed role-bound skills*; Test: skills output groups by role matching the `.claude/skills/dusk/<role>/` layout.
-- [ ] 7.5 Wire `--help` on every new command — usage description, flag list, ≥1 example. Acceptance: scenario *Every new command supports `--help`*; Test: `dusk verify --help`, `dusk inspect --help`, `dusk roles --help`, `dusk skills --help` each exit 0 with usage substring.
+- [x] 7.2 Extend `dusk inspect` (the Phase-1 surface) to render hierarchical satisfaction + test-pyramid children satisfaction + the new `low_confidence_supports[]` field. Acceptance: scenario *`dusk inspect` reports hierarchical satisfaction and low-confidence supports*; Test: inspect after a low-confidence verdict shows the new section.
+- [x] 7.3 Add `dusk roles` listing the nine installed role files with each role's declared `memory`, `model`, skill count. Acceptance: scenario *`dusk roles` lists the nine installed role files with their declared scopes*; Test: roles enumeration covers all nine, in a stable order.
+- [x] 7.4 Add `dusk skills` introspecting installed role-bound skills grouped by role. Acceptance: scenario *`dusk skills` introspects the installed role-bound skills*; Test: skills output groups by role matching the `.claude/skills/dusk/<role>/` layout.
+- [x] 7.5 Wire `--help` on every new command — usage description, flag list, ≥1 example. Acceptance: scenario *Every new command supports `--help`*; Test: `dusk verify --help`, `dusk inspect --help`, `dusk roles --help`, `dusk skills --help` each exit 0 with usage substring.
 
 ## 8. Canonical artifacts, phase-landing smoke test & cohesive landing
 
