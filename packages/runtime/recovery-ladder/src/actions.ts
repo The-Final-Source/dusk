@@ -102,17 +102,34 @@ export function level2Proposal(input: Level2Input): Level2Outcome {
 
 // ---- L3: operator-actionable freeze ----------------------------------------
 
+/**
+ * Machine-readable resume record persisted alongside the human-readable
+ * freeze-state.md, so `dusk implement --resume <bead-id>` can reload the frozen
+ * bead and continue its Step-4 entry from the right iteration (§recovery-ladder).
+ */
+export type FreezeResumeState = {
+  bead_id: string;
+  intent_paths: string[];
+  /** Lifetime iterations already consumed (resume continues from here). */
+  lifetime_iter: number;
+  branch: string;
+};
+
 export type Level3Input = {
   rootDir: string;
   beadId: string;
   beadMemory: string;
   lastVerdicts: VerdictSummary[];
   diagnosisHistory: DiagnosisEntry[];
+  /** Resume record written to freeze-state.json (enables the documented resume). */
+  resume?: FreezeResumeState;
   /** Injectable writer so tests can force a serialization failure (→ L4). */
   freezeWriter?: (path: string, content: string) => void;
 };
 
-export type Level3Outcome = { level: "L3"; error: DuskError; freezePath: string };
+export type Level3Outcome = { level: "L3"; error: DuskError; freezePath: string; resumePath?: string };
+
+export const freezeResumePath = (rootDir: string, beadId: string): string => join(beadDir(rootDir, beadId), "freeze-state.json");
 
 const defaultFreezeWriter = (path: string, content: string): void => {
   mkdirSync(dirname(path), { recursive: true });
@@ -140,10 +157,17 @@ export function level3Freeze(input: Level3Input): Level3Outcome {
     "",
   ].join("\n");
 
-  (input.freezeWriter ?? defaultFreezeWriter)(freezePath, content); // may throw → L4
+  const write = input.freezeWriter ?? defaultFreezeWriter;
+  write(freezePath, content); // may throw → L4
+  let resumePath: string | undefined;
+  if (input.resume) {
+    resumePath = freezeResumePath(input.rootDir, input.beadId);
+    write(resumePath, JSON.stringify(input.resume, null, 2));
+  }
   return {
     level: "L3",
     freezePath,
+    ...(resumePath ? { resumePath } : {}),
     error: duskError("bead_frozen", `bead ${input.beadId} frozen for operator resolution; worktree preserved`, {
       recoverable: false,
       bead_id: input.beadId,

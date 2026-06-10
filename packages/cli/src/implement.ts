@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { duskError, verifierEvidenceMaxLines, type VerifierFactory } from "@dusk/core-schema";
 import { loadProjectContext } from "@dusk/mcp-server";
-import { runImplement, readRuntimeEnv, type TaskRunner } from "@dusk/runtime-orchestrator";
+import { resumeFrozenBead, runImplement, readRuntimeEnv, type RunImplementDeps, type TaskRunner } from "@dusk/runtime-orchestrator";
 import {
   DEFAULT_VERIFIER_SYSTEM_PROMPT,
   claudeCodeAvailable,
@@ -65,21 +65,25 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
     return result.success ? result.value : result.error;
   };
 
-  const result = await runImplement(
-    request ? { request } : { resumeToken: resume },
-    {
-      rootDir: root,
-      sessionId: `cli_${clock.now()}`,
-      env: readRuntimeEnv(),
-      taskRunner,
-      verifierFactory,
-      buildIndex: () => loadProjectContext(root).index,
-      clock,
-      config: baseCtx.config,
-      perEntryMax: sanityNumber(baseCtx.config, "short_cycle_max_iterations", 20),
-      lifetimeMax: sanityNumber(baseCtx.config, "bead_lifetime_iterations", 40),
-    },
-  );
+  const deps: RunImplementDeps = {
+    rootDir: root,
+    sessionId: `cli_${clock.now()}`,
+    env: readRuntimeEnv(),
+    taskRunner,
+    verifierFactory,
+    buildIndex: () => loadProjectContext(root).index,
+    clock,
+    config: baseCtx.config,
+    perEntryMax: sanityNumber(baseCtx.config, "short_cycle_max_iterations", 20),
+    lifetimeMax: sanityNumber(baseCtx.config, "bead_lifetime_iterations", 40),
+  };
+
+  // A bead-id resumes an L3-frozen bead from its preserved state; a resume token
+  // continues a checkpoint-paused run.
+  const result =
+    resume && resume.startsWith("bd_")
+      ? await resumeFrozenBead(resume, deps)
+      : await runImplement(request ? { request } : { resumeToken: resume }, deps);
 
   if (!result.success) return { ok: false, text: `implement: ${result.error.kind} — ${result.error.message}\n` };
   const s = result.value;

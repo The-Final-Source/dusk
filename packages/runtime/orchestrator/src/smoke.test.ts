@@ -19,9 +19,11 @@ import {
 } from "@dusk/test-harness";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
+import { level3Freeze } from "@dusk/runtime-recovery-ladder";
+
 import { readRuntimeEnv } from "./env.js";
 import { clearSnapshot } from "./snapshot.js";
-import { runImplement, type RunImplementDeps } from "./stateMachine.js";
+import { resumeFrozenBead, runImplement, type RunImplementDeps } from "./stateMachine.js";
 
 // §15.3 — Phase-3 phase-landing smoke test (four scenarios). The Primary path's
 // real-frontier-model leg is gated to the correctness suite; here the control
@@ -134,6 +136,29 @@ describe("Variant B — recovery ladder L1 (partial) + L2 (revision needed)", ()
     if (!l2.success || l2.value.level !== "L2") return;
     expect(l2.value.error.kind).toBe("bead_intent_revision_needed");
     expect(l2.value.error.recoverable).toBe(true);
+  });
+});
+
+describe("Variant B' — L3 freeze → dusk implement --resume reloads + continues Step 4 (P3-T12b/14.5)", () => {
+  test("a frozen bead resumes from its freeze-state and completes", async () => {
+    const widgetIndex = (): DerivedIndex => buildDerivedIndex([focal("src/w.ts", 1, "api/widget", "w", ["shape"])], new Map([["api/widget", mkIntent("api/widget", "shape")]]));
+    // Create the bead's worktree (preserved by L3) and freeze it at lifetime iter 6.
+    const h = mg.createWorktree();
+    level3Freeze({
+      rootDir: mg.repoDir,
+      beadId: h.beadId,
+      beadMemory: "## Current diagnosis\nstuck",
+      lastVerdicts: [{ iter: 6, decision: "reject", triple_id: "api/widget[shape]", rationale: "mismatch" }],
+      diagnosisHistory: [{ iter: 5, text: "stuck on shape" }],
+      resume: { bead_id: h.beadId, intent_paths: ["api/widget"], lifetime_iter: 6, branch: h.branch },
+    });
+
+    // Resume: the double now accepts → the bead converges, commits, merges.
+    const result = await resumeFrozenBead(h.beadId, deps("smoke", widgetIndex));
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.value.commits[0].bead_id).toBe(h.beadId);
+    expect(result.value.beads_summary[0].exit_iter).toBeGreaterThanOrEqual(6); // continued from the frozen iteration
   });
 });
 

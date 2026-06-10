@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+
 import type { DerivedIndex } from "@dusk/core-index";
 import {
   duskError,
@@ -15,7 +17,7 @@ import { loadForResume, deleteCheckpoint, type Clock as CheckpointClock } from "
 import { commitBead } from "@dusk/runtime-commit";
 import { runLongCycle, affectedUniverse, type ImportGraph } from "@dusk/runtime-long-cycle";
 import { runMerge, topoOrder } from "@dusk/runtime-merge";
-import { runRecoveryLadder } from "@dusk/runtime-recovery-ladder";
+import { freezeResumePath, runRecoveryLadder } from "@dusk/runtime-recovery-ladder";
 import { runShortCycle, type GateResult } from "@dusk/runtime-short-cycle";
 import { runTestRunner, type VitestRunner } from "@dusk/runtime-test-runner";
 import { createWorktreesForDag, planWorktrees, worktreePathFor } from "@dusk/runtime-worktree";
@@ -194,6 +196,8 @@ type ProcessBeadInput = {
   run: ReturnType<typeof startActiveRun>;
   deps: RunImplementDeps;
   spawn: BoundSpawn;
+  /** Lifetime iterations already consumed (resume from a frozen bead). */
+  lifetimeStart?: number;
 };
 
 type ProcessBeadOk = { commitSha: string; status: BeadStatus; exitIter: number; testIntentsExecuted: string[]; lowConfidenceSupports: ImplementSummary["low_confidence_supports"] };
@@ -202,7 +206,7 @@ async function processBead(input: ProcessBeadInput): Promise<RuntimeResult<Proce
   const { deps, beadId, snapshot } = input;
   const triples = tripleIdsOf(snapshot.index, input.primaryIntent);
   const lowConfidenceSupports: ImplementSummary["low_confidence_supports"] = [];
-  let lifetimeIter = 0;
+  let lifetimeIter = input.lifetimeStart ?? 0;
   const diagnosisHistory: string[] = [];
 
   setBeadStatus(input.run, beadId, "short_cycle", "Step 4 — short cycle");
@@ -244,6 +248,7 @@ async function processBead(input: ProcessBeadInput): Promise<RuntimeResult<Proce
         beadMemory: "",
         trailers,
         subject: `wip: ${input.primaryIntent} (recovery)`,
+        freezeResume: { intent_paths: input.node.intent_paths, lifetime_iter: short.value.lifetimeIters, branch: `dusk/${beadId}` },
       });
       if (!ladder.success) return ladder;
       if (ladder.value.level === "L1") {
@@ -306,6 +311,64 @@ async function processBead(input: ProcessBeadInput): Promise<RuntimeResult<Proce
     if (!commit.success) return commit;
     setBeadStatus(input.run, beadId, "done", "Step 7 — committed");
     return ok({ commitSha: commit.value.commit_sha, status: "done", exitIter: lifetimeIter, testIntentsExecuted: executedTestIntents, lowConfidenceSupports });
+  }
+}
+
+/**
+ * Resume an L3-frozen bead (§recovery-ladder; 14.5 / P3-T12b). Reads the
+ * preserved freeze-state.json resume record, rebuilds the run's snapshot + bound
+ * spawn, and re-runs the bead's Step-4 entry from the frozen lifetime iteration —
+ * continuing through Steps 5-9 and merge to a summary (or a subsequent error).
+ */
+export async function resumeFrozenBead(beadId: string, deps: RunImplementDeps): Promise<RuntimeResult<ImplementSummary>> {
+  const startedAt = deps.clock.now();
+  const resumePath = freezeResumePath(deps.rootDir, beadId);
+  if (!existsSync(resumePath)) {
+    return err(duskError("bead_frozen", `no frozen resume record at ${resumePath}`, { recoverable: false, bead_id: beadId }));
+  }
+  const record = JSON.parse(readFileSync(resumePath, "utf8")) as { bead_id: string; intent_paths: string[]; lifetime_iter: number; branch: string };
+
+  const snapshot = getOrBuildSnapshot(deps.sessionId, { repoDir: deps.rootDir, baseRef: deps.baseRef, buildIndex: deps.buildIndex, resolveCommit: deps.resolveCommit }, { rebuildIndex: deps.rebuildIndex });
+  const run = startActiveRun(deps.sessionId, snapshot);
+  const spawn: BoundSpawn = (params) => spawnSubAgent(params, { rootDir: deps.rootDir, env: deps.env, clock: deps.clock, taskRunner: deps.taskRunner, verifierFactory: deps.verifierFactory, ...(deps.traceSink ? { traceSink: deps.traceSink } : {}), indexSnapshotId: snapshot.id });
+
+  try {
+    const node = { intent_paths: record.intent_paths, predicted_files: [] as string[] };
+    const suffixes = testPyramidSuffixes(deps.config);
+    const testIntents = record.intent_paths.filter((p) => suffixes.includes(p.split("/").at(-1) ?? ""));
+    upsertBead(run, { id: beadId, status: "short_cycle", current_step: "Step 4 — resumed from freeze", started_at: new Date(deps.clock.now()).toISOString(), branch: record.branch });
+
+    const result = await processBead({
+      beadId,
+      worktreePath: worktreePathFor(deps.rootDir, beadId),
+      primaryIntent: record.intent_paths[0],
+      testIntents,
+      node,
+      snapshot,
+      run,
+      deps,
+      spawn,
+      lifetimeStart: record.lifetime_iter,
+    });
+    if (!result.success) return result;
+
+    const merged = runMerge({ repoDir: deps.rootDir, dag: { nodes: [{ bead_id: beadId, intent_paths: record.intent_paths, predicted_files: [] }], edges: [] } });
+    if (!merged.success) return merged;
+
+    return ok(
+      assembleSummary({
+        commits: [{ bead_id: beadId, commit_sha: result.value.commitSha, branch: record.branch }],
+        beads: [{ bead_id: beadId, status: result.value.status, exit_iter: result.value.exitIter }],
+        intentsTouched: record.intent_paths,
+        testIntentsExecuted: result.value.testIntentsExecuted,
+        traceIds: [],
+        totalDurationMs: Math.max(0, deps.clock.now() - startedAt),
+        totalCostUsd: 0,
+        lowConfidenceSupports: result.value.lowConfidenceSupports,
+      }),
+    );
+  } finally {
+    endActiveRun();
   }
 }
 

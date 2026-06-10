@@ -43,6 +43,8 @@ export type RecoveryLadderInput = {
   gitRunner?: GitRunner;
   /** Injectable freeze writer; throwing drives L4 (disk-error injection). */
   freezeWriter?: (path: string, content: string) => void;
+  /** When freezing (L3), the resume record to persist for `dusk implement --resume`. */
+  freezeResume?: { intent_paths: string[]; lifetime_iter: number; branch: string };
 };
 
 export function runRecoveryLadder(input: RecoveryLadderInput): RuntimeResult<RecoveryOutcome> {
@@ -89,6 +91,7 @@ export function runRecoveryLadder(input: RecoveryLadderInput): RuntimeResult<Rec
         beadMemory: input.beadMemory,
         lastVerdicts: input.lastVerdicts,
         diagnosisHistory: input.diagnosisHistory,
+        ...(input.freezeResume ? { resume: { bead_id: input.beadId, ...input.freezeResume } } : {}),
         freezeWriter: input.freezeWriter,
       }),
     );
