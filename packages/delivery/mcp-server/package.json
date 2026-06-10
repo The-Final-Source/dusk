@@ -26,7 +26,11 @@
     "@dusk/core-decoration": "workspace:*",
     "@dusk/core-index": "workspace:*",
     "@dusk/runtime-orchestrator": "workspace:*",
-    "@dusk/runtime-verifier": "workspace:*"
+    "@dusk/runtime-verifier": "workspace:*",
+    "@dusk/runtime-implement-checkpoint": "workspace:*",
+    "@dusk/runtime-cancel": "workspace:*",
+    "@dusk/runtime-livelock-detection": "workspace:*",
+    "@dusk/runtime-test-runner": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

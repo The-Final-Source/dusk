@@ -1,4 +1,5 @@
-// @dusk/mcp-server — read-only Phase-2 MCP surface (tools + resources + DuskError).
+// @dusk/mcp-server — MCP surface (Phase-2 read tools + Phase-3 write tools).
 export * from "./context.js";
 export * from "./queries.js";
 export * from "./server.js";
+export * from "./writeSurface.js";

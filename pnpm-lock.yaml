@@ -231,9 +231,21 @@ importers:
       '@dusk/core-schema':
         specifier: workspace:*
         version: link:../../core/schema
+      '@dusk/runtime-cancel':
+        specifier: workspace:*
+        version: link:../../runtime/cancel
+      '@dusk/runtime-implement-checkpoint':
+        specifier: workspace:*
+        version: link:../../runtime/implement-checkpoint
+      '@dusk/runtime-livelock-detection':
+        specifier: workspace:*
+        version: link:../../runtime/livelock-detection
       '@dusk/runtime-orchestrator':
         specifier: workspace:*
         version: link:../../runtime/orchestrator
+      '@dusk/runtime-test-runner':
+        specifier: workspace:*
+        version: link:../../runtime/test-runner
       '@dusk/runtime-verifier':
         specifier: workspace:*
         version: link:../../runtime/verifier

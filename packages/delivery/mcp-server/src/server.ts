@@ -15,6 +15,7 @@ import {
   statusQuery,
   verifyQuery,
 } from "./queries.js";
+import { duskCancel, duskImplement, duskResolveLivelock, duskTest, type WriteSurfaceDeps } from "./writeSurface.js";
 
 export const PHASE2_TOOL_NAMES = [
   "dusk_status",
@@ -60,8 +61,12 @@ function resourceContents(uri: URL, result: RuntimeResult<unknown>) {
   return { contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(payload) }] };
 }
 
-/** Build the Dusk MCP server (read-only Phase-2 surface) over a loaded context. */
-export function createDuskMcpServer(ctx: DuskContext): McpServer {
+export const PHASE3_WRITE_TOOL_NAMES = ["dusk_implement", "dusk_cancel", "dusk_resolve_livelock", "dusk_test"] as const;
+
+/** Build the Dusk MCP server. The read-only Phase-2 surface is always present;
+ *  the Phase-3 write surface (dusk_implement / dusk_cancel / dusk_resolve_livelock
+ *  / /dusk-test) is registered when `write` deps are supplied. */
+export function createDuskMcpServer(ctx: DuskContext, write?: WriteSurfaceDeps): McpServer {
   const server = new McpServer({ name: "dusk", version: "0.0.1" });
 
   server.registerTool("dusk_status", { description: "Current state: active beads, recent verdicts, recent test runs, index stats.", inputSchema: {} }, guarded(() => statusQuery(ctx)));
@@ -119,6 +124,30 @@ export function createDuskMcpServer(ctx: DuskContext): McpServer {
     { description: "One bead" },
     async (uri, variables) => resourceContents(uri, getBeadQuery(ctx, String(variables.id))),
   );
+
+  // ---- Phase-3 write surface (registered only when write deps are supplied). ----
+  if (write) {
+    server.registerTool(
+      "dusk_implement",
+      { description: "Run the 9-step implementation pipeline (request or resume_token).", inputSchema: { request: z.string().optional(), resume_token: z.string().optional(), scope_hint: z.array(z.string()).optional() } },
+      (args) => guarded(() => duskImplement(write, { request: args.request, resumeToken: args.resume_token, scopeHint: args.scope_hint }))(),
+    );
+    server.registerTool(
+      "dusk_cancel",
+      { description: "Cooperatively cancel an in-flight pipeline; returns a CancelResult.", inputSchema: { bead_id: z.string().optional(), reason: z.string() } },
+      (args) => guarded(() => duskCancel(write, args))(),
+    );
+    server.registerTool(
+      "dusk_resolve_livelock",
+      { description: "Resolve a Test-Verifier livelock (accept_test_as_is | modify_triple | escalate).", inputSchema: { bead_id: z.string(), verb: z.enum(["accept_test_as_is", "modify_triple", "escalate"]), payload: z.record(z.unknown()).optional() } },
+      (args) => guarded(() => duskResolveLivelock(write, args as never))(),
+    );
+    server.registerTool(
+      "dusk_test",
+      { description: "Run the Test Runner standalone over a test-intent scope; returns a TestVerdict.", inputSchema: { scope: z.string() } },
+      (args) => guarded(() => duskTest(write, args.scope))(),
+    );
+  }
 
   return server;
 }

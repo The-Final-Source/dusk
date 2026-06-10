@@ -29,6 +29,18 @@
     },
     {
       "path": "../../runtime/verifier"
+    },
+    {
+      "path": "../../runtime/implement-checkpoint"
+    },
+    {
+      "path": "../../runtime/cancel"
+    },
+    {
+      "path": "../../runtime/livelock-detection"
+    },
+    {
+      "path": "../../runtime/test-runner"
     }
   ]
 }
