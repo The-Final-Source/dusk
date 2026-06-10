@@ -1,5 +1,5 @@
 {
-  "name": "@dusk/runtime-verifier",
+  "name": "@dusk/fixtures",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -14,23 +14,18 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "tsc && vitest run",
+    "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.104.0",
-    "zod": "^3.24.0",
     "@dusk/core-schema": "workspace:*",
     "@dusk/core-parser": "workspace:*",
     "@dusk/core-graph": "workspace:*",
     "@dusk/core-decoration": "workspace:*",
-    "@dusk/core-index": "workspace:*",
-    "@dusk/runtime-orchestrator": "workspace:*"
+    "@dusk/core-index": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0",
-    "@dusk/test-harness": "workspace:*",
-    "@dusk/fixtures": "workspace:*"
+    "vitest": "^3.0.0"
   }
 }

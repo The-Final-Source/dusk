@@ -99,9 +99,18 @@ importers:
       '@dusk/core-schema':
         specifier: workspace:*
         version: link:../core/schema
+      '@dusk/mcp-server':
+        specifier: workspace:*
+        version: link:../delivery/mcp-server
       '@dusk/pre-tool-use':
         specifier: workspace:*
         version: link:../delivery/pre-tool-use
+      '@dusk/runtime-orchestrator':
+        specifier: workspace:*
+        version: link:../runtime/orchestrator
+      '@dusk/runtime-verifier':
+        specifier: workspace:*
+        version: link:../runtime/verifier
       yaml:
         specifier: ^2.5.0
         version: 2.8.2
@@ -263,6 +272,31 @@ importers:
       '@dusk/test-harness':
         specifier: workspace:*
         version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/fixtures:
+    dependencies:
+      '@dusk/core-decoration':
+        specifier: workspace:*
+        version: link:../core/decoration
+      '@dusk/core-graph':
+        specifier: workspace:*
+        version: link:../core/graph
+      '@dusk/core-index':
+        specifier: workspace:*
+        version: link:../core/index
+      '@dusk/core-parser':
+        specifier: workspace:*
+        version: link:../core/parser
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../core/schema
+    devDependencies:
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
@@ -481,6 +515,9 @@ importers:
         specifier: ^3.24.0
         version: 3.25.76
     devDependencies:
+      '@dusk/fixtures':
+        specifier: workspace:*
+        version: link:../../fixtures
       '@dusk/test-harness':
         specifier: workspace:*
         version: link:../../test-harness
