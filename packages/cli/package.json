@@ -39,6 +39,7 @@
     "typescript": "^5.7.0",
     "vitest": "^3.0.0",
     "@dusk/test-harness": "workspace:*",
-    "@dusk/fixtures": "workspace:*"
+    "@dusk/fixtures": "workspace:*",
+    "@dusk/runtime-short-cycle": "workspace:*"
   }
 }

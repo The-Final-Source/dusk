@@ -127,6 +127,9 @@ importers:
       '@dusk/fixtures':
         specifier: workspace:*
         version: link:../fixtures
+      '@dusk/runtime-short-cycle':
+        specifier: workspace:*
+        version: link:../runtime/short-cycle
       '@dusk/test-harness':
         specifier: workspace:*
         version: link:../test-harness
