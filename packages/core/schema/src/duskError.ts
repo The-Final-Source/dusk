@@ -24,6 +24,8 @@ export const DUSK_ERROR_KINDS = [
   "author_dialog_id_unknown",
   "author_stage_invalid_response",
   "author_intent_schema_invalid",
+  "author_finalize_partial_failure",
+  "author_l2_proposal_unreadable",
   // Verifier (Phase 2)
   "verifier_evidence_too_large",
   "verifier_model_call_failed",

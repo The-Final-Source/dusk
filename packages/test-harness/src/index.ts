@@ -7,3 +7,6 @@ export * from "./verifierFixture.js";
 export * from "./gitWorktree.js";
 export * from "./stallingFixture.js";
 export * from "./vitestReport.js";
+export * from "./authorFixture.js";
+export * from "./dialogFixtures.js";
+export * from "./unresolvedIntentFixture.js";

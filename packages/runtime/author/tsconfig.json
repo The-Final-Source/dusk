@@ -1,0 +1,25 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../../core/schema"
+    },
+    {
+      "path": "../../core/parser"
+    },
+    {
+      "path": "../orchestrator"
+    },
+    {
+      "path": "../memory"
+    }
+  ]
+}

@@ -16,3 +16,6 @@ export * from "./livelockReport.js";
 export * from "./commitTrailers.js";
 export * from "./ids.js";
 export * from "./beadDag.js";
+export * from "./dialogState.js";
+export * from "./authorSeam.js";
+export * from "./intentProposal.js";

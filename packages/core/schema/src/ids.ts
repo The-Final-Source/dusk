@@ -27,6 +27,8 @@ export function formatId(prefix: string, epochMs: number, seq: number): string {
 
 export const RESUME_TOKEN_RE = /^rt_[0-9]{14}[0-9]{3}$/;
 export const BEAD_ID_RE = /^bd_[0-9]{14}[0-9]{3}$/;
+export const DIALOG_ID_RE = /^dlg_[0-9]{14}[0-9]{3}$/;
 
 export const isResumeToken = (value: string): boolean => RESUME_TOKEN_RE.test(value);
 export const isBeadId = (value: string): boolean => BEAD_ID_RE.test(value);
+export const isDialogId = (value: string): boolean => DIALOG_ID_RE.test(value);
