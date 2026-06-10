@@ -1,2 +1,4 @@
-// @dusk/runtime-memory — barrel export (populated per task).
-export {};
+// @dusk/runtime-memory — four-scope materialization + dual-channel bead memory.
+export * from "./materialize.js";
+export * from "./beadMemory.js";
+export * from "./compact.js";
