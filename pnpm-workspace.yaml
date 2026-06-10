@@ -2,3 +2,4 @@ packages:
   - "packages/*"
   - "packages/core/*"
   - "packages/delivery/*"
+  - "packages/runtime/*"
