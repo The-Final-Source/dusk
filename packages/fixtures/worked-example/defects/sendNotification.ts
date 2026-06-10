@@ -81,6 +81,7 @@ export async function sendNotification(
     // @intent notifications/send [publish-sync-per-insert]
     // @intent-support sync/pubsub-on-create [event-per-insert] ["the channel publish call", "delivers", "the prepared sync event onto the resolved notification channel via pubsub"]
     await pubsub.publish(notificationChannel, event);
+    // @intent notifications/send [publish-sync-per-insert]
     await pubsub.publish(notificationChannel, event);
   }
 

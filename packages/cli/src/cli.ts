@@ -24,7 +24,7 @@ Usage:
 
 const HELP_TEXT: Record<string, string> = {
   verify:
-    "dusk verify <path|scope>\n  Run the Verifier procedure read-only over the intents touching a file (or an\n  intent scope) and print per-triple verdicts. Mutates no working tree, makes no\n  commit. Requires ANTHROPIC_API_KEY.\n  Flags: --model <id>   override the verifier model\n  Example: dusk verify packages/api/src/services/notifications/index.ts\n",
+    "dusk verify <path|scope>\n  Run the Verifier procedure read-only over the intents touching a file (or an\n  intent scope) and print per-triple verdicts. Mutates no working tree, makes no\n  commit. Runs the Verifier on the ambient Claude Code model (no API key needed).\n  Flags: --model <id>   override the verifier model\n  Example: dusk verify packages/api/src/services/notifications/index.ts\n",
   inspect:
     "dusk inspect <intent-path>\n  Report an intent's own-triple satisfaction, its test-pyramid children\n  satisfaction, and any low-confidence supports from the most recent verdict.\n  Flags: (none)\n  Example: dusk inspect notifications/send\n",
   roles:
@@ -74,7 +74,7 @@ async function run(command: string | undefined, rest: string[]): Promise<number>
         process.stdout.write(HELP_TEXT.verify);
         return rest.length === 0 && !wantsHelp(rest) ? 1 : 0;
       }
-      const result = await runVerify(root, rest[0], { apiKey: process.env.ANTHROPIC_API_KEY, model: flagValue(rest, "--model") });
+      const result = await runVerify(root, rest[0], { model: flagValue(rest, "--model") });
       process.stdout.write(result.text);
       return result.ok ? 0 : 1;
     }

@@ -40,9 +40,9 @@ export function workedExampleIntents(): Map<string, Intent> {
           quantifier: "exactly-one",
           scope: "per inserted notification row",
         },
-        { id: "respect-opt-out", subject: "the push delivery", predicate: "excludes", object: "users whose pushOptOut preference is true" },
+        { id: "respect-opt-out", subject: "the push delivery", predicate: "skips", object: "users whose pushOptOut preference is true" },
         { id: "cleanup-device-not-registered", subject: "the cleanup step", predicate: "deletes", object: "push tokens whose delivery returned deviceNotRegistered" },
-        { id: "persistence-not-blocked-by-push", subject: "a thrown push error", predicate: "is isolated so it does not prevent", object: "the notification persistence from succeeding" },
+        { id: "persistence-not-blocked-by-push", subject: "a thrown push error", predicate: "is caught and logged, allowing", object: "the notification persistence to succeed" },
       ],
     }),
     intent({

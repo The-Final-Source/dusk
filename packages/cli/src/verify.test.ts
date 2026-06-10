@@ -5,15 +5,22 @@ import { stringify as stringifyYaml } from "yaml";
 import { execFileSync } from "node:child_process";
 import { cleanSourcePath, WORKED_EXAMPLE_FILE, workedExampleIntents } from "@dusk/fixtures";
 import { createTempRepo, type TempRepo } from "@dusk/test-harness";
+import { claudeCodeAvailable, type ModelClient } from "@dusk/runtime-verifier";
 import type { Verdict } from "@dusk/core-schema";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import { renderVerdicts, runVerify } from "./verify.js";
 import { scaffoldProject } from "./scaffold.js";
 
-// Task 7.1 — `dusk verify` renders per-triple verdicts; real-model e2e is gated.
+// Task 7.1 — `dusk verify` renders per-triple verdicts; real-model e2e is gated on the claude CLI.
 
-const API_KEY = process.env.ANTHROPIC_API_KEY;
+const RUN_CORRECTNESS = Boolean(process.env.DUSK_RUN_CORRECTNESS) && claudeCodeAvailable();
+const fakeModel: ModelClient = {
+  complete: async () => ({
+    text: JSON.stringify({ triples: [] }),
+    usage: { model: "fake", promptTokens: 1, completionTokens: 1, costUsd: 0, latencyMs: 0 },
+  }),
+};
 
 describe("renderVerdicts", () => {
   test("renders per-triple focal/support/polarity lines and the implies note", () => {
@@ -51,18 +58,20 @@ describe("7.1 — dusk verify on the worked example (real model)", () => {
   });
   afterEach(() => repo.cleanup());
 
-  test.skipIf(!API_KEY)("prints per-triple verdicts and leaves the working tree unchanged", async () => {
+  test.skipIf(!RUN_CORRECTNESS)("prints per-triple verdicts via the ambient Claude Code model; tree unchanged", async () => {
     const before = execFileSync("git", ["status", "--porcelain"], { cwd: repo.dir }).toString();
-    const result = await runVerify(repo.dir, WORKED_EXAMPLE_FILE, { apiKey: API_KEY, model: process.env.DUSK_VERIFIER_MODEL });
+    const result = await runVerify(repo.dir, WORKED_EXAMPLE_FILE, { model: process.env.DUSK_VERIFIER_MODEL });
     expect(result.ok).toBe(true);
     expect(result.text).toMatch(/ACCEPT|REJECT/);
     const after = execFileSync("git", ["status", "--porcelain"], { cwd: repo.dir }).toString();
     expect(after).toBe(before);
-  }, 180_000);
+  }, 300_000);
 
-  test("requires a model key (honest failure without ANTHROPIC_API_KEY)", async () => {
-    const result = await runVerify(repo.dir, WORKED_EXAMPLE_FILE, { apiKey: undefined });
-    expect(result.ok).toBe(false);
-    expect(result.text).toContain("ANTHROPIC_API_KEY");
+  test("with an injected model, renders verdicts and leaves the working tree unchanged (deterministic)", async () => {
+    const before = execFileSync("git", ["status", "--porcelain"], { cwd: repo.dir }).toString();
+    const result = await runVerify(repo.dir, WORKED_EXAMPLE_FILE, { modelClient: fakeModel });
+    expect(result.ok).toBe(true);
+    const after = execFileSync("git", ["status", "--porcelain"], { cwd: repo.dir }).toString();
+    expect(after).toBe(before);
   });
 });

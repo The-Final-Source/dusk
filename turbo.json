@@ -17,7 +17,9 @@
       "cache": false
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "env": ["DUSK_RUN_CORRECTNESS"],
+      "passThroughEnv": ["DUSK_RUN_CORRECTNESS", "DUSK_VERIFIER_MODEL", "ANTHROPIC_API_KEY"]
     },
     "typecheck": {
       "dependsOn": ["^build"]

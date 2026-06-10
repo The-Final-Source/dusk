@@ -137,7 +137,7 @@ export async function verifyQuery(
   args: { scope?: string | string[]; intents?: string[]; diff?: unknown },
 ): Promise<RuntimeResult<{ verdicts: Verdict[] }>> {
   if (!ctx.modelClient) {
-    return { success: false, error: duskError("verifier_model_call_failed", "dusk_verify requires a configured model (ANTHROPIC_API_KEY)", { recoverable: false }) };
+    return { success: false, error: duskError("verifier_model_call_failed", "dusk_verify requires a configured model (the Claude Code CLI, or an injected client)", { recoverable: false }) };
   }
   const targets = args.intents ?? (args.scope ? scopePaths(ctx, args.scope) : [...ctx.intents.keys()]);
   const verdicts: Verdict[] = [];

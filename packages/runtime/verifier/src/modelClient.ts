@@ -1,3 +1,5 @@
+import { execFileSync, spawn } from "node:child_process";
+
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 
@@ -73,6 +75,88 @@ export function anthropicModelClient(opts: AnthropicClientOptions): ModelClient 
       };
     },
   };
+}
+
+// ---- Claude Code (ambient auth, no API key) -------------------------------
+
+export type ClaudeCodeClientOptions = {
+  model?: string;
+  /** The `claude` CLI binary (default: resolved from PATH). */
+  cliPath?: string;
+  timeoutMs?: number;
+  now?: () => number;
+};
+
+const DISABLED_TOOLS = ["Bash", "Edit", "Write", "Read", "Glob", "Grep", "Task", "WebFetch", "WebSearch"];
+
+function runClaude(cli: string, args: string[], input: string, timeoutMs: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cli, args, { stdio: ["pipe", "pipe", "pipe"] });
+    let out = "";
+    let err = "";
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error("claude CLI timed out"));
+    }, timeoutMs);
+    child.stdout.on("data", (d) => (out += d));
+    child.stderr.on("data", (d) => (err += d));
+    child.on("error", (e) => {
+      clearTimeout(timer);
+      reject(e);
+    });
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      if (code === 0) resolve(out);
+      else reject(new Error(`claude CLI exited ${code}: ${err.slice(0, 500)}`));
+    });
+    child.stdin.write(input);
+    child.stdin.end();
+  });
+}
+
+/**
+ * Model client backed by the locally-available Claude Code CLI in headless mode
+ * (`claude -p --output-format json`). Uses the ambient Claude Code authentication —
+ * NO separate API key. This is the faithful Phase-2 model boundary: the Verifier
+ * runs on the same model access the harness already has (RFC §9.9). Tools are
+ * disabled — the Verifier only emits the requested JSON.
+ */
+export function claudeCodeModelClient(opts: ClaudeCodeClientOptions = {}): ModelClient {
+  const model = opts.model ?? "claude-sonnet-4-6";
+  const cli = opts.cliPath ?? "claude";
+  const timeoutMs = opts.timeoutMs ?? 120_000;
+  const now = opts.now ?? (() => Date.now());
+  return {
+    async complete({ system, user }) {
+      const start = now();
+      const args = ["--print", "--output-format", "json", "--model", model, "--max-turns", "1"];
+      if (system) args.push("--system-prompt", system);
+      args.push("--disallowed-tools", ...DISABLED_TOOLS); // variadic — keep last
+      const raw = await runClaude(cli, args, user, timeoutMs);
+      const parsed = JSON.parse(raw) as { result?: unknown; total_cost_usd?: number; usage?: { input_tokens?: number; output_tokens?: number } };
+      const usage = parsed.usage ?? {};
+      return {
+        text: typeof parsed.result === "string" ? parsed.result : JSON.stringify(parsed.result ?? {}),
+        usage: {
+          model,
+          promptTokens: usage.input_tokens ?? 0,
+          completionTokens: usage.output_tokens ?? 0,
+          costUsd: parsed.total_cost_usd ?? 0,
+          latencyMs: now() - start,
+        },
+      };
+    },
+  };
+}
+
+/** Probe whether the Claude Code CLI is invocable (for test gating). */
+export function claudeCodeAvailable(cliPath = "claude"): boolean {
+  try {
+    execFileSync(cliPath, ["--version"], { stdio: "ignore", timeout: 10_000 });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ---- structured response parsing ------------------------------------------

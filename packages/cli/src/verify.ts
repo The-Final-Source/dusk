@@ -1,9 +1,9 @@
 import { existsSync } from "node:fs";
-import { isAbsolute, relative } from "node:path";
+import { isAbsolute, join, relative } from "node:path";
 
 import { type Verdict } from "@dusk/core-schema";
 import { loadProjectContext, verifyQuery } from "@dusk/mcp-server";
-import { DEFAULT_VERIFIER_SYSTEM_PROMPT, anthropicModelClient } from "@dusk/runtime-verifier";
+import { DEFAULT_VERIFIER_SYSTEM_PROMPT, claudeCodeAvailable, claudeCodeModelClient, type ModelClient } from "@dusk/runtime-verifier";
 import { loadRoleFile } from "@dusk/runtime-orchestrator";
 
 /** Human-readable per-triple verdict rendering. */
@@ -21,25 +21,26 @@ export function renderVerdicts(verdicts: Verdict[]): string {
   return `${lines.join("\n")}\n`;
 }
 
-export type VerifyOptions = { apiKey?: string; model?: string };
+export type VerifyOptions = { model?: string; modelClient?: ModelClient };
 
 /** Resolve a `dusk verify` argument (a file path or an intent scope) to a verify scope. */
 function resolveScope(root: string, arg: string): { scope?: string | string[]; intents?: string[] } {
-  if (existsSync(arg)) {
-    const rel = isAbsolute(arg) ? relative(root, arg) : arg;
+  const abs = isAbsolute(arg) ? arg : join(root, arg);
+  if (existsSync(abs)) {
+    const rel = relative(root, abs);
     const ctx = loadProjectContext(root);
-    const intents = ctx.index.reverse(rel);
-    return { intents };
+    return { intents: ctx.index.reverse(rel) };
   }
   return { scope: arg };
 }
 
 /** `dusk verify <path|scope>` — run the Verifier procedure read-only and print per-triple verdicts. */
-export async function runVerify(root: string, arg: string, opts: VerifyOptions): Promise<{ ok: boolean; text: string }> {
-  if (!opts.apiKey) {
-    return { ok: false, text: "dusk verify requires a configured model (set ANTHROPIC_API_KEY).\n" };
+export async function runVerify(root: string, arg: string, opts: VerifyOptions = {}): Promise<{ ok: boolean; text: string }> {
+  if (!opts.modelClient && !claudeCodeAvailable()) {
+    return { ok: false, text: "dusk verify needs the Claude Code CLI (`claude`) on PATH (it runs the Verifier on the ambient model — no API key required).\n" };
   }
-  const modelClient = anthropicModelClient({ apiKey: opts.apiKey, model: opts.model ?? "claude-sonnet-4-6" });
+  // Default model boundary: the locally-available Claude Code CLI (ambient auth, no key).
+  const modelClient = opts.modelClient ?? claudeCodeModelClient({ model: opts.model ?? "claude-sonnet-4-6" });
   const role = loadRoleFile(root, "verifier");
   const systemPrompt = role.success ? role.value.body : DEFAULT_VERIFIER_SYSTEM_PROMPT;
   const ctx = loadProjectContext(root, { modelClient, systemPrompt });

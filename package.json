@@ -17,6 +17,7 @@
     "mobile:build": "pnpm --filter @dusk/mobile build:ios",
     "mobile:build:dev": "pnpm --filter @dusk/mobile build:dev",
     "test": "turbo test",
+    "test:correctness": "DUSK_RUN_CORRECTNESS=1 turbo test --force",
     "typecheck": "turbo typecheck",
     "db:seed": "turbo db:seed --filter=@dusk/api",
     "template:init": "./scripts/init.sh",
