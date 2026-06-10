@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: The `dusk` CLI exposes the read-path commands that mirror the MCP read surface
 
