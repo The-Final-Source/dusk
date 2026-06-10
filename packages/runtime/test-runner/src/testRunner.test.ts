@@ -1,0 +1,123 @@
+import { buildDerivedIndex, type DerivedIndex } from "@dusk/core-index";
+import type { DecorationRecord } from "@dusk/core-decoration";
+import { TestVerdictSchema, ok, type BoundSpawn, type Intent, type SubAgentTrace, type Verdict } from "@dusk/core-schema";
+import { makeVitestJsonReportString } from "@dusk/test-harness";
+import { describe, expect, test } from "vitest";
+
+import { discoverByLayer } from "./discovery.js";
+import { runTestRunner } from "./run.js";
+import { assembleTestVerdict } from "./verdict.js";
+import { buildVitestArgv } from "./vitest.js";
+
+// §9 test-execution — zero-model (scripted double + scripted Vitest reporter).
+
+const TEST_INTENT = "notifications/send/unit-tests";
+const TEST_FILE = "/repo/notifications/send.unit.test.ts";
+
+const testIntent = (id: string, triples: string[]): Intent => ({
+  schema_version: 2,
+  id,
+  description: id,
+  obligation: "must",
+  compose: "all",
+  triples: triples.map((t) => ({ id: t, subject: "the test", predicate: "verifies", object: "the behavior", polarity: "positive" })),
+  relates_to: [],
+});
+
+const testRec = (file: string, line: number, intentPath: string, triples: string[]): DecorationRecord => ({
+  file,
+  line,
+  scope: "declaration",
+  declaration_name: "a test",
+  marker: "intent-test",
+  intent_path: intentPath,
+  aspect_ids: triples,
+  support_triple: null,
+  ignore_clause: null,
+});
+
+const verdict = (decision: "accept" | "reject"): Verdict => ({ intent_path: TEST_INTENT, decision, per_triple: [], aggregate_rationale: decision });
+
+function makeSpawn(verdicts: Verdict[]): BoundSpawn {
+  let i = 0;
+  let ctr = 0;
+  return async (params) => {
+    ctr += 1;
+    const trace: SubAgentTrace = { schema_version: 1, trace_id: `tr_${ctr}`, role: params.role, invocation_site: params.invocationSite ?? "implement", model: "stub", prompt_tokens: 0, completion_tokens: 0, latency_ms: 0, cost_usd: 0 };
+    if (params.role === "verifier") return ok({ trace, assembledPrompt: params.input, verdict: verdicts[i++] });
+    return ok({ trace, assembledPrompt: params.input, output: "ok" });
+  };
+}
+
+const indexWith = (records: DecorationRecord[], intents: Intent[]): DerivedIndex =>
+  buildDerivedIndex(records, new Map(intents.map((i) => [i.id, i])));
+
+const deps = (index: DerivedIndex, spawn: BoundSpawn, vitestRunner?: (files: string[], cwd: string) => string) => ({
+  spawn,
+  index,
+  beadId: "bd_1",
+  sessionId: "s1",
+  testIntentPath: TEST_INTENT,
+  prepassInput: () => "review this test body",
+  cwd: "/repo",
+  vitestRunner,
+});
+
+describe("9.1 — Verifier-rejected tests are excluded from the Vitest invocation (P3-T16)", () => {
+  test("a trivially-passing test rejected pre-pass never reaches Vitest; bead re-enters Step 4", async () => {
+    const index = indexWith([testRec(TEST_FILE, 5, TEST_INTENT, ["covers-persist-first"])], [testIntent(TEST_INTENT, ["covers-persist-first"])]);
+    const calls: string[][] = [];
+    const result = await runTestRunner(deps(index, makeSpawn([verdict("reject")]), (files) => {
+      calls.push(files);
+      return makeVitestJsonReportString([]);
+    }));
+    expect(result.success).toBe(true);
+    if (!result.success || result.value.kind !== "reenter_step4") return;
+    expect(result.value.rejected).toEqual([{ test_intent_path: TEST_INTENT, triple_id: "covers-persist-first" }]);
+    expect(result.value.invokedFiles).not.toContain(TEST_FILE); // excluded from the argv
+    expect(calls).toHaveLength(0); // Vitest never invoked
+  });
+});
+
+describe("9.2 — verified tests run under Vitest and roll up to a TestVerdict (offline wiring)", () => {
+  test("pre-pass accept → Vitest invoked on the file → satisfied TestVerdict", async () => {
+    const index = indexWith([testRec(TEST_FILE, 5, TEST_INTENT, ["covers-persist-first"])], [testIntent(TEST_INTENT, ["covers-persist-first"])]);
+    const calls: string[][] = [];
+    const result = await runTestRunner(deps(index, makeSpawn([verdict("accept")]), (files) => {
+      calls.push(files);
+      return makeVitestJsonReportString([{ file: TEST_FILE, title: "persists before publishing", status: "passed", duration: 3 }]);
+    }));
+    expect(result.success).toBe(true);
+    if (!result.success || result.value.kind !== "verdict") return;
+    expect(calls[0]).toEqual([TEST_FILE]); // Vitest invoked on the verified file
+    expect(result.value.verdict.decision).toBe("pass");
+    expect(result.value.verdict.per_triple.find((t) => t.triple_id === "covers-persist-first")?.verdict).toBe("pass");
+  });
+});
+
+describe("9.3 — TestVerdict shape is frozen per App. A.5", () => {
+  test("assembled TestVerdict parses against the schema", () => {
+    const v = assembleTestVerdict({
+      testIntentPath: TEST_INTENT,
+      coveredTriples: ["covers-persist-first", "covers-publish-sync"],
+      results: [{ file: TEST_FILE, title: "t", status: "passed", duration: 2 }],
+    });
+    expect(TestVerdictSchema.safeParse(v).success).toBe(true);
+    expect(v.decision).toBe("pass");
+  });
+});
+
+describe("9.4 — configurable test-pyramid suffix discovery", () => {
+  test("custom contract-tests suffix is discovered and routed to Vitest", () => {
+    const contractIntent = "api/x/contract-tests";
+    const file = "/repo/api/x.contract.test.ts";
+    const index = indexWith(
+      [testRec(file, 1, contractIntent, ["covers-contract"])],
+      [testIntent("api/x", ["impl"]), testIntent(contractIntent, ["covers-contract"])],
+    );
+    const byLayer = discoverByLayer(index, "api/x", ["contract-tests"]);
+    expect(byLayer["contract-tests"]).toHaveLength(1);
+    expect(byLayer["contract-tests"][0].file).toBe(file);
+    expect(buildVitestArgv([file])).toEqual(["vitest", "run", file, "--reporter=json"]);
+  });
+});
