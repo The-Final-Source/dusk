@@ -645,6 +645,9 @@ importers:
       '@dusk/runtime-commit':
         specifier: workspace:*
         version: link:../commit
+      yaml:
+        specifier: ^2.5.0
+        version: 2.8.2
     devDependencies:
       '@dusk/test-harness':
         specifier: workspace:*
