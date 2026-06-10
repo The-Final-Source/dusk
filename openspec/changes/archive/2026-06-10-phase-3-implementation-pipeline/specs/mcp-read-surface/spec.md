@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: `dusk://beads/active` and `dusk_list_beads` serve populated bead state during an in-flight pipeline
 
