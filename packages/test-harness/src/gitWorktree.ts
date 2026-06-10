@@ -82,11 +82,13 @@ export function createMockGitWorktree(options: MockGitWorktreeOptions = {}): Moc
 
   const worktreePaths = (): string[] => {
     const out = git(repoDir, ["worktree", "list", "--porcelain"]);
-    return out
+    const all = out
       .split("\n")
       .filter((l) => l.startsWith("worktree "))
-      .map((l) => l.slice("worktree ".length).trim())
-      .filter((p) => p !== repoDir);
+      .map((l) => l.slice("worktree ".length).trim());
+    // The first entry is the main worktree (git canonicalizes paths, so a
+    // string compare to repoDir is unreliable on macOS /var → /private/var).
+    return all.slice(1);
   };
 
   const cleanup = (): void => {

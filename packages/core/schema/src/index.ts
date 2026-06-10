@@ -14,3 +14,5 @@ export * from "./cancelResult.js";
 export * from "./testVerdict.js";
 export * from "./livelockReport.js";
 export * from "./commitTrailers.js";
+export * from "./ids.js";
+export * from "./beadDag.js";
