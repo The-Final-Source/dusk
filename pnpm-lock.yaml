@@ -542,6 +542,9 @@ importers:
 
   packages/runtime/long-cycle:
     dependencies:
+      '@dusk/core-decoration':
+        specifier: workspace:*
+        version: link:../../core/decoration
       '@dusk/core-index':
         specifier: workspace:*
         version: link:../../core/index

@@ -19,7 +19,8 @@
   },
   "dependencies": {
     "@dusk/core-schema": "workspace:*",
-    "@dusk/core-index": "workspace:*"
+    "@dusk/core-index": "workspace:*",
+    "@dusk/core-decoration": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
