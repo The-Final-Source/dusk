@@ -1,0 +1,11 @@
+id: sync/one-event-per-insert
+description: A publish loop emits exactly one sync event per inserted row.
+obligation: must
+compose: all
+triples:
+  - id: one-per-row
+    subject: "the publish loop"
+    predicate: "emits"
+    object: "a sync event on the entity channel"
+    quantifier: exactly-one
+    scope: "per inserted row"

@@ -1,0 +1,10 @@
+id: api/no-offset-pagination
+description: List endpoints must not use offset-based pagination.
+obligation: must
+compose: all
+triples:
+  - id: offset-prohibited
+    subject: "list endpoints"
+    predicate: "use"
+    object: "offset-based pagination (skip / limit / page-number)"
+    polarity: negative

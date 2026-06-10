@@ -36,6 +36,7 @@
   "devDependencies": {
     "typescript": "^5.7.0",
     "vitest": "^3.0.0",
-    "@dusk/test-harness": "workspace:*"
+    "@dusk/test-harness": "workspace:*",
+    "@dusk/fixtures": "workspace:*"
   }
 }

@@ -118,6 +118,9 @@ importers:
         specifier: ^3.24.0
         version: 3.25.76
     devDependencies:
+      '@dusk/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
       '@dusk/test-harness':
         specifier: workspace:*
         version: link:../test-harness
