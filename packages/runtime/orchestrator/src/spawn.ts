@@ -52,6 +52,12 @@ export type SpawnDeps = {
   traceSink?: TraceSink;
   /** Deterministic trace-id generator (defaults to a clock + counter scheme). */
   traceId?: () => string;
+  /**
+   * The run's session-snapshot id (RFC §2.10; design D1). When present it is
+   * stamped onto every emitted trace, so every spawn in a run carries the same
+   * `index_snapshot_id` (Phase 2 reserved the field; Phase 3 sets it).
+   */
+  indexSnapshotId?: string;
 };
 
 let traceCounter = 0;
@@ -184,6 +190,7 @@ export async function spawnSubAgent(params: SpawnParams, deps: SpawnDeps): Promi
     completion_tokens: completionTokens,
     latency_ms: latencyMs,
     cost_usd: costUsd,
+    ...(deps.indexSnapshotId ? { index_snapshot_id: deps.indexSnapshotId } : {}),
     skills_loaded: frontmatter.skills,
     ...(params.iterationNumber !== undefined ? { iteration_number: params.iterationNumber } : {}),
     ...(role === "bead-orchestrator" ? { convergence_diagnosis_present: hasDiagnosis(memory.rendering) } : {}),

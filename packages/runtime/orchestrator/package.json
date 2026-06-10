@@ -21,6 +21,8 @@
     "zod": "^3.24.0",
     "yaml": "^2.5.0",
     "@dusk/core-schema": "workspace:*",
+    "@dusk/core-index": "workspace:*",
+    "@dusk/core-decoration": "workspace:*",
     "@dusk/runtime-memory": "workspace:*",
     "@dusk/runtime-skills": "workspace:*",
     "@dusk/runtime-tool-scope": "workspace:*"

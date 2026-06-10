@@ -22,3 +22,6 @@ export * from "./env.js";
 export * from "./redaction.js";
 export * from "./roleFile.js";
 export * from "./spawn.js";
+export * from "./snapshot.js";
+export * from "./beadDelta.js";
+export * from "./activeRun.js";

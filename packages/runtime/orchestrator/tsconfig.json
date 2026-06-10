@@ -13,6 +13,12 @@
       "path": "../../core/schema"
     },
     {
+      "path": "../../core/index"
+    },
+    {
+      "path": "../../core/decoration"
+    },
+    {
       "path": "../memory"
     },
     {

@@ -602,6 +602,12 @@ importers:
 
   packages/runtime/orchestrator:
     dependencies:
+      '@dusk/core-decoration':
+        specifier: workspace:*
+        version: link:../../core/decoration
+      '@dusk/core-index':
+        specifier: workspace:*
+        version: link:../../core/index
       '@dusk/core-schema':
         specifier: workspace:*
         version: link:../../core/schema
