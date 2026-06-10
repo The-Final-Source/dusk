@@ -12,6 +12,20 @@ import type { VerifierResult } from "./verifierSeam.js";
  * the deps into a `BoundSpawn` closure and injects that downward.
  */
 
+/**
+ * Phase-3 bead-lifecycle fields the orchestrator stamps onto a spawn's trace.
+ * `stuckness_detector_state` / `verifier_livelock_signal` belong ONLY on
+ * Bead-Orchestrator traces (the asymmetry guarantee); `confirmation_*` correlate
+ * long-cycle confirmation-pass verdicts. The spawn pipeline copies whichever
+ * fields are present onto the emitted `SubAgentTrace`.
+ */
+export type BeadLifecycleFields = {
+  stuckness_detector_state?: { fired: boolean };
+  verifier_livelock_signal?: boolean;
+  confirmation_of_trace_id?: string;
+  confirmation_pass_outcome?: "confirmed_reject" | "flaky_verdict_dismissed";
+};
+
 export type SpawnParams = {
   role: SubAgentRole;
   beadId?: string;
@@ -24,6 +38,8 @@ export type SpawnParams = {
   /** For verifier spawns: the intent (and optional aspect) under evaluation. */
   intentPath?: string;
   aspectId?: string;
+  /** Phase-3 bead-lifecycle fields stamped onto the emitted trace. */
+  beadLifecycle?: BeadLifecycleFields;
 };
 
 export type SpawnOutcome = {

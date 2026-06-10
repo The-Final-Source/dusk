@@ -194,6 +194,11 @@ export async function spawnSubAgent(params: SpawnParams, deps: SpawnDeps): Promi
     skills_loaded: frontmatter.skills,
     ...(params.iterationNumber !== undefined ? { iteration_number: params.iterationNumber } : {}),
     ...(role === "bead-orchestrator" ? { convergence_diagnosis_present: hasDiagnosis(memory.rendering) } : {}),
+    // Phase-3 bead-lifecycle fields, when the orchestrator supplies them.
+    ...(params.beadLifecycle?.stuckness_detector_state ? { stuckness_detector_state: params.beadLifecycle.stuckness_detector_state } : {}),
+    ...(params.beadLifecycle?.verifier_livelock_signal !== undefined ? { verifier_livelock_signal: params.beadLifecycle.verifier_livelock_signal } : {}),
+    ...(params.beadLifecycle?.confirmation_of_trace_id ? { confirmation_of_trace_id: params.beadLifecycle.confirmation_of_trace_id } : {}),
+    ...(params.beadLifecycle?.confirmation_pass_outcome ? { confirmation_pass_outcome: params.beadLifecycle.confirmation_pass_outcome } : {}),
     ...(capturesRawPrompt(env) ? { raw_prompt: redact(assembledPrompt, { repoRoot: rootDir }) } : {}),
   };
 
