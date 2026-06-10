@@ -20,3 +20,5 @@ export { duskError, isDuskError, ok, err, isOk, isErr } from "@dusk/core-schema"
 
 export * from "./env.js";
 export * from "./redaction.js";
+export * from "./roleFile.js";
+export * from "./spawn.js";

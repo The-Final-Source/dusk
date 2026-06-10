@@ -9,6 +9,15 @@ import type { Verdict } from "./verdict.js";
  * test-harness, orchestrator, verifier, and verifier-test-double all bind to one
  * definition without a package cycle.
  */
+/** Model-usage a verifier factory reports back so the spawn trace can record it. */
+export type VerifierUsage = {
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  costUsd: number;
+  latencyMs?: number;
+};
+
 export type VerifierSpawnContext = {
   /** The intent under evaluation (drives fixture selection in the double). */
   intentPath: string;
@@ -21,6 +30,12 @@ export type VerifierSpawnContext = {
   assembledPrompt: string;
   /** Opaque per-call verifier input; the real factory casts it to its typed input. */
   input?: unknown;
+  /**
+   * The real factory reports its model usage here so the spawn pipeline can put
+   * it on the emitted trace. The double leaves it uncalled (usage stays zero) —
+   * which is exactly the only field that differs between real and doubled traces.
+   */
+  reportUsage?: (usage: VerifierUsage) => void;
 };
 
 export type VerifierResult = Verdict | DuskError;
