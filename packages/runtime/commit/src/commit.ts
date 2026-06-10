@@ -32,13 +32,20 @@ export function commitBead(input: CommitBeadInput): RuntimeResult<CommitResult> 
   const message = renderCommitMessage({ subject: input.subject, body: input.body, trailers: input.trailers });
   try {
     git(input.worktreePath, ["add", "-A"]);
-    git(input.worktreePath, ["commit", "-q", "-F", "-"], message);
+    // A converged bead always produces exactly one commit. When the working tree
+    // carries no staged change (e.g. a control-flow run with no file writes), an
+    // empty commit still records the bead's trailer set on its branch.
+    const dirty = git(input.worktreePath, ["status", "--porcelain"]).length > 0;
+    const commitArgs = dirty ? ["commit", "-q", "-F", "-"] : ["commit", "-q", "--allow-empty", "-F", "-"];
+    git(input.worktreePath, commitArgs, message);
     const commit_sha = git(input.worktreePath, ["rev-parse", "HEAD"]);
     const branch = git(input.worktreePath, ["rev-parse", "--abbrev-ref", "HEAD"]);
     return ok({ commit_sha, branch, message });
   } catch (error) {
+    const stderr = (error as { stderr?: Buffer | string }).stderr;
+    const detail = stderr ? String(stderr) : error instanceof Error ? error.message : "git commit failed";
     return err(
-      duskError("internal_error", error instanceof Error ? error.message : "git commit failed", {
+      duskError("internal_error", `git commit failed: ${detail}`, {
         recoverable: false,
         bead_id: input.trailers.bead_id,
         step: 7,

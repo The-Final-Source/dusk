@@ -25,3 +25,5 @@ export * from "./spawn.js";
 export * from "./snapshot.js";
 export * from "./beadDelta.js";
 export * from "./activeRun.js";
+export * from "./summary.js";
+export * from "./stateMachine.js";

@@ -37,6 +37,13 @@ export function runMerge(input: MergeInput): RuntimeResult<MergeResult> {
 
   for (const beadId of order) {
     const branch = `dusk/${beadId}`;
+    // Serialized beads share their group's worktree/branch — only the group's
+    // representative branch exists. Skip beads with no branch of their own.
+    try {
+      git(input.repoDir, ["rev-parse", "--verify", "--quiet", `refs/heads/${branch}`]);
+    } catch {
+      continue;
+    }
     try {
       // Land the bead's commit on main (topologically; main advances each step).
       git(input.repoDir, ["merge", "--no-edit", branch]);

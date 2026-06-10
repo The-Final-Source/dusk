@@ -26,6 +26,42 @@
     },
     {
       "path": "../tool-scope"
+    },
+    {
+      "path": "../decomposer"
+    },
+    {
+      "path": "../worktree"
+    },
+    {
+      "path": "../short-cycle"
+    },
+    {
+      "path": "../recovery-ladder"
+    },
+    {
+      "path": "../long-cycle"
+    },
+    {
+      "path": "../test-runner"
+    },
+    {
+      "path": "../livelock-detection"
+    },
+    {
+      "path": "../commit"
+    },
+    {
+      "path": "../merge"
+    },
+    {
+      "path": "../conflict-resolver"
+    },
+    {
+      "path": "../implement-checkpoint"
+    },
+    {
+      "path": "../cancel"
     }
   ]
 }

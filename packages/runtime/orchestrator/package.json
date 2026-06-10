@@ -25,7 +25,19 @@
     "@dusk/core-decoration": "workspace:*",
     "@dusk/runtime-memory": "workspace:*",
     "@dusk/runtime-skills": "workspace:*",
-    "@dusk/runtime-tool-scope": "workspace:*"
+    "@dusk/runtime-tool-scope": "workspace:*",
+    "@dusk/runtime-decomposer": "workspace:*",
+    "@dusk/runtime-worktree": "workspace:*",
+    "@dusk/runtime-short-cycle": "workspace:*",
+    "@dusk/runtime-recovery-ladder": "workspace:*",
+    "@dusk/runtime-long-cycle": "workspace:*",
+    "@dusk/runtime-test-runner": "workspace:*",
+    "@dusk/runtime-livelock-detection": "workspace:*",
+    "@dusk/runtime-commit": "workspace:*",
+    "@dusk/runtime-merge": "workspace:*",
+    "@dusk/runtime-conflict-resolver": "workspace:*",
+    "@dusk/runtime-implement-checkpoint": "workspace:*",
+    "@dusk/runtime-cancel": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

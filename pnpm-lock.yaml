@@ -614,15 +614,51 @@ importers:
       '@dusk/core-schema':
         specifier: workspace:*
         version: link:../../core/schema
+      '@dusk/runtime-cancel':
+        specifier: workspace:*
+        version: link:../cancel
+      '@dusk/runtime-commit':
+        specifier: workspace:*
+        version: link:../commit
+      '@dusk/runtime-conflict-resolver':
+        specifier: workspace:*
+        version: link:../conflict-resolver
+      '@dusk/runtime-decomposer':
+        specifier: workspace:*
+        version: link:../decomposer
+      '@dusk/runtime-implement-checkpoint':
+        specifier: workspace:*
+        version: link:../implement-checkpoint
+      '@dusk/runtime-livelock-detection':
+        specifier: workspace:*
+        version: link:../livelock-detection
+      '@dusk/runtime-long-cycle':
+        specifier: workspace:*
+        version: link:../long-cycle
       '@dusk/runtime-memory':
         specifier: workspace:*
         version: link:../memory
+      '@dusk/runtime-merge':
+        specifier: workspace:*
+        version: link:../merge
+      '@dusk/runtime-recovery-ladder':
+        specifier: workspace:*
+        version: link:../recovery-ladder
+      '@dusk/runtime-short-cycle':
+        specifier: workspace:*
+        version: link:../short-cycle
       '@dusk/runtime-skills':
         specifier: workspace:*
         version: link:../skills
+      '@dusk/runtime-test-runner':
+        specifier: workspace:*
+        version: link:../test-runner
       '@dusk/runtime-tool-scope':
         specifier: workspace:*
         version: link:../tool-scope
+      '@dusk/runtime-worktree':
+        specifier: workspace:*
+        version: link:../worktree
       yaml:
         specifier: ^2.5.0
         version: 2.8.2
