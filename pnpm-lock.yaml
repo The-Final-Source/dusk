@@ -105,12 +105,18 @@ importers:
       '@dusk/pre-tool-use':
         specifier: workspace:*
         version: link:../delivery/pre-tool-use
+      '@dusk/runtime-implement-checkpoint':
+        specifier: workspace:*
+        version: link:../runtime/implement-checkpoint
       '@dusk/runtime-orchestrator':
         specifier: workspace:*
         version: link:../runtime/orchestrator
       '@dusk/runtime-verifier':
         specifier: workspace:*
         version: link:../runtime/verifier
+      '@dusk/runtime-worktree':
+        specifier: workspace:*
+        version: link:../runtime/worktree
       yaml:
         specifier: ^2.5.0
         version: 2.8.2

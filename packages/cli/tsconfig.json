@@ -35,6 +35,12 @@
     },
     {
       "path": "../delivery/mcp-server"
+    },
+    {
+      "path": "../runtime/worktree"
+    },
+    {
+      "path": "../runtime/implement-checkpoint"
     }
   ]
 }

@@ -6,6 +6,8 @@ import { checkHook } from "./checkHook.js";
 import { listRoles, renderRoles } from "./roles.js";
 import { listSkills, renderSkills } from "./skills.js";
 import { runVerify } from "./verify.js";
+import { cleanupWorktreesCommand, gcCheckpointsCommand, gcDialogsCommand } from "./doctorP3.js";
+import { runImplementCli } from "./implement.js";
 import type { ConflictChoice } from "./settingsMerge.js";
 
 const HELP = `dusk — Intent Architecture CLI
@@ -17,8 +19,9 @@ Usage:
   dusk inspect <intent-path>  Hierarchical satisfaction, claim lists, test children, low-confidence supports
   dusk roles                  List the nine installed role files (memory, model, skill count)
   dusk skills                 Introspect installed role-bound skills, grouped by role
-  dusk doctor --check-hook    Verify the gate is installed (exit 0 ok / 2 config / 3 round-trip)
-                              add --repair to re-run the install for configuration issues
+  dusk implement <request>    Run the 9-step pipeline (mirror of dusk_implement); --resume <id> to continue
+  dusk doctor --check-hook    Verify the gate is installed (--repair to fix)
+  dusk doctor --cleanup-worktrees | --gc-implement-checkpoints | --gc-dialogs   Reap stale runtime state
   dusk --help                 Show this help
 `;
 
@@ -31,7 +34,12 @@ const HELP_TEXT: Record<string, string> = {
     "dusk roles\n  Enumerate the nine installed .claude/agents/dusk-*.md role files with each\n  role's declared memory scope, model, and skill count.\n  Flags: (none)\n  Example: dusk roles\n",
   skills:
     "dusk skills\n  Enumerate installed role-bound skills grouped by role, matching the layout\n  under .claude/skills/dusk/<role>/.\n  Flags: (none)\n  Example: dusk skills\n",
+  implement:
+    "dusk implement <request>\n  Run the 9-step implementation pipeline (mirror of the dusk_implement MCP tool;\n  primarily for debugging). Runs the Verifier on the ambient Claude Code model.\n  Flags: --resume <bead-id|resume-token>   resume a paused or L3-frozen run\n  Example: dusk implement \"add cursor decoding for paginated lists\"\n  Example: dusk implement --resume rt_20260610120000001\n",
 };
+
+const DOCTOR_HELP =
+  "dusk doctor [--check-hook [--repair] | --cleanup-worktrees | --gc-implement-checkpoints | --gc-dialogs]\n  --check-hook                 verify the PreToolUse gate is installed (--repair to fix)\n  --cleanup-worktrees          reap orphaned dusk/<bead-id> worktrees (idempotent)\n  --gc-implement-checkpoints   reap pause/resume checkpoints older than 24h\n  --gc-dialogs                 reap dialog directories older than 24h\n  Example: dusk doctor --cleanup-worktrees\n";
 
 const wantsHelp = (args: string[]): boolean => args.includes("--help") || args.includes("-h");
 
@@ -97,14 +105,39 @@ async function run(command: string | undefined, rest: string[]): Promise<number>
       process.stdout.write(renderSkills(listSkills(root)));
       return 0;
     }
+    case "implement": {
+      if (wantsHelp(rest) || rest.length === 0) {
+        process.stdout.write(HELP_TEXT.implement);
+        return rest.length === 0 && !wantsHelp(rest) ? 1 : 0;
+      }
+      const result = await runImplementCli(root, rest);
+      process.stdout.write(result.text);
+      return result.ok ? 0 : 1;
+    }
     case "doctor": {
-      if (wantsHelp(rest)) return process.stdout.write("dusk doctor --check-hook [--repair]\n"), 0;
+      if (wantsHelp(rest)) return process.stdout.write(DOCTOR_HELP), 0;
+      const clock = { now: () => Date.now() };
       if (rest.includes("--check-hook")) {
         const result = checkHook(root, { repair: rest.includes("--repair") });
         process.stdout.write(`doctor --check-hook: ${result.message}\n`);
         return result.exitCode;
       }
-      process.stdout.write("doctor: pass --check-hook (full project checks land in later phases)\n");
+      if (rest.includes("--cleanup-worktrees")) {
+        const result = cleanupWorktreesCommand(root);
+        process.stdout.write(result.text);
+        return result.exitCode;
+      }
+      if (rest.includes("--gc-implement-checkpoints")) {
+        const result = gcCheckpointsCommand(root, clock);
+        process.stdout.write(result.text);
+        return result.exitCode;
+      }
+      if (rest.includes("--gc-dialogs")) {
+        const result = gcDialogsCommand(root, clock);
+        process.stdout.write(result.text);
+        return result.exitCode;
+      }
+      process.stdout.write(DOCTOR_HELP);
       return 0;
     }
     default:

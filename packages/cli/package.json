@@ -31,7 +31,9 @@
     "@dusk/pre-tool-use": "workspace:*",
     "@dusk/runtime-orchestrator": "workspace:*",
     "@dusk/runtime-verifier": "workspace:*",
-    "@dusk/mcp-server": "workspace:*"
+    "@dusk/mcp-server": "workspace:*",
+    "@dusk/runtime-worktree": "workspace:*",
+    "@dusk/runtime-implement-checkpoint": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

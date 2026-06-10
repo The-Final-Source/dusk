@@ -12,6 +12,8 @@ import {
   type Verdict,
 } from "@dusk/core-schema";
 import { verifyIntent } from "@dusk/runtime-verifier";
+import { activeBeadSummaries, getActiveRun, type BeadSummary } from "@dusk/runtime-orchestrator";
+import { listCheckpoints } from "@dusk/runtime-implement-checkpoint";
 
 import type { DuskContext } from "./context.js";
 
@@ -190,17 +192,30 @@ export function listTracesQuery(ctx: DuskContext, opts: { limit?: number } = {})
   return { success: true, value: { traces: limited } };
 }
 
-export function listBeadsQuery(_ctx: DuskContext): RuntimeResult<{ beads: never[] }> {
-  return { success: true, value: { beads: [] } };
+// ---- dusk_list_beads (14.1): populated during an in-flight pipeline ----------
+
+export function listBeadsQuery(_ctx: DuskContext): RuntimeResult<{ beads: BeadSummary[] }> {
+  // Reads the in-process active-run registry; empty when no pipeline is in flight.
+  return { success: true, value: { beads: activeBeadSummaries() } };
 }
 
-export function getBeadQuery(_ctx: DuskContext, beadId: string): RuntimeResult<{ id: string; status: string; current_step: number | null; memory_summary: string; verdict_history: never[] }> {
-  return {
-    success: true,
-    value: { id: beadId, status: "unknown", current_step: null, memory_summary: "", verdict_history: [] },
-  };
+export function getBeadQuery(_ctx: DuskContext, beadId: string): RuntimeResult<{ id: string; status: string; current_step: string | null; branch: string | null; started_at: string | null }> {
+  const bead = getActiveRun()?.beads.get(beadId);
+  if (!bead) return { success: true, value: { id: beadId, status: "unknown", current_step: null, branch: null, started_at: null } };
+  return { success: true, value: { id: bead.id, status: bead.status, current_step: bead.current_step, branch: bead.branch, started_at: bead.started_at } };
 }
 
-export function listCheckpointsQuery(_ctx: DuskContext): RuntimeResult<{ checkpoints: never[] }> {
-  return { success: true, value: { checkpoints: [] } };
+// ---- dusk_list_implement_checkpoints (14.2): outstanding paused checkpoints ----
+
+export type CheckpointEntry = { resume_token: string; original_request: string; created_at: string; last_touched_at: string; unresolved_refs: string[] };
+
+export function listCheckpointsQuery(ctx: DuskContext): RuntimeResult<{ checkpoints: CheckpointEntry[] }> {
+  const checkpoints = listCheckpoints(ctx.rootDir).map(({ token, checkpoint }) => ({
+    resume_token: token,
+    original_request: checkpoint.original_request,
+    created_at: checkpoint.created_at,
+    last_touched_at: checkpoint.last_touched_at,
+    unresolved_refs: checkpoint.unresolved_refs,
+  }));
+  return { success: true, value: { checkpoints } };
 }
