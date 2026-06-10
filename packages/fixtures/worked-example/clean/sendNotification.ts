@@ -35,6 +35,7 @@ function normalizeUserIds(target: NotificationTarget): string[] {
 // @intent sync/pubsub-on-create [event-per-insert]
 // @intent observability/structured-logging [structured-payloads]
 // @intent error-handling/observable-failures [catch-log-continue]
+// @intent api/idempotency-on-writes
 export async function sendNotification(
   db: Db,
   pubsub: PgPubSub,
