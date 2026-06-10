@@ -3,3 +3,8 @@ export * from "./intent.js";
 export * from "./migration.js";
 export * from "./load.js";
 export * from "./config.js";
+export * from "./verdict.js";
+export * from "./duskError.js";
+export * from "./result.js";
+export * from "./subAgentTrace.js";
+export * from "./verifierSeam.js";
