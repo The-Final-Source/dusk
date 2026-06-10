@@ -120,7 +120,7 @@
   - **Variant B (recovery ladder).** Drive the two-intent fixture to lifetime exhaustion via the scripted-verdict Verifier double → L1 partial commit merges cleanly. Then drive the zero-satisfiable fixture → L2 `bead_intent_revision_needed` with `intent-proposal.yaml`. (Zero-model.)
   - **Variant C (cancel).** Start the Primary run; `dusk_cancel` mid-flight → `CancelResult` partitioning correct. (Real git + injected drain delay; zero-model via double for in-flight bead.)
   Acceptance: plan Phase-3 phase-landing smoke test (plan lines ~577–588); Test: one e2e Vitest scenario per variant in a temp repo, gated as the archival pre-requisite.
-- [ ] 15.4 **Verify the Cohesive landing criteria** (archival gate, plan lines ~590–600):
+- [x] 15.4 **Verify the Cohesive landing criteria** (archival gate, plan lines ~590–600):
   - All P3-T1..T29 (incl. T12b, T12c) pass — control-flow via the scripted-verdict double (deterministic, no model); verdict-correctness legs against the real frontier model at `temperature: 0` with `N=3, threshold ≥2/3`. Real git (worktrees + rebase), real Vitest.
   - The Primary smoke scenario and all three variants are green.
   - `dusk_implement`, `dusk_cancel`, `dusk_resolve_livelock`, `/dusk-test`, `dusk implement --resume`, and the `dusk implement` CLI mirror are operable with working `--help`; `dusk doctor --cleanup-worktrees` reaps orphans.
