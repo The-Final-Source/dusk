@@ -1,5 +1,5 @@
 import { execFileSync, spawn as spawnChild } from "node:child_process";
-import { existsSync, symlinkSync } from "node:fs";
+import { existsSync, readdirSync, symlinkSync } from "node:fs";
 import { join, relative } from "node:path";
 
 import { duskError, verifierEvidenceMaxLines, type VerifierFactory } from "@dusk/core-schema";
@@ -152,8 +152,15 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
     const run = getActiveRun();
     const bead = run ? [...run.beads.values()].find((b) => IN_FLIGHT.has(b.status)) : undefined;
     if (!bead) return null;
-    const worktree = worktreePathFor(root, bead.id);
-    if (!existsSync(worktree)) return null;
+    let worktree = worktreePathFor(root, bead.id);
+    if (!existsSync(worktree)) {
+      // Non-first beads of a worktree GROUP run in the group's worktree (named
+      // after its first bead) — fall back to the single active group worktree.
+      const base = join(root, ".ia/runtime/worktrees");
+      const dirs = existsSync(base) ? readdirSync(base).filter((d) => d.startsWith("bd_")) : [];
+      if (dirs.length !== 1) return null;
+      worktree = join(base, dirs[0]);
+    }
     const pkgDir = packageRel ? join(worktree, packageRel) : worktree;
     return existsSync(pkgDir) ? pkgDir : null;
   };

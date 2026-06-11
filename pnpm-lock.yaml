@@ -132,6 +132,9 @@ importers:
       '@dusk/runtime-orchestrator':
         specifier: workspace:*
         version: link:../runtime/orchestrator
+      '@dusk/runtime-test-runner':
+        specifier: workspace:*
+        version: link:../runtime/test-runner
       '@dusk/runtime-verifier':
         specifier: workspace:*
         version: link:../runtime/verifier
