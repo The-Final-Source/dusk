@@ -20,6 +20,11 @@ describe("CreateUserSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rejects a whitespace-only name", () => {
+    const result = CreateUserSchema.safeParse({ name: "   ", email: "alice@example.com" });
+    expect(result.success).toBe(false);
+  });
+
   it("rejects an email without a domain part", () => {
     const result = CreateUserSchema.safeParse({ name: "Alice", email: "alice@" });
     expect(result.success).toBe(false);

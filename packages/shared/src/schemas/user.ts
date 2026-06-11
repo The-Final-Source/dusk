@@ -8,7 +8,7 @@ export type Role = z.infer<typeof RoleSchema>;
 // @intent shared/schemas/email-field [reject-invalid-email-format]
 export const CreateUserSchema = z.object({
   // @intent shared/schemas/name-field [reject-empty-or-whitespace-name]
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().min(1, "Name is required"),
   // @intent shared/schemas/email-field [reject-invalid-email-format]
   email: z.string().email("Invalid email address"),
 });
