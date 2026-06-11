@@ -3,5 +3,5 @@ class: verification
 ground_truth_outcome: verifier_reject
 ground_truth_defect_loc:
   file: src.ts
-  line: 8
+  line: 9
 description: "Claims exactly-one event per inserted row but emits two per row."

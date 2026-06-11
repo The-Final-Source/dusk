@@ -4,6 +4,7 @@ export function deliver(payload: string): string {
   try {
     push(payload);
   } catch (error) {
+    // @intent error-handling/catch-log-continue [catch-log-continue]
     throw error; // SEEDED: verification/catch-log-rethrow
   }
   // @intent error-handling/catch-log-continue [catch-log-continue]

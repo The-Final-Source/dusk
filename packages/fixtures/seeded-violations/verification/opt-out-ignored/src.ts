@@ -4,6 +4,7 @@ export function pushAll(users: Array<{ id: string; pushOptOut: boolean }>): numb
   let sent = 0;
   // @intent notifications/respect-opt-out [respect-opt-out]
   for (const user of users) {
+    // @intent notifications/respect-opt-out [respect-opt-out]
     sent += push(user.id); // SEEDED: verification/opt-out-ignored
   }
   // @intent notifications/respect-opt-out [respect-opt-out]

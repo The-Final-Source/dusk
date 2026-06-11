@@ -729,7 +729,7 @@
       "ground_truth_outcome": "verifier_reject",
       "ground_truth_defect_loc": {
         "file": "src.ts",
-        "line": 7
+        "line": 8
       },
       "description": "Claims catch-log-continue but rethrows, aborting persistence.",
       "dir": "verification/catch-log-rethrow",
@@ -882,7 +882,7 @@
       "ground_truth_outcome": "verifier_reject",
       "ground_truth_defect_loc": {
         "file": "src.ts",
-        "line": 7
+        "line": 8
       },
       "description": "Claims respect-opt-out but pushes to every user including opted-out ones.",
       "dir": "verification/opt-out-ignored",
@@ -927,7 +927,7 @@
       "ground_truth_outcome": "verifier_reject",
       "ground_truth_defect_loc": {
         "file": "src.ts",
-        "line": 8
+        "line": 9
       },
       "description": "Claims exactly-one event per inserted row but emits two per row.",
       "dir": "verification/quantifier-double-publish",
