@@ -7,7 +7,7 @@ import { readIntentFile } from "@dusk/core-parser";
 import { TENSION_CLASSIFICATIONS } from "@dusk/core-schema";
 import { readRuntimeEnv, spawnSubAgent, type TaskRunner } from "@dusk/runtime-orchestrator";
 import { claudeCodeAvailable, claudeCodeModelClient } from "@dusk/runtime-verifier";
-import { createTempRepo, readTraces, type TempRepo } from "@dusk/test-harness";
+import { createTempRepo, isTransportError, readTraces, type TempRepo } from "@dusk/test-harness";
 
 import { createAuthorRuntime, type AuthorRuntime } from "./runtime.js";
 import { makeModelAuthorGenerator } from "./modelGenerator.js";
@@ -45,9 +45,10 @@ function makeRealRuntime(repo: TempRepo): AuthorRuntime {
   cpSync(join(cliAssets, "skills", "dusk"), join(repo.dir, ".claude/skills/dusk"), { recursive: true });
   const client = claudeCodeModelClient({ model: MODEL });
   const taskRunner: TaskRunner = async (call) => {
-    // One retry on ANY thrown completion error (timeout / spawn failure / non-zero
-    // exit). A throw carries no model content by construction, so retrying it can
-    // never re-roll content evidence — only recover a null observation.
+    // One retry on TRANSPORT-CLASSIFIED errors only (CLI timeout/exit, spawn
+    // errno, malformed JSON envelope — see isTransportError). A transport throw
+    // carries no model content, so the retry recovers a null observation;
+    // anything else is a bug and propagates immediately.
     let lastError: unknown;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
@@ -61,6 +62,7 @@ function makeRealRuntime(repo: TempRepo): AuthorRuntime {
           costUsd: completion.usage.costUsd,
         };
       } catch (error) {
+        if (!isTransportError(error)) throw error;
         lastError = error;
       }
     }
@@ -81,13 +83,14 @@ function makeRealRuntime(repo: TempRepo): AuthorRuntime {
 const tracesText = (repo: TempRepo): string => JSON.stringify(readTraces(repo.dir));
 
 /**
- * Per-attempt catch policy: a TRANSPORT throw consumes one of the N attempts as
- * a non-success (it is a null observation, outside the content evidence); a
- * vitest ASSERTION failure is a deterministic-invariant violation and fails the
- * suite outright — it must never be swallowed into the 2/3 threshold.
+ * Per-attempt catch policy (protocol amendment, arch-board D4 + S7): ONLY a
+ * transport-classified throw consumes one of the N attempts as a non-success
+ * (it is a null observation, outside the content evidence). Everything else —
+ * vitest assertion failures (deterministic invariants sit outside the 2/3
+ * threshold) and programming bugs alike — fails the suite outright.
  */
-const rethrowAssertions = (error: unknown): void => {
-  if (error instanceof Error && error.name === "AssertionError") throw error;
+const consumeOnlyTransport = (error: unknown): void => {
+  if (!isTransportError(error)) throw error;
 };
 
 describe.skipIf(!RUN_CORRECTNESS)("author flow — real model (temperature 0, N=3 ≥2/3)", () => {
@@ -112,7 +115,7 @@ describe.skipIf(!RUN_CORRECTNESS)("author flow — real model (temperature 0, N=
         expect(traces.every((t) => t.role === "author")).toBe(true);
         if (classified) successes += 1;
       } catch (error) {
-        rethrowAssertions(error); // invariant violations fail outright; transport throws consume the attempt
+        consumeOnlyTransport(error); // only transport throws consume the attempt
       } finally {
         repo.cleanup();
       }
@@ -146,7 +149,7 @@ describe.skipIf(!RUN_CORRECTNESS)("author flow — real model (temperature 0, N=
         expect(tracesText(repo)).not.toContain("packages/intents/canonical");
         if (greenfield) successes += 1;
       } catch (error) {
-        rethrowAssertions(error); // invariant violations fail outright; transport throws consume the attempt
+        consumeOnlyTransport(error); // only transport throws consume the attempt
       } finally {
         repo.cleanup();
       }
@@ -203,7 +206,8 @@ describe.skipIf(!RUN_CORRECTNESS)("author flow — real model (temperature 0, N=
 async function driveToCommit(runtime: AuthorRuntime, repo: TempRepo, request: string): Promise<boolean> {
   try {
     return await driveToCommitInner(runtime, repo, request);
-  } catch {
+  } catch (error) {
+    if (!isTransportError(error)) throw error; // bugs fail loudly; transport consumes the attempt
     return false;
   }
 }

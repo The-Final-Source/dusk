@@ -24,13 +24,9 @@ function nearestExistingAncestor(ref: string, index: DerivedIndex): string | nul
   return null;
 }
 
-function describeRef(ref: string, request: string | undefined, index: DerivedIndex): string {
+function describeRef(ref: string, request: string, index: DerivedIndex): string {
   const lines: string[] = [];
-  lines.push(
-    request
-      ? `The request "${request}" references an intent "${ref}" that doesn't exist.`
-      : `An intent "${ref}" is referenced but doesn't exist.`,
-  );
+  lines.push(`The request "${request}" references an intent "${ref}" that doesn't exist.`);
 
   const ancestor = nearestExistingAncestor(ref, index);
   if (ancestor) {
@@ -61,8 +57,14 @@ function describeRef(ref: string, request: string | undefined, index: DerivedInd
   return lines.join(" ");
 }
 
-/** Build the enriched Stage-1 framing seed for the `ImplementCheckpoint` (design D4 signature). */
-export function enrichDialogSeed(unresolvedRefs: string[], snapshot: DerivedIndex, request?: string): string {
+/**
+ * Build the enriched Stage-1 framing seed for the `ImplementCheckpoint`.
+ * `request` is REQUIRED (arch-board 2026-06-11 S6, compiler-enforced): the
+ * documented framing embeds the originating request, the snapshot cannot carry
+ * it, and an optional parameter's only possible activation would be a caller
+ * forgetting it and silently shipping degraded framing.
+ */
+export function enrichDialogSeed(unresolvedRefs: string[], snapshot: DerivedIndex, request: string): string {
   return [...unresolvedRefs]
     .sort()
     .map((ref) => describeRef(ref, request, snapshot))

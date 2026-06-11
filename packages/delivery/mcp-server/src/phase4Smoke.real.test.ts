@@ -15,7 +15,7 @@ import {
 import { createAuthorRuntime, makeModelAuthorGenerator, readDialogState, type AuthorRuntime } from "@dusk/runtime-author";
 import { clearSnapshot, readRuntimeEnv, runImplement, spawnSubAgent, type RunImplementDeps, type TaskRunner } from "@dusk/runtime-orchestrator";
 import { claudeCodeAvailable, claudeCodeModelClient } from "@dusk/runtime-verifier";
-import { createMockGitWorktree, makeScriptedVerdictFactory, makeVitestJsonReportString, type MockGitWorktree } from "@dusk/test-harness";
+import { createMockGitWorktree, isTransportError, makeScriptedVerdictFactory, makeVitestJsonReportString, type MockGitWorktree } from "@dusk/test-harness";
 import { describe, expect, test } from "vitest";
 
 /**
@@ -42,14 +42,16 @@ const role = (slug: string, memory: string): string =>
 function buildRealAuthorRuntime(repoDir: string): AuthorRuntime {
   const client = claudeCodeModelClient({ model: MODEL });
   const taskRunner: TaskRunner = async (call) => {
-    // One retry on ANY thrown completion error — a throw carries no model
-    // content by construction, so a retry recovers a null observation only.
+    // One retry on TRANSPORT-CLASSIFIED errors only (see isTransportError) — a
+    // transport throw carries no model content, so the retry recovers a null
+    // observation; anything else is a bug and propagates immediately.
     let lastError: unknown;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
         const completion = await client.complete({ system: "", user: call.prompt, temperature: 0 });
         return { output: completion.text, model: completion.usage.model, promptTokens: completion.usage.promptTokens, completionTokens: completion.usage.completionTokens, latencyMs: completion.usage.latencyMs, costUsd: completion.usage.costUsd };
       } catch (error) {
+        if (!isTransportError(error)) throw error;
         lastError = error;
       }
     }
@@ -159,9 +161,9 @@ async function runPrimaryOnce(iteration: number): Promise<boolean> {
     const again = await runImplement({ resumeToken: token }, implementDeps(resumeSession, 3_000));
     return !again.success && again.error.kind === "implement_resume_token_expired";
   } catch (error) {
-    // Transport throws consume the attempt (null observation); a vitest
-    // assertion failure is a deterministic invariant violation — fail outright.
-    if (error instanceof Error && error.name === "AssertionError") throw error;
+    // ONLY transport throws consume the attempt (null observation); assertion
+    // failures and programming bugs alike fail the suite outright (D4 + S7).
+    if (!isTransportError(error)) throw error;
     return false;
   } finally {
     clearSnapshot(session);

@@ -10,3 +10,4 @@ export * from "./vitestReport.js";
 export * from "./authorFixture.js";
 export * from "./dialogFixtures.js";
 export * from "./unresolvedIntentFixture.js";
+export * from "./transportError.js";
