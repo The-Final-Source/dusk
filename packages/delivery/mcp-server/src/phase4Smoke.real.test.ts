@@ -42,6 +42,8 @@ const role = (slug: string, memory: string): string =>
 function buildRealAuthorRuntime(repoDir: string): AuthorRuntime {
   const client = claudeCodeModelClient({ model: MODEL });
   const taskRunner: TaskRunner = async (call) => {
+    // One retry on ANY thrown completion error — a throw carries no model
+    // content by construction, so a retry recovers a null observation only.
     let lastError: unknown;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
@@ -156,8 +158,11 @@ async function runPrimaryOnce(iteration: number): Promise<boolean> {
     if (!resumed.success || resumed.value.commits.length < 1) return false;
     const again = await runImplement({ resumeToken: token }, implementDeps(resumeSession, 3_000));
     return !again.success && again.error.kind === "implement_resume_token_expired";
-  } catch {
-    return false; // transport failure consumes the attempt
+  } catch (error) {
+    // Transport throws consume the attempt (null observation); a vitest
+    // assertion failure is a deterministic invariant violation — fail outright.
+    if (error instanceof Error && error.name === "AssertionError") throw error;
+    return false;
   } finally {
     clearSnapshot(session);
     clearSnapshot(resumeSession);

@@ -149,7 +149,15 @@ export function createDuskMcpServer(ctx: DuskContext, write?: WriteSurfaceDeps, 
       {
         description: "Resolve a Test-Verifier livelock (accept_test_as_is | modify_triple | escalate). modify_triple opens a scoped Author dialog (Phase-4 contract; the Phase-3 inline payload form is rejected).",
         // `payload` stays declared ONLY so Phase-3-form callers reach the typed config_invalid rejection instead of a transport error.
-        inputSchema: { bead_id: z.string(), verb: z.enum(["accept_test_as_is", "modify_triple", "escalate"]), dialog_init: z.record(z.unknown()).optional(), payload: z.record(z.unknown()).optional() },
+        inputSchema: {
+          bead_id: z.string(),
+          verb: z.enum(["accept_test_as_is", "modify_triple", "escalate"]),
+          dialog_init: z.record(z.unknown()).optional(),
+          payload: z
+            .record(z.unknown())
+            .optional()
+            .describe("REMOVED in Phase 4 — passing any value returns DuskError{kind: config_invalid}; use dialog_init instead"),
+        },
       },
       (args) => guarded(() => duskResolveLivelock(write, args as never))(),
     );

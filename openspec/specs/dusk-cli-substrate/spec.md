@@ -135,6 +135,14 @@ The `dusk` CLI SHALL gain `dusk author <request>` (mirrors `dusk_author_start`),
 - **AND** prints the next question (or `finalize_ready`)
 - **AND** exits 0
 
+#### Scenario: Free-text pyramid picks are derived deterministically (CLI has no payload channel)
+
+The CLI mirror carries no structured `payload`, so when the Stage-4 pyramid pick is the pending question and no `payload.layers` is present, the pick SHALL be derived deterministically from the response text (`parseLayersFromText` — pure string rules, no model): named layers and bare stems ("unit" for `unit-tests`) are picked; a mention governed by a preceding negator in the same clause ("no unit tests, just integration") is EXCLUDED; an explicit decline ("none", "no test children", "skip") yields no children; an ambiguous turn that names no layer and is no decline re-asks the pyramid question instead of silently recording an empty pick. Structured `payload.layers` (the MCP surface — see `author-mcp-surface`) ALWAYS takes precedence over text. (Arch-board 2026-06-11 D5.)
+
+- **WHEN** `dusk author --continue dlg_... "no unit tests, just integration"` is invoked at the pyramid pick
+- **THEN** exactly the `integration-tests` child is drafted
+- **AND** a follow-up turn that names no layer and is not a decline re-asks the pick
+
 #### Scenario: `dusk author --finalize` prints the created intent paths
 
 - **WHEN** `dusk author --finalize dlg_...` is invoked on a finalize-ready dialog

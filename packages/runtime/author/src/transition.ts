@@ -51,6 +51,7 @@ export type QuestionSpec =
   | { type: "reciprocal_edge"; source: string; target: string }
   | { type: "draft_confirmation" }
   | { type: "stage45_bounce"; violation: DraftViolation }
+  | { type: "pyramid_pick_retry"; suffixes: string[] }
   | { type: "scoped_triple_edit" };
 
 export type TransitionOutcome = { kind: "ask"; stage: AuthorStage; question: QuestionSpec } | { kind: "finalize_ready" };
@@ -75,11 +76,49 @@ export function pyramidPending(state: DialogState, suffixes: string[] = [...DEFA
   return impl !== undefined && impl.pyramid_picked === undefined;
 }
 
-/** Derive a layer pick from free text (the CLI mirror has no structured payload).
- *  Layer names (or their bare stems) mentioned in the text are picked; "none"/"no"/"skip" picks nothing. */
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const NEGATORS = ["no", "not", "none", "without", "skip", "except", "don't", "dont", "don’t"];
+
+/**
+ * Derive a layer pick from free text (the CLI mirror has no structured payload
+ * channel; structured `payload.layers` always wins over this). Deterministic
+ * pure string rules, no model:
+ *  - a layer name or its bare stem ("unit" for "unit-tests") mentioned in the
+ *    text is picked;
+ *  - a mention governed by a preceding negator in the same clause ("no unit
+ *    tests", "skip the e2e suite", "except integration") is EXCLUDED — so
+ *    "no unit tests, just integration" picks ["integration-tests"];
+ *  - suffix stems are regex-escaped (pyramid suffixes are user-configurable).
+ */
 export function parseLayersFromText(text: string, suffixes: string[]): string[] {
   const lower = text.toLowerCase();
-  return suffixes.filter((s) => lower.includes(s) || new RegExp(`\\b${s.replace(/-tests$/, "")}\\b`).test(lower));
+  // Clauses are negation scopes: a negator only governs mentions up to the next
+  // clause boundary (",", ";", " but ", " just ", " only ").
+  const clauses = lower.split(/[,;]| but | just | only /);
+  const picked = new Set<string>();
+  for (const clause of clauses) {
+    const negated = NEGATORS.some((n) => new RegExp(`(?:^|\\s)${escapeRegExp(n)}(?:\\s|$)`).test(clause));
+    for (const suffix of suffixes) {
+      const stem = suffix.replace(/-tests$/, "");
+      // Lookarounds instead of \b: configurable stems may end in non-word chars
+      // (e.g. "c++"), where \b never matches.
+      const mentioned =
+        clause.includes(suffix.toLowerCase()) || new RegExp(`(?<!\\w)${escapeRegExp(stem.toLowerCase())}(?!\\w)`).test(clause);
+      if (!mentioned) continue;
+      if (negated) picked.delete(suffix);
+      else picked.add(suffix);
+    }
+  }
+  return suffixes.filter((s) => picked.has(s));
+}
+
+/** Whether free text explicitly declines test children ("none", "no tests", "skip"). */
+export function isExplicitLayerDecline(text: string, suffixes: string[]): boolean {
+  const lower = text.toLowerCase();
+  if (!NEGATORS.some((n) => new RegExp(`(?:^|\\s)${escapeRegExp(n)}(?:\\s|$)`).test(lower))) return false;
+  // A decline either names no layer at all, or negates every layer it names.
+  return parseLayersFromText(text, suffixes).length === 0;
 }
 
 /** The first draft slot (Stage-2 scaffold), created on demand. */
@@ -160,9 +199,13 @@ export function transition(state: DialogState, response: ClassifiedResponse, opt
       const scoped = scopedDraft(next);
 
       if (response.kind === "pick_pyramid_layers") {
-        const layers = Array.isArray(response.payload?.layers)
-          ? (response.payload.layers as string[])
-          : parseLayersFromText(response.text, suffixes);
+        const structured = Array.isArray(response.payload?.layers);
+        const layers = structured ? (response.payload!.layers as string[]) : parseLayersFromText(response.text, suffixes);
+        // A free-text turn that names no layer AND is not an explicit decline is
+        // ambiguous (likely misrouted) — re-ask rather than silently recording [].
+        if (!structured && layers.length === 0 && !isExplicitLayerDecline(response.text, suffixes)) {
+          return { nextState: next, outcome: ask(4, { type: "pyramid_pick_retry", suffixes }) };
+        }
         const impl = implDraft(next, suffixes);
         if (impl?.id) {
           const children = layers.filter((l) => suffixes.includes(l)).map((layer) => pyramidChild(impl, layer));

@@ -27,7 +27,7 @@ The MCP server SHALL expose `dusk_author_start({ request: string, entry_mode?: A
 
 ### Requirement: `dusk_author_continue({dialog_id, response, payload?})` advances the dialog one turn
 
-The MCP server SHALL expose `dusk_author_continue({ dialog_id: string, response: string, payload?: object })` that loads the existing `DialogState`, runs one transition per §author-five-stage-flow, persists the new state, and returns either `{ stage, next_question }` (more turns required) or `{ finalize_ready: true }` (Stage 5 reached and validated). The `payload?` field carries optional typed data for structured user choices (e.g., a list of pyramid layer ids). (RFC §10.1; design D1.)
+The MCP server SHALL expose `dusk_author_continue({ dialog_id: string, response: string, payload?: object })` that loads the existing `DialogState`, runs one transition per §author-five-stage-flow, persists the new state, and returns either `{ stage, next_question }` (more turns required) or `{ finalize_ready: true }` (Stage 5 reached and validated). The `payload?` field carries optional typed data for structured user choices (e.g., a list of pyramid layer ids) and ALWAYS takes precedence over free-text derivation; when no structured pick is supplied the deterministic free-text contract in `dusk-cli-substrate` ("Free-text pyramid picks are derived deterministically") applies. (RFC §10.1; design D1.)
 
 #### Scenario: Continue advances Stage 1 → Stage 2 on framing confirmation
 

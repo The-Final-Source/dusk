@@ -5,7 +5,11 @@ TBD - created by archiving change phase-4-intent-authoring. Update Purpose after
 ## Requirements
 ### Requirement: The `DialogState` schema is the frozen cross-proposal interface
 
-The schema MUST live in `@dusk/core-schema` (so Phase 5's audit imports it without inverting the dep graph) and carry exactly: `{ schema_version: 1, dialog_id, request, current_stage: 1 | 2 | 3 | 4 | "4.5" | 5, transcript: TranscriptEntry[], intents_drafted: Intent[], created_at, last_touched_at }` where `TranscriptEntry = { role: "author" | "user", content, stage, at }`. The `intents_drafted[]` accumulates the in-progress draft and is only schema-validated at Stage 4.5; the `transcript[]` is the audit-reachable record of human-Author negotiation. (RFC §5, §10.1; design D2, D9.)
+The schema MUST live in `@dusk/core-schema` (so Phase 5's audit imports it without inverting the dep graph) and carry exactly: `{ schema_version: 1, dialog_id, request, current_stage: 1 | 2 | 3 | 4 | "4.5" | 5, transcript: TranscriptEntry[], intents_drafted: DraftIntent[], created_at, last_touched_at }` where `TranscriptEntry = { role: "author" | "user", content, stage, at }`. The `intents_drafted[]` accumulates the in-progress draft and is only schema-validated at Stage 4.5; the `transcript[]` is the audit-reachable record of human-Author negotiation. (RFC §5, §10.1; design D2, D9; arch-board 2026-06-11 D2.)
+
+**`DraftIntent` (the in-progress draft shape).** A strict `Intent[]` cannot represent the violations Stage 4.5 exists to bounce (out-of-closed-vocabulary antecedent predicates, `refines` relates_to kinds) nor a mid-dialog partial draft, so drafts use the relaxed `DraftIntentSchema`: every intent field optional, antecedent predicates and `relates_to` kinds as free strings, PLUS six optional Author bookkeeping fields — `tensions_surfaced`, `tension_resolutions`, `practice_scaffold`, `pyramid_picked`, `reciprocal_resolved`, `in_place_edit`. Guarantees: bookkeeping is stripped (`toIntentRaw`/finalize) before any intent file is written — no Author control-state ever leaks into `.ia/intents/`; the top-level eight-field `DialogState` list above is unchanged and remains the frozen seam; Phase 5 MUST parse drafts via `DraftIntentSchema` from `@dusk/core-schema`, never the strict `IntentSchema`.
+
+**Audit mode recovery.** Phase 5 recovers a dialog's entry mode from disk as follows: a draft carrying `in_place_edit` ⇒ `scoped_triple_edit`; otherwise `full` and `l2_recovery` dialogs converge after Stage 3 and are NOT distinguished on disk (the Stage-3 author turn's proposal content is the only trace of an L2 origin).
 
 #### Scenario: DialogState shape parses against the Zod schema
 
@@ -27,7 +31,7 @@ The schema MUST live in `@dusk/core-schema` (so Phase 5's audit imports it witho
 
 ### Requirement: The disk format is YAML frontmatter + Markdown transcript with deterministic round-trip
 
-The dialog state SHALL be persisted as YAML frontmatter (`dialog_id`, `request`, `current_stage`, `created_at`, `last_touched_at`) followed by Markdown sections per design D2: `## Intents drafted` (YAML-encoded list of partial Intents), `## Transcript` containing per-turn `## Turn N` sub-sections with role/stage headers and content. Parse-then-serialize SHALL be byte-identical. (Design D2.)
+The dialog state SHALL be persisted as YAML frontmatter (`dialog_id`, `request`, `current_stage`, `created_at`, `last_touched_at`) followed by Markdown sections per design D2: `## Intents drafted` (YAML-encoded list of partial `DraftIntent`s), `## Transcript` containing per-turn `## Turn N` sub-sections with role/stage headers and content. Parse-then-serialize SHALL be byte-identical. (Design D2.)
 
 #### Scenario: A populated dialog round-trips byte-identically
 

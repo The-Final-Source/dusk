@@ -61,3 +61,26 @@ export function findIllegalNegation(slot: Slot, value: string): NegationFinding 
   }
   return null;
 }
+
+export type TripleNegationFinding = NegationFinding & { triple_id: string; path: string; message: string };
+
+/**
+ * The single orchestration of the negation rule over one triple's slots —
+ * shared by `loadIntent` (parser gate) and `validateMatrixPredicateNegation`
+ * (Author Stage 4.5) so the loop and the violation message exist exactly once.
+ */
+export function findTripleNegations(triple: { id: string; subject: string; predicate: string; object: string }): TripleNegationFinding[] {
+  const out: TripleNegationFinding[] = [];
+  for (const slot of ["subject", "predicate", "object"] as const) {
+    const finding = findIllegalNegation(slot, triple[slot]);
+    if (finding) {
+      out.push({
+        ...finding,
+        triple_id: triple.id,
+        path: `triples.${triple.id}.${slot}`,
+        message: `matrix-predicate negation "${finding.marker}" in the ${slot} slot of triple "${triple.id}"`,
+      });
+    }
+  }
+  return out;
+}

@@ -1,6 +1,6 @@
 import { parseIntent, type Intent, type ParseIntentOptions } from "@dusk/core-schema";
 
-import { findIllegalNegation } from "./negationDetector.js";
+import { findTripleNegations } from "./negationDetector.js";
 import { checkAntecedentGrammar } from "./antecedentGrammar.js";
 
 export type DecorationParseError = { kind: "decoration_parse_error"; message: string; hint: string; path: string };
@@ -25,16 +25,13 @@ export function loadIntent(raw: unknown, options: ParseIntentOptions = {}): Inte
 
   const triples = [...(intent.triples ?? []), ...(intent.consequent ?? [])];
   for (const triple of triples) {
-    for (const slot of ["subject", "predicate", "object"] as const) {
-      const finding = findIllegalNegation(slot, triple[slot]);
-      if (finding) {
-        errors.push({
-          kind: "decoration_parse_error",
-          path: `triples.${triple.id}.${slot}`,
-          message: `matrix-predicate negation "${finding.marker}" in the ${slot} slot of triple "${triple.id}"`,
-          hint: "use polarity: negative instead (see dusk/author/polarity-decision)",
-        });
-      }
+    for (const finding of findTripleNegations(triple)) {
+      errors.push({
+        kind: "decoration_parse_error",
+        path: finding.path,
+        message: finding.message,
+        hint: "use polarity: negative instead (see dusk/author/polarity-decision)",
+      });
     }
   }
 

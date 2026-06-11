@@ -45,7 +45,9 @@ function makeRealRuntime(repo: TempRepo): AuthorRuntime {
   cpSync(join(cliAssets, "skills", "dusk"), join(repo.dir, ".claude/skills/dusk"), { recursive: true });
   const client = claudeCodeModelClient({ model: MODEL });
   const taskRunner: TaskRunner = async (call) => {
-    // One retry for transient CLI transport failures (exit 1 with empty stderr).
+    // One retry on ANY thrown completion error (timeout / spawn failure / non-zero
+    // exit). A throw carries no model content by construction, so retrying it can
+    // never re-roll content evidence — only recover a null observation.
     let lastError: unknown;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
@@ -78,6 +80,16 @@ function makeRealRuntime(repo: TempRepo): AuthorRuntime {
 
 const tracesText = (repo: TempRepo): string => JSON.stringify(readTraces(repo.dir));
 
+/**
+ * Per-attempt catch policy: a TRANSPORT throw consumes one of the N attempts as
+ * a non-success (it is a null observation, outside the content evidence); a
+ * vitest ASSERTION failure is a deterministic-invariant violation and fails the
+ * suite outright — it must never be swallowed into the 2/3 threshold.
+ */
+const rethrowAssertions = (error: unknown): void => {
+  if (error instanceof Error && error.name === "AssertionError") throw error;
+};
+
 describe.skipIf(!RUN_CORRECTNESS)("author flow — real model (temperature 0, N=3 ≥2/3)", () => {
   test("3.3 / P4-T2 — Stage 2 surfaces the existing cursor intent via grep + classification; no vector substrate", async () => {
     let successes = 0;
@@ -99,8 +111,8 @@ describe.skipIf(!RUN_CORRECTNESS)("author flow — real model (temperature 0, N=
         expect(traces.length).toBeGreaterThan(0);
         expect(traces.every((t) => t.role === "author")).toBe(true);
         if (classified) successes += 1;
-      } catch {
-        // transport failure consumes this attempt (protocol: content threshold ≥2/3)
+      } catch (error) {
+        rethrowAssertions(error); // invariant violations fail outright; transport throws consume the attempt
       } finally {
         repo.cleanup();
       }
@@ -133,8 +145,8 @@ describe.skipIf(!RUN_CORRECTNESS)("author flow — real model (temperature 0, N=
         // No canonical-library lookup: prompts never reference the canonical tree.
         expect(tracesText(repo)).not.toContain("packages/intents/canonical");
         if (greenfield) successes += 1;
-      } catch {
-        // transport failure consumes this attempt
+      } catch (error) {
+        rethrowAssertions(error); // invariant violations fail outright; transport throws consume the attempt
       } finally {
         repo.cleanup();
       }

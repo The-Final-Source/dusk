@@ -1,16 +1,16 @@
 import { ANTECEDENT_PREDICATES, RELATES_TO_KINDS } from "@dusk/core-schema";
 
-import { findIllegalNegation, type NegationFinding } from "./negationDetector.js";
+import { findTripleNegations } from "./negationDetector.js";
 import { isResolvableReference } from "./antecedentGrammar.js";
 import { loadIntent, type IntentLoadResult } from "./loadIntent.js";
 
 /**
- * The four Stage-4.5 validation primitives (Phase-4 design D3). These are the
- * SAME rules the Phase-1 parser + PreToolUse gate enforce — thin named entry
- * points over the single-source implementations (`findIllegalNegation`, the
- * closed `ANTECEDENT_PREDICATES` / `RELATES_TO_KINDS` vocabularies,
- * `isResolvableReference`, `loadIntent`). The Author runtime imports these
- * directly; rule drift between Author and gate is impossible by construction.
+ * The four Stage-4.5 validation primitives (Phase-4 design D3) — named entry
+ * points ADDED in Phase 4 as thin adapters over the Phase-1 single-source
+ * implementations (`findTripleNegations`, the closed `ANTECEDENT_PREDICATES` /
+ * `RELATES_TO_KINDS` vocabularies, `isResolvableReference`, `loadIntent`).
+ * `loadIntent` (the parser gate) and these adapters share the SAME leaves, so
+ * rule drift between Author and gate is impossible by construction.
  */
 
 export type ValidationViolation = {
@@ -25,18 +25,11 @@ type RelatesToLike = { kind: string; target: string };
 
 /** Matrix/constituent negation rule over one triple's slots (RFC §3.1.1). */
 export function validateMatrixPredicateNegation(triple: TripleLike): ValidationViolation[] {
-  const out: ValidationViolation[] = [];
-  for (const slot of ["subject", "predicate", "object"] as const) {
-    const finding: NegationFinding | null = findIllegalNegation(slot, triple[slot]);
-    if (finding) {
-      out.push({
-        code: "matrix_predicate_negation",
-        path: `triples.${triple.id}.${slot}`,
-        message: `matrix-predicate negation "${finding.marker}" in the ${slot} slot of triple "${triple.id}"`,
-      });
-    }
-  }
-  return out;
+  return findTripleNegations(triple).map((finding) => ({
+    code: "matrix_predicate_negation" as const,
+    path: finding.path,
+    message: finding.message,
+  }));
 }
 
 /** Closed antecedent vocabulary + resolvable-reference objects for `compose: implies` (RFC §3.2.1). */

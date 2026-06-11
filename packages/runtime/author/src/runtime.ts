@@ -84,6 +84,8 @@ export function renderQuestion(spec: QuestionSpec, state: DialogState): string {
       const hint = spec.violation.skill_hint ? ` See skill dusk/author/${spec.violation.skill_hint}.` : "";
       return `Draft validation failed [${spec.violation.code}] at ${spec.violation.draft_id} → ${spec.violation.path}: ${spec.violation.message}.${hint} Revise the draft and confirm again.`;
     }
+    case "pyramid_pick_retry":
+      return `I couldn't read a test-pyramid pick from that. Which layers should I draft — ${spec.suffixes.join(", ")} — or "none" for no test children? (Structured callers reply with payload.layers.)`;
     case "scoped_triple_edit": {
       const draft = state.intents_drafted.find((d) => d.in_place_edit);
       const t = draft?.triples?.[0];
