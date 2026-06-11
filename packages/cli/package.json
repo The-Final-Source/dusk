@@ -35,7 +35,8 @@
     "@dusk/runtime-worktree": "workspace:*",
     "@dusk/runtime-implement-checkpoint": "workspace:*",
     "@dusk/runtime-author": "workspace:*",
-    "@dusk/runtime-benchmark": "workspace:*"
+    "@dusk/runtime-benchmark": "workspace:*",
+    "@dusk/runtime-test-runner": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

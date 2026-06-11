@@ -1,23 +1,39 @@
-import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { execFileSync, spawn as spawnChild } from "node:child_process";
+import { existsSync, symlinkSync } from "node:fs";
+import { join, relative } from "node:path";
 
 import { duskError, verifierEvidenceMaxLines, type VerifierFactory } from "@dusk/core-schema";
 import { loadProjectContext } from "@dusk/mcp-server";
-import { resumeFrozenBead, runImplement, readRuntimeEnv, type RunImplementDeps, type TaskRunner } from "@dusk/runtime-orchestrator";
+import {
+  getActiveRun,
+  resumeFrozenBead,
+  runImplement,
+  readRuntimeEnv,
+  type RunImplementDeps,
+  type TaskRunner,
+} from "@dusk/runtime-orchestrator";
+import { worktreePathFor } from "@dusk/runtime-worktree";
 import {
   DEFAULT_VERIFIER_SYSTEM_PROMPT,
   claudeCodeAvailable,
   claudeCodeModelClient,
   verifyIntent,
 } from "@dusk/runtime-verifier";
+import type { VitestRunner } from "@dusk/runtime-test-runner";
+import { realTestPrepassVerdict } from "@dusk/runtime-benchmark";
 
 /**
  * `dusk implement` / `dusk implement --resume <bead-id>` (14.4/14.5) — the CLI
- * mirror of the `dusk_implement` MCP tool, primarily for debugging. It assembles
- * the runtime deps on the ambient Claude Code model (the Verifier runs on
- * `claude -p`; no API key) and runs the 9-step pipeline. Full Engineer file-write
- * fidelity requires the Claude Code harness's Task tool; outside it this is a
- * best-effort structural run.
+ * mirror of the `dusk_implement` MCP tool. Runs the 9-step pipeline on the
+ * ambient Claude Code model (no API key). Phase-5 dogfood upgrade (previously a
+ * text-only structural run):
+ *
+ *  - The ENGINEER spawns as a headless `claude -p` agent WITH file tools,
+ *    working inside the active bead's worktree (real file writes).
+ *  - The VERIFIER rebuilds its evidence context from the active worktree per
+ *    call, so verdicts judge the engineer's actual draft at temperature 0.
+ *  - Stage-2 Vitest runs inside the worktree package (node_modules linked from
+ *    the main checkout — worktrees are bare source checkouts).
  */
 
 const sanityNumber = (config: Record<string, unknown>, key: string, fallback: number): number => {
@@ -27,17 +43,79 @@ const sanityNumber = (config: Record<string, unknown>, key: string, fallback: nu
 
 export type ImplementCliResult = { ok: boolean; text: string };
 
-function parseArgs(rest: string[]): { request?: string; resume?: string; scopeHint?: string[] } {
-  const resumeIdx = rest.indexOf("--resume");
-  if (resumeIdx !== -1) return { resume: rest[resumeIdx + 1] };
-  const positional = rest.filter((a) => !a.startsWith("--"));
-  return { request: positional[0] };
+function parseArgs(rest: string[]): { request?: string; resume?: string; scopeHint?: string[]; baseRef?: string } {
+  const flag = (name: string): string | undefined => {
+    const i = rest.indexOf(name);
+    return i !== -1 && i + 1 < rest.length ? rest[i + 1] : undefined;
+  };
+  const resume = flag("--resume");
+  const scope = flag("--scope");
+  const baseRef = flag("--base-ref");
+  const flagValues = new Set([resume, scope, baseRef].filter(Boolean));
+  const positional = rest.filter((a) => !a.startsWith("--") && !flagValues.has(a));
+  return {
+    ...(resume ? { resume } : { request: positional[0] }),
+    ...(scope ? { scopeHint: scope.split(",").map((s) => s.trim()).filter(Boolean) } : {}),
+    ...(baseRef ? { baseRef } : {}),
+  };
+}
+
+const ENGINEER_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep"];
+const IN_FLIGHT = new Set(["short_cycle", "long_cycle", "test_execution", "committing", "paused_livelock"]);
+
+const ENGINEER_FILE_INSTRUCTION =
+  "\n\n## File-write mode\n\nApply the implementation by EDITING the files in the current working directory directly " +
+  "(you have Read/Write/Edit/Glob/Grep tools). Honor the decoration rules: every exported declaration and every " +
+  "top-level statement inside a decorated exported function must carry its `// @intent <path> [aspects]` decoration " +
+  "(intents live under .ia/intents/). Keep the change minimal and focused on the named intent. When you are done, " +
+  "reply with a 1-2 sentence summary of what you changed.";
+
+/** Run a headless file-capable Claude Code agent and return its final text. */
+function runHeadlessAgent(
+  prompt: string,
+  cwd: string,
+  model: string,
+  timeoutMs: number,
+): Promise<{ text: string; costUsd: number; promptTokens: number; completionTokens: number }> {
+  return new Promise((resolve, reject) => {
+    const args = ["--print", "--output-format", "json", "--model", model, "--allowed-tools", ENGINEER_TOOLS.join(","), "--permission-mode", "acceptEdits"];
+    const child = spawnChild("claude", args, { cwd, stdio: ["pipe", "pipe", "pipe"] });
+    let out = "";
+    let errText = "";
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error("claude CLI timed out"));
+    }, timeoutMs);
+    child.stdout.on("data", (d) => (out += d));
+    child.stderr.on("data", (d) => (errText += d));
+    child.on("error", (e) => {
+      clearTimeout(timer);
+      reject(e);
+    });
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      if (code !== 0) return reject(new Error(`claude CLI exited ${code}: ${errText.slice(0, 500)}`));
+      try {
+        const parsed = JSON.parse(out) as { result?: unknown; total_cost_usd?: number; usage?: { input_tokens?: number; output_tokens?: number } };
+        resolve({
+          text: typeof parsed.result === "string" ? parsed.result : JSON.stringify(parsed.result ?? {}),
+          costUsd: parsed.total_cost_usd ?? 0,
+          promptTokens: parsed.usage?.input_tokens ?? 0,
+          completionTokens: parsed.usage?.output_tokens ?? 0,
+        });
+      } catch (e) {
+        reject(e);
+      }
+    });
+    child.stdin.write(prompt);
+    child.stdin.end();
+  });
 }
 
 export async function runImplementCli(root: string, rest: string[], opts: { clock?: { now: () => number } } = {}): Promise<ImplementCliResult> {
-  const { request, resume } = parseArgs(rest);
+  const { request, resume, scopeHint, baseRef } = parseArgs(rest);
   if (!request && !resume) {
-    return { ok: false, text: "usage: dusk implement <request> | dusk implement --resume <bead-id|resume-token>\n" };
+    return { ok: false, text: "usage: dusk implement <request> [--scope <intent,..>] [--base-ref <ref>] | dusk implement --resume <bead-id|resume-token>\n" };
   }
   if (!claudeCodeAvailable()) {
     return { ok: false, text: "dusk implement needs the Claude Code CLI (`claude`) on PATH (it runs the pipeline on the ambient model — no API key required).\n" };
@@ -50,19 +128,74 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
   }
 
   const clock = opts.clock ?? { now: () => Date.now() };
-  const modelClient = claudeCodeModelClient({ model: "claude-sonnet-4-6" });
+  const model = "claude-sonnet-4-6";
+  const modelClient = claudeCodeModelClient({ model });
   const baseCtx = loadProjectContext(root, { modelClient, systemPrompt: DEFAULT_VERIFIER_SYSTEM_PROMPT });
 
-  const taskRunner: TaskRunner = async (call) => {
-    const completion = await modelClient.complete({ system: call.prompt, user: "Proceed.", temperature: 0 });
-    return { output: completion.text, model: "claude-sonnet-4-6", promptTokens: completion.usage.promptTokens, completionTokens: completion.usage.completionTokens, costUsd: completion.usage.costUsd ?? 0, latencyMs: 0 };
+  // The project may be a package INSIDE the repo: worktrees are full-repo
+  // checkouts, so the package's path within a worktree is its repo-relative path.
+  const repoRoot = execFileSync("git", ["rev-parse", "--show-toplevel"], { cwd: root, encoding: "utf8" }).trim();
+  const packageRel = relative(repoRoot, root);
+
+  /** The active bead's package directory inside its worktree (null between beads). */
+  const activeWorktreePackageDir = (): string | null => {
+    const run = getActiveRun();
+    const bead = run ? [...run.beads.values()].find((b) => IN_FLIGHT.has(b.status)) : undefined;
+    if (!bead) return null;
+    const worktree = worktreePathFor(root, bead.id);
+    if (!existsSync(worktree)) return null;
+    const pkgDir = packageRel ? join(worktree, packageRel) : worktree;
+    return existsSync(pkgDir) ? pkgDir : null;
   };
 
+  const taskRunner: TaskRunner = async (call) => {
+    if (call.subagentType === "dusk-engineer") {
+      // Phase-5 dogfood mode: the Engineer is a REAL file-writing headless agent
+      // working inside the active bead's worktree.
+      const cwd = activeWorktreePackageDir() ?? root;
+      const result = await runHeadlessAgent(`${call.prompt}${ENGINEER_FILE_INSTRUCTION}`, cwd, model, 15 * 60 * 1000);
+      return { output: result.text, model, promptTokens: result.promptTokens, completionTokens: result.completionTokens, costUsd: result.costUsd, latencyMs: 0 };
+    }
+    const completion = await modelClient.complete({ system: call.prompt, user: "Proceed.", temperature: 0 });
+    return { output: completion.text, model, promptTokens: completion.usage.promptTokens, completionTokens: completion.usage.completionTokens, costUsd: completion.usage.costUsd ?? 0, latencyMs: 0 };
+  };
+
+  // The Verifier judges the engineer's ACTUAL DRAFT: its evidence context is
+  // rebuilt from the active worktree per call (fresh per call, temperature 0).
   const verifierFactory: VerifierFactory = async (vctx) => {
-    const intent = baseCtx.intents.get(vctx.intentPath);
+    const pkgDir = activeWorktreePackageDir();
+    const ctx = pkgDir ? loadProjectContext(pkgDir, { modelClient, systemPrompt: DEFAULT_VERIFIER_SYSTEM_PROMPT }) : baseCtx;
+    const intent = ctx.intents.get(vctx.intentPath) ?? baseCtx.intents.get(vctx.intentPath);
     if (!intent) return duskError("intent_path_unresolved", `intent not found: ${vctx.intentPath}`, { recoverable: true });
-    const result = await verifyIntent(intent, { index: baseCtx.index, readFile: baseCtx.readFile, maxLines: verifierEvidenceMaxLines(baseCtx.config), modelClient, systemPrompt: DEFAULT_VERIFIER_SYSTEM_PROMPT });
+    // Test intents are judged by the Stage-1 test-body pre-pass instrument
+    // (full test bodies, RFC §3.4) — never by single-line claim evidence.
+    if (ctx.index.testDiscovery(vctx.intentPath).length > 0) {
+      const prepass = await realTestPrepassVerdict(vctx.intentPath, { index: ctx.index, intents: ctx.intents, readFile: ctx.readFile, modelClient });
+      return prepass.success ? prepass.value : prepass.error;
+    }
+    const result = await verifyIntent(intent, {
+      index: ctx.index,
+      readFile: ctx.readFile,
+      maxLines: verifierEvidenceMaxLines(baseCtx.config),
+      modelClient,
+      systemPrompt: DEFAULT_VERIFIER_SYSTEM_PROMPT,
+      onUsage: vctx.reportUsage,
+    });
     return result.success ? result.value : result.error;
+  };
+
+  // Stage-2 Vitest runs inside the worktree package; node_modules are linked
+  // from the main checkout (worktrees are bare source checkouts).
+  const vitestRunner: VitestRunner = (files, cwd) => {
+    const pkgDir = activeWorktreePackageDir() ?? cwd;
+    const worktreeRoot = packageRel && pkgDir.endsWith(packageRel) ? pkgDir.slice(0, pkgDir.length - packageRel.length - 1) : pkgDir;
+    for (const [target, source] of [
+      [join(worktreeRoot, "node_modules"), join(repoRoot, "node_modules")],
+      [join(pkgDir, "node_modules"), join(root, "node_modules")],
+    ] as const) {
+      if (!existsSync(target) && existsSync(source)) symlinkSync(source, target, "dir");
+    }
+    return execFileSync("pnpm", ["vitest", "run", ...files, "--reporter=json"], { cwd: pkgDir, encoding: "utf8" });
   };
 
   const deps: RunImplementDeps = {
@@ -76,6 +209,8 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
     config: baseCtx.config,
     perEntryMax: sanityNumber(baseCtx.config, "short_cycle_max_iterations", 20),
     lifetimeMax: sanityNumber(baseCtx.config, "bead_lifetime_iterations", 40),
+    vitestRunner,
+    ...(baseRef ? { baseRef } : {}),
   };
 
   // A bead-id resumes an L3-frozen bead from its preserved state; a resume token
@@ -83,7 +218,7 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
   const result =
     resume && resume.startsWith("bd_")
       ? await resumeFrozenBead(resume, deps)
-      : await runImplement(request ? { request } : { resumeToken: resume }, deps);
+      : await runImplement(request ? { request, ...(scopeHint ? { scopeHint } : {}) } : { resumeToken: resume }, deps);
 
   if (!result.success) return { ok: false, text: `implement: ${result.error.kind} — ${result.error.message}\n` };
   const s = result.value;

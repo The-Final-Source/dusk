@@ -3,21 +3,17 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import type { BenchmarkReport, DuskError } from "@dusk/core-schema";
-import { runGate, type HookInput } from "@dusk/pre-tool-use";
-import { analyzeStaticDecoration, buildDerivedIndex } from "@dusk/core-index";
-import { parseDecorations } from "@dusk/core-decoration";
-import { loadIntentTree } from "@dusk/core-graph";
 import { claudeCodeModelClient, type ModelClient } from "@dusk/runtime-verifier";
 import {
   assembleBenchmarkReport,
   calibrateAudit,
   evaluateDogfood,
-  materializeFixtureProject,
   realFixtureVerifierCall,
+  realGateLeg,
+  realStaticAnalyzerLeg,
   runBenchmarkSweep,
   runFreshnessAudit,
   type Clock,
-  type SeededFixture,
   type SweepModel,
 } from "@dusk/runtime-benchmark";
 
@@ -66,41 +62,6 @@ export type BenchmarkCliDeps = {
 };
 
 const errText = (prefix: string, error: DuskError): string => `${prefix}: ${error.kind} — ${error.message}\n`;
-
-function gateLeg(fixture: SeededFixture): { blocked: boolean } {
-  // The REAL mechanical gate over the fixture's materialized mini-project.
-  const dir = mkdtempSync(join(tmpdir(), "dusk-bench-gate-"));
-  try {
-    materializeFixtureProject(fixture, dir);
-    const file = fixture.ground_truth_defect_loc?.file ?? fixture.files.find((f) => !f.startsWith("intents/"))!;
-    const input: HookInput = { tool: "Write", args: { file_path: join(dir, file), content: readFixtureFile(fixture, file) } };
-    return { blocked: runGate(input).decision === "block" };
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
-}
-
-const readFixtureFile = (fixture: SeededFixture, rel: string): string => readFileSync(join(fixture.dir, rel), "utf8");
-
-function staticLeg(fixture: SeededFixture): { flagged: boolean } {
-  const dir = mkdtempSync(join(tmpdir(), "dusk-bench-static-"));
-  try {
-    materializeFixtureProject(fixture, dir);
-    const files: Record<string, string> = {};
-    for (const rel of fixture.files) {
-      if (rel.startsWith("intents/")) continue;
-      files[rel] = readFixtureFile(fixture, rel);
-    }
-    const tree = loadIntentTree(join(dir, ".ia/intents"));
-    const records = Object.entries(files).flatMap(([file, source]) => parseDecorations(source, file));
-    const index = buildDerivedIndex(records, tree.intents);
-    const { findings } = analyzeStaticDecoration({ files, index, mode: "conservative" });
-    const loc = fixture.ground_truth_defect_loc;
-    return { flagged: findings.some((f) => f.class === "s_not_subset_d" && (!loc || (f.file === loc.file && f.line === loc.line))) };
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
-}
 
 function renderBenchmarkSummary(report: BenchmarkReport): string {
   const lines: string[] = [`benchmark ${report.run_id} — ${report.fixture_count} fixtures, models: ${report.models.join(", ")}`];
@@ -191,7 +152,7 @@ export async function runBenchmarkCli(root: string, args: string[], deps: Benchm
   try {
     const sweepModels: SweepModel[] =
       deps.sweepModels ?? models.map((name) => ({ name, call: realFixtureVerifierCall({ workDir: join(workDir, name), modelClient: modelClientFor(name) }) }));
-    const sweep = await runBenchmarkSweep({ root: deps.fixtureRoot, outDir, models: sweepModels, gate: gateLeg, staticAnalyzer: staticLeg, clock });
+    const sweep = await runBenchmarkSweep({ root: deps.fixtureRoot, outDir, models: sweepModels, gate: realGateLeg, staticAnalyzer: realStaticAnalyzerLeg, clock });
     if (!sweep.success) return { ok: false, text: errText("benchmark", sweep.error) };
     const report = assembleBenchmarkReport({ runId, records: sweep.value.records, models: sweepModels.map((m) => m.name), clock });
     writeFileSync(join(outDir, "benchmark-report.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
