@@ -75,6 +75,37 @@ export function readDiagnosis(rootDir: string, beadId: string): string {
   return parseBeadMemory(readFileSync(path, "utf8")).current_diagnosis;
 }
 
+/** 1–2 sentence summary of what the Engineer changed this iteration (v9 App. A.6; P5-T1). */
+function engineerChangeSummary(output: string | undefined): string {
+  const firstLine = (output ?? "").split(/\r?\n/).find((l) => l.trim().length > 0)?.trim() ?? "";
+  if (firstLine.length === 0) return "(no engineer output)";
+  return firstLine.length > 240 ? `${firstLine.slice(0, 237)}...` : firstLine;
+}
+
+type VerdictDelta = { flipped_triples: string[]; new_failures: string[]; new_passes: string[] };
+
+/**
+ * What changed vs the prior iteration's verdict (v9 App. A.6): triples that
+ * flipped pass↔fail, plus triples failing / passing for the FIRST time.
+ */
+function verdictDelta(
+  current: Map<string, "pass" | "fail">,
+  prior: Map<string, "pass" | "fail"> | null,
+  everFailed: Set<string>,
+  everPassed: Set<string>,
+): VerdictDelta {
+  const flipped: string[] = [];
+  const newFailures: string[] = [];
+  const newPasses: string[] = [];
+  for (const [id, status] of current) {
+    const before = prior?.get(id);
+    if (before !== undefined && before !== status) flipped.push(id);
+    if (status === "fail" && !everFailed.has(id)) newFailures.push(id);
+    if (status === "pass" && !everPassed.has(id)) newPasses.push(id);
+  }
+  return { flipped_triples: flipped, new_failures: newFailures, new_passes: newPasses };
+}
+
 export async function runShortCycle(deps: ShortCycleDeps): Promise<RuntimeResult<ShortCycleOutcome>> {
   let perEntryIter = 0;
   let lifetimeIter = deps.lifetimeStart ?? 0;
@@ -83,6 +114,10 @@ export async function runShortCycle(deps: ShortCycleDeps): Promise<RuntimeResult
   let diagnosisWrittenThisEntry = false;
   const failingSets: string[][] = [];
   const diagnosisHistory: string[] = [];
+  // v9 stuck-bead debugging state (P5-T1): per-triple status history for verdict deltas.
+  const everFailed = new Set<string>();
+  const everPassed = new Set<string>();
+  let priorStatus: Map<string, "pass" | "fail"> | null = null;
   const writeDiag = (text: string): void =>
     deps.writeDiagnosis ? deps.writeDiagnosis(text) : defaultWriteDiagnosis(deps.rootDir, deps.beadId, text);
 
@@ -132,6 +167,12 @@ export async function runShortCycle(deps: ShortCycleDeps): Promise<RuntimeResult
     failingSets.push(failing);
     const converged = failing.length === 0; // 6.7: support_quality is NOT consulted here
 
+    // v9 stuck-bead debugging (P5-T1): delta vs the prior iteration's verdict.
+    const tripleStatus = new Map<string, "pass" | "fail">(verdict.per_triple.map((t) => [t.triple_id, t.focal_verdict]));
+    const delta = verdictDelta(tripleStatus, priorStatus, everFailed, everPassed);
+    for (const [id, status] of tripleStatus) (status === "fail" ? everFailed : everPassed).add(id);
+    priorStatus = tripleStatus;
+
     // 5. Stuckness / diagnosis (only while not converged).
     let fired = false;
     if (!converged) {
@@ -145,7 +186,8 @@ export async function runShortCycle(deps: ShortCycleDeps): Promise<RuntimeResult
       }
     }
 
-    // 6. Bead-Orchestrator tick trace (carries stuckness_detector_state; diagnosis flag auto-computed from its memory).
+    // 6. Bead-Orchestrator tick trace (carries stuckness_detector_state + the v9
+    // stuck-bead debugging fields; diagnosis flag auto-computed from its memory).
     await deps.spawn({
       role: "bead-orchestrator",
       beadId: deps.beadId,
@@ -153,7 +195,12 @@ export async function runShortCycle(deps: ShortCycleDeps): Promise<RuntimeResult
       input: "route",
       iterationNumber: perEntryIter,
       invocationSite: "short-cycle",
-      beadLifecycle: { stuckness_detector_state: { fired } },
+      beadLifecycle: {
+        stuckness_detector_state: { fired },
+        failing_triple_set: failing,
+        verdict_delta_from_prior: delta,
+        engineer_change_summary: engineerChangeSummary(engineer.value.output),
+      },
     });
 
     // 7. Converged → exit to Step 5.

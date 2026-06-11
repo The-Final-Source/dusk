@@ -24,6 +24,10 @@ export type BeadLifecycleFields = {
   verifier_livelock_signal?: boolean;
   confirmation_of_trace_id?: string;
   confirmation_pass_outcome?: "confirmed_reject" | "flaky_verdict_dismissed";
+  /** v9 stuck-bead debugging (Phase 5) — stamped on the Bead-Orchestrator tick per short-cycle iteration. */
+  verdict_delta_from_prior?: { flipped_triples: string[]; new_failures: string[]; new_passes: string[] };
+  failing_triple_set?: string[];
+  engineer_change_summary?: string;
 };
 
 export type SpawnParams = {
@@ -40,6 +44,13 @@ export type SpawnParams = {
   aspectId?: string;
   /** Phase-3 bead-lifecycle fields stamped onto the emitted trace. */
   beadLifecycle?: BeadLifecycleFields;
+  /**
+   * Phase-5 (P5-T1): for the COMPLETING long-cycle confirmation spawn — derives
+   * the aggregated `confirmation_pass_outcome` from this spawn's own verdict
+   * (the prior confirmation's decision is closed over by the long cycle), so the
+   * outcome lands on a trace without mutating already-emitted events.
+   */
+  confirmationOutcomeFromVerdict?: (decision: "accept" | "reject") => "confirmed_reject" | "flaky_verdict_dismissed";
 };
 
 export type SpawnOutcome = {

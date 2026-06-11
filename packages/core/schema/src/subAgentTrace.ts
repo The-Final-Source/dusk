@@ -57,6 +57,19 @@ export const SubAgentTraceSchema = z
     // Short-cycle debugging
     iteration_number: z.number().int().optional(),
 
+    // Stuck-bead debugging (v9 App. A.6 — short-cycle events; completed in Phase 5).
+    // Emitted on the Bead-Orchestrator tick after each short-cycle verdict.
+    verdict_delta_from_prior: z
+      .object({
+        flipped_triples: z.array(z.string()),
+        new_failures: z.array(z.string()),
+        new_passes: z.array(z.string()),
+      })
+      .strict()
+      .optional(),
+    failing_triple_set: z.array(z.string()).optional(),
+    engineer_change_summary: z.string().optional(),
+
     // Bead-Orchestrator traces only — diagnosis lives here, NEVER on Verifier traces
     convergence_diagnosis_present: z.boolean().optional(),
 

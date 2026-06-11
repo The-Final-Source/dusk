@@ -333,6 +333,17 @@ async function processBead(input: ProcessBeadInput): Promise<RuntimeResult<Proce
       if (tick.kind === "livelock") {
         setBeadStatus(input.run, beadId, "paused_livelock", "Step 6 — Test-Verifier livelock");
         deps.onLivelock?.(tick.report);
+        // Livelock trace event (P5-T1): `verifier_livelock_signal` lives ONLY on
+        // Bead-Orchestrator traces (the asymmetry guarantee). Best-effort — a
+        // failed emission must not block the pause.
+        await input.spawn({
+          role: "bead-orchestrator",
+          beadId,
+          sessionId: deps.sessionId,
+          input: "livelock",
+          invocationSite: "test-execution",
+          beadLifecycle: { verifier_livelock_signal: true },
+        });
         return err(
           duskError("pipeline_iteration_cap_exceeded", `bead ${beadId} paused for Test-Verifier livelock; resolve via dusk_resolve_livelock`, {
             recoverable: true,

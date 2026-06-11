@@ -10,6 +10,7 @@ import {
   type SpawnParams,
   type SpawnOutcome,
   duskError,
+  isDuskError,
 } from "@dusk/core-schema";
 import { materializeMemory, type MemoryScope } from "@dusk/runtime-memory";
 import { loadSkills, renderSkillsBlock } from "@dusk/runtime-skills";
@@ -179,6 +180,15 @@ export async function spawnSubAgent(params: SpawnParams, deps: SpawnDeps): Promi
 
   const latencyMs = Math.max(0, clock.now() - startedAt);
 
+  // The completing long-cycle confirmation spawn derives the aggregated outcome
+  // from its own verdict (P5-T1) — the prior confirmation's decision is closed
+  // over by the long cycle, so no already-emitted event needs mutation.
+  const confirmationPassOutcome =
+    params.beadLifecycle?.confirmation_pass_outcome ??
+    (params.confirmationOutcomeFromVerdict && verdict && !isDuskError(verdict)
+      ? params.confirmationOutcomeFromVerdict(verdict.decision)
+      : undefined);
+
   const trace: SubAgentTrace = {
     schema_version: 1,
     trace_id: traceId,
@@ -198,7 +208,11 @@ export async function spawnSubAgent(params: SpawnParams, deps: SpawnDeps): Promi
     ...(params.beadLifecycle?.stuckness_detector_state ? { stuckness_detector_state: params.beadLifecycle.stuckness_detector_state } : {}),
     ...(params.beadLifecycle?.verifier_livelock_signal !== undefined ? { verifier_livelock_signal: params.beadLifecycle.verifier_livelock_signal } : {}),
     ...(params.beadLifecycle?.confirmation_of_trace_id ? { confirmation_of_trace_id: params.beadLifecycle.confirmation_of_trace_id } : {}),
-    ...(params.beadLifecycle?.confirmation_pass_outcome ? { confirmation_pass_outcome: params.beadLifecycle.confirmation_pass_outcome } : {}),
+    ...(confirmationPassOutcome ? { confirmation_pass_outcome: confirmationPassOutcome } : {}),
+    // v9 stuck-bead debugging fields (P5-T1) — supplied by the short cycle on Bead-Orchestrator ticks.
+    ...(params.beadLifecycle?.verdict_delta_from_prior ? { verdict_delta_from_prior: params.beadLifecycle.verdict_delta_from_prior } : {}),
+    ...(params.beadLifecycle?.failing_triple_set ? { failing_triple_set: params.beadLifecycle.failing_triple_set } : {}),
+    ...(params.beadLifecycle?.engineer_change_summary ? { engineer_change_summary: params.beadLifecycle.engineer_change_summary } : {}),
     ...(capturesRawPrompt(env) ? { raw_prompt: redact(assembledPrompt, { repoRoot: rootDir }) } : {}),
   };
 

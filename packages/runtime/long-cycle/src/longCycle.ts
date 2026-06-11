@@ -82,6 +82,14 @@ export async function runLongCycle(deps: LongCycleDeps): Promise<RuntimeResult<L
         invocationSite: "long-cycle",
         intentPath: tuple.intent_path,
         beadLifecycle: { confirmation_of_trace_id: confirmationTraceId },
+        // The completing confirmation spawn's trace records the aggregated
+        // outcome (P5-T1): ≥1/2 rejects confirm; both accepts dismiss as flaky.
+        ...(i === 1
+          ? {
+              confirmationOutcomeFromVerdict: (decision: "accept" | "reject") =>
+                confirmations[0].decision === "reject" || decision === "reject" ? "confirmed_reject" : "flaky_verdict_dismissed",
+            }
+          : {}),
       });
       if (!conf.success) return conf;
       confirmations.push(conf.value.verdict);
