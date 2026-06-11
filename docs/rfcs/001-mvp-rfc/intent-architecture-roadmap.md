@@ -936,6 +936,28 @@ Two sprints. Sprint 9 instruments and benchmarks. Sprint 10 dogfoods on real cod
 
 ---
 
+## Post-v1 — Sprint 11: Greenfield POC (the first v1.x change)
+
+**Not part of the v1 gate.** Sprint 11 begins only after Sprint 10's dogfood gate passes and the Phase-5 OpenSpec change archives — v1 is landed first. It is specified here (and as **Phase 6** in the implementation plan, which carries the full behavioral-test contract P6-T1..T8) because its shape was settled during the v1 build and it is the natural first v1.x milestone.
+
+**Goal.** Validate the v9 thesis in its pure form on Dusk's native terrain: a small but real **API application built greenfield, with zero hand-written application code** — every line produced through `dusk_author` + `dusk_implement`, mechanically auditable via the commit-trailer record.
+
+**Why this is the right first v1.x move.** v9 is greenfield-first by design — decorate-at-authorship is the native mode; legacy bootstrap (RFC §8.2) is deferred precisely because retro-decoration is the *un*-native mode. Yet v1 never tests the native mode purely: Sprint 10's dogfood is brownfield-lite on a pure-leaf package (no DB, no HTTP, unit-only pyramid). Sprint 11 closes the three residual gaps in one artifact: the zero-hand-written-code thesis, the full test pyramid (integration vs live Postgres + e2e vs real HTTP) on real non-fixture code, and greenfield intent-tree authoring at application scale with Stage-2 tension detection operating as the tree grows.
+
+**What gets built.**
+- A fresh standalone repository (its own git history, purely Dusk-authored and independently auditable — not a monorepo package), `dusk init` from zero.
+- A minimal **notifications API** on Dusk's own stack (TS strict ESM, Express + tRPC, Drizzle + Postgres, Vitest) — deliberately the canonical-intents / App. B domain so the Author's Stage-2/3 machinery operates on familiar ground: 4–6 endpoints, a cursor-paginated list, an idempotent write under a `compose: implies` intent, structured-logging + error-handling cross-cutting intents, full pyramid with integration + e2e children.
+- A **trailer-audit script** (zero-model pass over `git log`) proving every application-source commit carries the full v9 trailer set — the mechanical form of the zero-hand-written-code constraint.
+- A **`PocReport`** (the `DogfoodReport` shape reused) separating hard gates from exploratory greenfield-friction data (dialog turn counts, Stage-3 acceptance rates, intent-granularity stats, time-to-endpoint) that seeds the v1.x backlog.
+
+**Human-input whitelist (the constraint's boundary):** authoring-dialog responses, `dusk_implement` requests, `dusk_resolve_livelock` / recovery resolutions, commit review/merge approval. Nothing else.
+
+**Sprint 11 done means.** The smoke scenario "from `git init` to a working API, hands off the code" is green: intent tree 100% dialog-authored (incl. ≥1 `polarity: negative`, ≥1 closed-vocabulary `implies`, integration + e2e pyramid children); all endpoints landed via `dusk_implement` (≥1 multi-bead file-overlap run + ≥1 natural pause→author→resume among them); the app boots and its full pyramid is green against live infrastructure; the trailer audit passes; `dusk doctor --static-analysis` is clean in both modes on the born-decorated code; the `PocReport` gates pass and its friction data is fed back into role prompts/skills as reviewed commits. The POC repo stands as the canonical greenfield reference for v1.x adopters.
+
+**Delivery model.** One OpenSpec change (`phase-6-greenfield-poc`), scaffolded after the Phase-5 change archives, per the same per-phase discipline. It requires **no deferred v1.x feature** — greenfield needs no legacy bootstrap, no vector search, no canonical-library runtime fetch.
+
+---
+
 ## Dependency graph + parallelism map
 
 ```
@@ -1008,7 +1030,7 @@ Two sprints. Sprint 9 instruments and benchmarks. Sprint 10 dogfoods on real cod
 - The pipeline split (5 → 6 → 7) is sequential because each step's exit gates the next.
 - Authoring (8) is a sibling system to the pipeline (`dusk_author` is a separate MCP tool from `dusk_implement`); the cross-link is the Decomposer escalation hook, which is a one-line invocation.
 - Validation (9) needs everything done before it can measure things meaningfully.
-- Real-world (10) is final.
+- Real-world (10) is final — for v1. Sprint 11 (the Greenfield POC) sits strictly after it, outside the v1 critical path: it begins only once the Phase-5 change archives.
 
 ---
 
@@ -1026,12 +1048,15 @@ Two sprints. Sprint 9 instruments and benchmarks. Sprint 10 dogfoods on real cod
 | 8 | `dusk_author` runs the 5-stage flow for a fresh intent. All branching decisions (classify, user-response, accept-or-defer) surface to user. Stage 5 commits atomically. Decomposer resumes correctly after authoring. Tested against a real intent-creation scenario in a dusk package. |
 | 9 | Trace stream emits one event per sub-agent call. `/dusk-benchmark` produces per-model accuracy data on seeded-violations fixture. `/dusk-doctor` clean on a clean repo. Worked example verifies cleanly. Detection-rate baselines documented. |
 | 10 | Dusk operates on ≥1 real dusk package for ≥2 weeks. Operational data collected per the Sprint 10 list. Adoption-friction findings fed back into role prompts + skills. Ecosystem skeletons routable. |
+| 11 *(post-v1)* | The v9 thesis holds purely: an API application built from `git init` with zero hand-written application code (trailer-audited). Full test pyramid green against live Postgres + real HTTP on non-fixture code. Intent tree 100% dialog-authored. Born-decorated code shows zero erosion under `--static-analysis`. `PocReport` gates pass; friction data seeds the v1.x backlog. |
 
 ---
 
 ## What's deferred to v1.x
 
 These are intentional cuts. The proposal calls them out in Ch. 8; the roadmap doesn't pretend they're v1 work.
+
+**v1.x sequencing note:** the first v1.x change is already specified — the **Greenfield POC** (Sprint 11 above; Phase 6 in the implementation plan). It requires none of the items on this list; in particular it does NOT pull legacy bootstrap forward — greenfield is v9's native mode and needs no retro-decoration machinery. Everything below remains demand-triggered, with the POC's exploratory friction data as the primary prioritization input.
 
 - ~~**Decorate-or-decompose static-analysis gating.**~~ **REPROMOTED to Sprint 9.** Framed as drift detection (decoration erosion over time), not real-time enforcement. `/dusk-doctor --static-analysis` ships in v1. (RFC §4.6, §8.9.)
 - **Semantic / vector / RAG search for Author Stage 2.** v1 ships agent-driven grep over `.ia/intents/`. Embedding-based discovery is v1.x, triggered by reports of recurring missed tensions in Stage 2. (RFC §8.10.)
@@ -1170,5 +1195,7 @@ The pieces that v4 spent effort on but v9 no longer needs (blocks, composition e
 - **Per-claim support verdicts + verdict split** — Engineer gets unambiguous repair signal.
 
 The honest framings the review board's feedback forced (advisory tool/skill scoping, advisory CLAUDE.md binding, harness contract reduced to 4 real capabilities, sub-agent spawn via Claude Code's Task tool, cooperative cancellation, disk-checkpoint pause/resume, paired resource fallbacks) reflect the actual capability surface available in v1 — not an idealized harness that doesn't exist yet.
+
+Post-v1, the first milestone is fixed: **Sprint 11's Greenfield POC** — an API application built from `git init` with zero hand-written code, proving the thesis on the terrain v9 was designed for. Its friction data, not speculation, prioritizes the rest of v1.x.
 
 Build for right. Land the plane.

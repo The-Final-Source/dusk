@@ -340,6 +340,34 @@ importers:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
+  packages/fixtures/worked-example:
+    dependencies:
+      '@dusk/core-decoration':
+        specifier: workspace:*
+        version: link:../../core/decoration
+      '@dusk/core-index':
+        specifier: workspace:*
+        version: link:../../core/index
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
+      '@dusk/fixtures':
+        specifier: workspace:*
+        version: link:..
+    devDependencies:
+      '@dusk/runtime-verifier':
+        specifier: workspace:*
+        version: link:../../runtime/verifier
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
   packages/hooks:
     dependencies:
       '@tanstack/react-query':
@@ -471,6 +499,43 @@ importers:
       '@dusk/runtime-verifier':
         specifier: workspace:*
         version: link:../verifier
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtime/benchmark:
+    dependencies:
+      '@dusk/core-decoration':
+        specifier: workspace:*
+        version: link:../../core/decoration
+      '@dusk/core-graph':
+        specifier: workspace:*
+        version: link:../../core/graph
+      '@dusk/core-index':
+        specifier: workspace:*
+        version: link:../../core/index
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
+      '@dusk/runtime-observability':
+        specifier: workspace:*
+        version: link:../observability
+      '@dusk/runtime-verifier':
+        specifier: workspace:*
+        version: link:../verifier
+      yaml:
+        specifier: ^2.6.0
+        version: 2.8.2
+    devDependencies:
+      '@dusk/runtime-verifier-test-double':
+        specifier: workspace:*
+        version: link:../verifier-test-double
       '@dusk/test-harness':
         specifier: workspace:*
         version: link:../../test-harness
@@ -656,6 +721,22 @@ importers:
       '@dusk/runtime-worktree':
         specifier: workspace:*
         version: link:../worktree
+    devDependencies:
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/runtime/observability:
+    dependencies:
+      '@dusk/core-schema':
+        specifier: workspace:*
+        version: link:../../core/schema
     devDependencies:
       '@dusk/test-harness':
         specifier: workspace:*

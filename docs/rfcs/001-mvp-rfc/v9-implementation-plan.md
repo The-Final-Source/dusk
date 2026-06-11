@@ -10,6 +10,8 @@
 
 This document is the **contract the v1 build is measured against**. The roadmap decomposes v9 into 10 sprints; this plan groups those sprints into 5 phases and, for each phase, specifies the behavioral tests that prove the phase delivered what it promised, plus the cohesive-landing gate the next phase cannot start without. Every commitment in the roadmap's "Architectural commitments locked for v1" table and every item in the RFC's v1 scope is covered here — the coverage matrix at the end is the checklist. Nothing is punted to v1.x except items the roadmap's "What's deferred to v1.x" section explicitly defers.
 
+A sixth phase — **Phase 6, the Greenfield POC** — is specified after Phase 5. It is **post-v1**: the first v1.x change, not part of the v1 gate, and it adds no rows to the coverage matrix. It is in this document because it follows the same phase discipline (one OpenSpec change, behavioral tests, a cohesive-landing gate) and because its shape was settled while the v1 plan was live: v1's dogfood validates decorate-at-authorship on existing code; Phase 6 validates the thesis in its pure form — an API application where every line was born through Dusk.
+
 ---
 
 ## Delivery model — one OpenSpec change proposal per phase
@@ -22,6 +24,8 @@ This document is the **contract the v1 build is measured against**. The roadmap 
 - **The coverage matrix is the cross-proposal ledger.** It guarantees that, summed across the five OpenSpec proposals, every v1 commitment is delivered exactly once and nothing is silently dropped between proposals.
 
 Read each phase below as the **brief for one OpenSpec proposal**: its Outcome is the proposal's "why," its Scope is the "what changes," its Behavioral tests + smoke test are the "how we know it's right," and its Cohesive landing criteria are the "definition of done."
+
+**Phase 6 follows the same delivery model post-v1**: it is scaffolded as its own OpenSpec change (`phase-6-greenfield-poc`) only after the Phase-5 change archives and v1 is landed. (When that change is created, `openspec/config.yaml`'s phase-order note gains the one-line Post-v1 entry — deliberately not edited while the Phase-5 change is in flight.)
 
 ---
 
@@ -832,9 +836,95 @@ An operator can run `/dusk-benchmark` and get per-class detection rates against 
 
 ---
 
+## Phase 6 — Greenfield POC (POST-V1 — the first v1.x change)
+
+**This phase is not part of the v1 gate.** It begins only after Phase 5 archives and v1 is landed (Roadmap Sprint 11). It adds no rows to the coverage matrix below.
+
+**Why greenfield, and why first.** v9 is designed greenfield-first: decoration happens at authorship (RFC §8.2 defers legacy bootstrap precisely because retro-decorating >20kLOC is the *un*-native mode), code is authored for AI consumption, and the whole apparatus — total decoration, the gate, per-aspect verification — is cheapest and highest-fidelity when every line is born decorated. Yet v1 never tests that native mode in its pure form. The v1 dogfood (P5-T11) is brownfield-lite: it decorates *existing* code on a *pure-leaf* package whose test pyramid is unit-only. Three gaps remain after v1 lands: (a) **the thesis itself** — "humans express intents; the harness produces adherent code" — has never run with zero hand-written application code; (b) **the full test pyramid has never executed against real infrastructure on real (non-fixture) code** — `packages/shared` has no DB and no HTTP, so the integration-tests/e2e-tests layers were only ever proven on Phase-3 fixtures; (c) **greenfield intent-tree authoring at application scale** — Stage-2 tension detection as a tree grows from nothing — has only been exercised one intent at a time. Phase 6 closes all three with one artifact: a small, working API application that exists only because Dusk built it.
+
+### Outcome
+
+A fresh repository contains a small but real API application — cursor-paginated reads, an idempotent write endpoint, Drizzle + Postgres persistence, structured logging, a full unit/integration/e2e test pyramid running against live infrastructure — in which **every line of application code was produced through `dusk_author` + `dusk_implement`**, mechanically auditable via the commit trailer record. Human contributions are confined to an enumerated whitelist: authoring-dialog responses, `dusk_implement` requests, livelock/recovery resolutions, and commit review. The POC's friction data (greenfield-specific: dialog ergonomics, Stage-3 proposal quality, intent-granularity choices, time-to-endpoint) seeds the v1.x backlog.
+
+### Scope
+
+- **The POC target** — a fresh standalone git repository (NOT a dusk-monorepo package: the POC's git history must be purely Dusk-authored and independently auditable), initialized from zero via `dusk init`. The application: a minimal **notifications API** on Dusk's own stack conventions (TypeScript strict ESM, Express + tRPC, Drizzle + Postgres, Vitest) — deliberately the same domain as the canonical intents and the App. B worked example, so the Author's Stage-2/Stage-3 machinery operates on familiar ground: 4–6 endpoints across ~2 resources, including a cursor-paginated list endpoint (under the pagination intents), an idempotent write endpoint (under a `compose: implies` idempotency-on-writes intent), structured-logging + error-handling cross-cutting intents, and a full test pyramid with integration-tests (real Postgres) and e2e-tests (the app's real HTTP surface) children. (Sprint 11; RFC §5, §3.2.1, §3.4, §8.2.)
+- **The thesis constraint: zero hand-written application code.** All application source is produced by the pipeline. Human inputs are whitelisted: dialog responses (`dusk_author_continue`), `dusk_implement` requests, `dusk_resolve_livelock` / recovery-ladder resolutions, and commit review/merge approval. The constraint is **mechanically audited**: a trailer-audit script walks the POC's git history and verifies every commit touching application source carries the full v9 trailer set (`Bead-id`/`Verdict-id`/`Trace-id`/…) or is a merge of such commits. (Sprint 11; RFC §6.7, App. A.7.)
+- **Greenfield intent-tree authoring** — the entire tree (~10–20 intents) through full-mode `dusk_author_*` dialogs, including ≥1 `polarity: negative` triple, ≥1 `compose: implies` intent with a closed-vocabulary antecedent, and test-pyramid children at the unit + integration + e2e layers. Stage-2 tension detection is exercised *as the tree grows* — later intents must discover and classify earlier ones. (Sprint 11; RFC §5, §3.1, §3.2.1.)
+- **The full pyramid on real infrastructure** — the Test Runner executes Verifier-validated integration tests against live Postgres and e2e tests against the app's real HTTP surface, through the pipeline (two-stage satisfaction + livelock machinery live). This is the first real-code, real-infra pyramid run. (Sprint 11; RFC §3.4, §6.6.)
+- **Pipeline breadth on greenfield code** — ≥1 `dusk_implement` request that decomposes to a multi-bead DAG with a file-overlap serialization edge (a cross-cutting intent overlapping an endpoint module); ≥1 naturally-occurring pause → author → resume loop (a request referencing a not-yet-authored intent mid-build). Recovery/livelock paths are recorded if they occur naturally — not artificially forced. (Sprint 11; RFC §6.2, §10.1.1.)
+- **Measurement carry-over** — the Phase-5 instruments run against the POC: complete trace streams; periodic `dusk doctor` + `--static-analysis` (born-decorated code should show **zero erosion** — the strongest available validation of the decorate-at-authorship design); a POC adherence baseline via `dusk_inspect`/the registry surfaces. (Sprint 11; RFC §8.9.)
+- **Friction → v1.x backlog** — the dogfood mechanics reused: dated JSONL under the POC's `.ia/observability/`, a `PocReport` (the `DogfoodReport` shape reused with a POC profile) separating hard gates from exploratory data; friction-driven role/skill edits land in the dusk repo as ordinary reviewed commits. (Sprint 11.)
+
+### Behavioral tests integrated in this phase
+
+#### The thesis constraint
+
+- **P6-T1 · Zero hand-written application code — mechanically audited.**
+  - **WHAT** — The defining constraint holds and is provable from the git record alone.
+  - **HOW** — Run the trailer-audit script over the POC repo's full history → assert every commit touching application source carries the full v9 trailer set (or is a merge of such commits); assert the whitelist (dialog responses, requests, resolutions, review) covers every human action recorded. The auditor is a zero-model pure pass over `git log`.
+  - **WHY** — The v9 thesis (RFC §1); the constraint that distinguishes Phase 6 from the brownfield dogfood.
+
+- **P6-T2 · The intent tree is born entirely through dialogs.**
+  - **WHAT** — Every intent in the POC traces to an authoring dialog; the hard constructs are present.
+  - **HOW** — For every intent under the POC's `.ia/intents/`, assert a corresponding `DialogState` transcript exists (or a finalize record naming it); assert the tree contains ≥1 `polarity: negative` triple, ≥1 `compose: implies` intent with a closed-vocabulary antecedent, and pyramid children at unit + integration + e2e layers — each matching its dialog's Stage-4/4.5 outcome.
+  - **WHY** — RFC §5; greenfield authoring at tree scale, which P4-T1 only exercised one intent at a time.
+
+#### The pyramid on real infrastructure
+
+- **P6-T3 · Integration tests execute against live Postgres through the pipeline.**
+  - **WHAT** — The integration-tests layer runs for real on real code — the first time outside fixtures.
+  - **HOW** — A `dusk_implement` run whose intent set includes an `…/integration-tests` child produces Verifier-validated tests that the Test Runner executes against the POC's live Postgres → assert the `TestVerdict` satisfies the layer's `covers-*` triples and the commit carries `Test-Intent` + `Test-Verdict-id` trailers.
+  - **WHY** — RFC §3.4, §6.6; closes v1 gap (b) — `packages/shared` is unit-only.
+
+- **P6-T4 · E2e tests execute against the app's real HTTP surface through the pipeline.**
+  - **WHAT** — The e2e layer runs against the running application.
+  - **HOW** — Same shape as P6-T3 for an `…/e2e-tests` child: the Test Runner boots/targets the app's HTTP surface, executes the e2e suite → assert the `TestVerdict` and trailers.
+  - **WHY** — RFC §3.4, §6.6; the layer v1 never ran on real code.
+
+#### Pipeline breadth on greenfield code
+
+- **P6-T5 · A multi-bead, file-overlap-serialized request lands on real code.**
+  - **WHAT** — The Decomposer's overlap machinery operates on a real module graph, not a fixture.
+  - **HOW** — Issue a request decomposing to ≥2 beads where a cross-cutting intent (e.g., structured-logging) overlaps an endpoint module → assert the DAG contains the serialization edge, the beads run in the documented order, and one commit per bead lands with full trailers.
+  - **WHY** — RFC §6.2; P3-T3 proved this on fixtures only.
+
+- **P6-T6 · The pause → author → resume loop closes naturally mid-build.**
+  - **WHAT** — The Phase-4 loop operates in real greenfield flow, where missing intents are the *normal* case.
+  - **HOW** — Issue a request referencing a not-yet-authored behavior → `implement_paused_for_authoring` with the enriched seed; drive the real dialog; `dusk_implement({resume_token})` completes with a commit; checkpoint deleted.
+  - **WHY** — RFC §10.1.1; P4-T8 on real work instead of a fixture.
+
+#### The deliverable + the design validation
+
+- **P6-T7 · The application works.**
+  - **WHAT** — The deliverable is a working API, not a trace stream.
+  - **HOW** — Boot the POC app → assert the endpoints respond; assert cursor-pagination semantics (opaque cursor, stable ordering) and idempotency semantics (duplicate write with same key → single effect) via the app's own e2e suite; assert the full suite (all pyramid layers) is green.
+  - **WHY** — Sprint 11's product bar; an adherent-but-broken app would falsify the thesis just as surely as hand-written code.
+
+- **P6-T8 · Born-decorated code shows zero erosion.**
+  - **WHAT** — Decorate-at-authorship produces and *maintains* total decoration — the design claim brownfield can't validate.
+  - **HOW** — Run `dusk doctor --static-analysis` (conservative) over the finished POC → assert zero unresolved `S ⊄ D` findings (any finding is either pipeline-fixed or carries a documented disposition); run `--strict-unknowns` → assert zero `undecorated_callee` findings in application code.
+  - **WHY** — RFC §4.1, §8.9; the strongest available evidence for the greenfield-first posture.
+
+### Phase-landing smoke test
+
+**Scenario — "from `git init` to a working API, hands off the code."** In a fresh repository: `dusk init` → author the intent tree through real dialogs (including the polarity-negative, `implies`, and pyramid constructs) → a series of `dusk_implement` requests builds the application (at least one multi-bead/file-overlap run and one natural pause→author→resume among them) → the app boots and its full pyramid (unit + integration vs live Postgres + e2e vs real HTTP) is green → the trailer audit confirms zero hand-written application code → `dusk doctor --static-analysis` is clean in both modes → the `PocReport` gates pass.
+
+**Green means:** the v9 thesis holds in its pure form on Dusk's native (greenfield) terrain, the full pyramid runs on real infrastructure, and the POC stands as the canonical greenfield reference for v1.x adopters.
+
+### Cohesive landing criteria
+
+- [ ] All P6 behavioral tests pass — the trailer auditor, transcript checker, and `PocReport` evaluator are zero-model pure passes; the build itself runs the production pipeline (real frontier model, ambient CLI, transport amendment applied).
+- [ ] The phase-landing smoke scenario is green end-to-end.
+- [ ] Hard gates: zero hand-written application code (P6-T1); all endpoints landed via `dusk_implement` with mergeable commits; the POC's own full pyramid green against live infrastructure; gate false-positive rate = 0 on the POC; intent tree 100% dialog-authored (P6-T2); static analysis clean in both modes (P6-T8).
+- [ ] Exploratory (explicitly non-gating, recorded in the `PocReport`): dialog turn counts, Stage-3 proposal acceptance rate, iteration distributions, pause/resume frequency, intent-granularity stats, time-to-endpoint.
+- [ ] Friction data fed back into role prompts/skills in the dusk repo as reviewed commits; the POC repo is publishable as the canonical greenfield reference.
+
+---
+
 ## Commitment → Phase coverage matrix
 
-Every v1 commitment from the roadmap's "Architectural commitments locked for v1" table and the plan brief's "Hard expectations" list, mapped to the phase that lands it and a representative behavioral test. If a row has no phase, v1 is not done.
+Every v1 commitment from the roadmap's "Architectural commitments locked for v1" table and the plan brief's "Hard expectations" list, mapped to the phase that lands it and a representative behavioral test. If a row has no phase, v1 is not done. **(Phase 6 is post-v1 and adds no rows to this ledger — v1 completeness is determined by Phases 1–5 alone.)**
 
 | Commitment | RFC § | Phase | Representative test(s) |
 |---|---|---|---|

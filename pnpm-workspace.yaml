@@ -3,3 +3,6 @@ packages:
   - "packages/core/*"
   - "packages/delivery/*"
   - "packages/runtime/*"
+  - "packages/fixtures/worked-example"
+  # Deliberately broken benchmark fixture code — never part of the workspace build (design D7).
+  - "!packages/fixtures/seeded-violations"

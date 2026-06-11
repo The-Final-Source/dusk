@@ -22,6 +22,16 @@ export const DuskConfigSchema = z
       .partial()
       .optional(),
     verifier_evidence_max_lines: z.number().int().positive().optional(),
+    // Phase 5 addition (additive; defaults preserve current behavior).
+    observability: z
+      .object({
+        trace_ring_bytes: z.number().int().positive().optional(),
+        mirrors: z
+          .array(z.object({ sink: z.enum(["otlp", "posthog"]), endpoint: z.string().min(1) }).strict())
+          .optional(),
+      })
+      .partial()
+      .optional(),
   })
   .passthrough();
 
@@ -48,4 +58,16 @@ export function intentsDir(config: DuskConfig): string {
 
 export function testPyramidSuffixes(config: DuskConfig): string[] {
   return config.test_pyramid?.suffixes ?? [...DEFAULT_TEST_PYRAMID_SUFFIXES];
+}
+
+export const DEFAULT_TRACE_RING_BYTES = 64 * 1024 * 1024;
+
+export type MirrorConfig = { sink: "otlp" | "posthog"; endpoint: string };
+
+export function traceRingBytes(config: DuskConfig): number {
+  return config.observability?.trace_ring_bytes ?? DEFAULT_TRACE_RING_BYTES;
+}
+
+export function traceMirrors(config: DuskConfig): MirrorConfig[] {
+  return config.observability?.mirrors ?? [];
 }

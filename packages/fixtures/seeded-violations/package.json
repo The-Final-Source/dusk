@@ -1,0 +1,7 @@
+{
+  "name": "@dusk/fixtures-seeded-violations",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Seeded-violations benchmark fixture (~60 violations, four classes). EXCLUDED from the pnpm workspace build — the fixture code is deliberately broken and must never compile. The manifest is built (and drift-guarded) by @dusk/runtime-benchmark's buildSeededManifest."
+}
