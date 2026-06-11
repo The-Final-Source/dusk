@@ -20,3 +20,5 @@
 {"kind":"implement_run","at":"2026-06-11T16:35:59.503Z","success":false,"note":"attempt: long cycle persistently rejected REAL adherence gaps (email-field over-claimed RFC 5322; unit-test intents uncovered); one parse-flake verdict then surfaced as verifier_model_call_failed — both root causes fixed as window edits"}
 {"kind":"friction","at":"2026-06-11T16:35:59.504Z","observation":"authored intents can be STRICTER than the existing code (RFC 5322 vs zod email; three-fields-only vs non-strict z.object) — the long cycle correctly blocks until the operator either fixes the code or re-scopes the intent; budget-burned runs are the signal"}
 {"kind":"package_test_suite","at":"2026-06-11T16:35:59.504Z","status":"green"}
+{"kind":"gate_event","at":"2026-06-11T17:12:43.231Z","decision":"approve","false_positive":false,"note":"property-level decorations src/schemas/user.ts: approve"}
+{"kind":"friction","at":"2026-06-11T17:12:43.233Z","observation":"for multi-line z.object schemas the Verifier's focal evidence is the claimed line only — declaration-level claims expose just the opening line, hiding the validator; decorate the carrying property lines directly"}
