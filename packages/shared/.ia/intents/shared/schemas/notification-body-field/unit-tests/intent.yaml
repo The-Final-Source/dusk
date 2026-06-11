@@ -1,0 +1,11 @@
+schema_version: 2
+id: shared/schemas/notification-body-field/unit-tests
+description: Unit tests cover shared/schemas/notification-body-field.
+obligation: must
+compose: all
+triples:
+  - id: covers-reject-body-exceeding-max-length
+    subject: the unit test
+    predicate: verifies
+    object: that the notification body field schema does not accept a value whose
+      length exceeds 2000 Unicode code points

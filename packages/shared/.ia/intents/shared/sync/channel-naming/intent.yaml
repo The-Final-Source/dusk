@@ -1,0 +1,17 @@
+schema_version: 2
+id: shared/sync/channel-naming
+description: Sync channel names are deterministically derived as the string
+  literal "sync:" concatenated with the entity type. No other format is valid
+  for a sync channel.
+obligation: must
+compose: all
+triples:
+  - id: channel-name-derivation
+    subject: a sync channel
+    predicate: derive
+    object: its name as the string "sync:" concatenated with the entity type
+  - id: channel-name-format-prohibition
+    subject: a sync channel name
+    predicate: use
+    object: any format other than sync:<entity>
+    polarity: negative

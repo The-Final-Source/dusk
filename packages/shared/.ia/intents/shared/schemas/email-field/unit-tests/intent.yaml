@@ -1,0 +1,11 @@
+schema_version: 2
+id: shared/schemas/email-field/unit-tests
+description: Unit tests cover shared/schemas/email-field.
+obligation: must
+compose: all
+triples:
+  - id: covers-reject-invalid-email-format
+    subject: the unit test
+    predicate: verifies
+    object: that the email field schema reject input that does not conform to RFC
+      5322 structural email format

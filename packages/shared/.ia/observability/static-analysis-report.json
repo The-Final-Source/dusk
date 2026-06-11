@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-11T14:14:31.174Z",
+  "mode": "strict-unknowns",
+  "findings": [],
+  "density_baseline": [
+    {
+      "file": "src/index.ts",
+      "decorated_units": 0,
+      "undecorated_units": 0
+    },
+    {
+      "file": "src/schemas/index.ts",
+      "decorated_units": 0,
+      "undecorated_units": 0
+    },
+    {
+      "file": "src/schemas/notification.test.ts",
+      "decorated_units": 0,
+      "undecorated_units": 0
+    },
+    {
+      "file": "src/schemas/notification.ts",
+      "decorated_units": 0,
+      "undecorated_units": 0
+    },
+    {
+      "file": "src/schemas/sync.test.ts",
+      "decorated_units": 0,
+      "undecorated_units": 0
+    },
+    {
+      "file": "src/schemas/sync.ts",
+      "decorated_units": 1,
+      "undecorated_units": 0
+    },
+    {
+      "file": "src/schemas/user.test.ts",
+      "decorated_units": 0,
+      "undecorated_units": 0
+    },
+    {
+      "file": "src/schemas/user.ts",
+      "decorated_units": 0,
+      "undecorated_units": 0
+    },
+    {
+      "file": "vitest.config.ts",
+      "decorated_units": 0,
+      "undecorated_units": 0
+    }
+  ]
+}

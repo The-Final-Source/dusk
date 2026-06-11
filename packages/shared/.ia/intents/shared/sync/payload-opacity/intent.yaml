@@ -1,0 +1,18 @@
+schema_version: 2
+id: shared/sync/payload-opacity
+description: The protocol layer must not inspect, validate, or transform the
+  payload field's content. Interpretation of the payload is entirely the
+  consumer's responsibility.
+obligation: must
+compose: all
+triples:
+  - id: no-payload-inspection
+    subject: the protocol layer
+    predicate: inspect
+    object: the payload field's content
+    polarity: negative
+  - id: no-payload-transformation
+    subject: the protocol layer
+    predicate: validate or transform
+    object: the payload field's content
+    polarity: negative

@@ -1,0 +1,16 @@
+schema_version: 2
+id: shared/schemas/role-vocabulary/unit-tests
+description: Unit tests cover shared/schemas/role-vocabulary.
+obligation: must
+compose: all
+triples:
+  - id: covers-closed-enum
+    subject: the unit test
+    predicate: verifies
+    object: that the role schema express the role vocabulary as a closed Zod enum
+      constrained to exactly 'user' and 'admin'
+  - id: covers-no-free-string-role
+    subject: the unit test
+    predicate: verifies
+    object: that the role schema does not accept a string value outside the closed
+      role enum

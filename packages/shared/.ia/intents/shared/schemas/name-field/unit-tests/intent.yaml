@@ -1,0 +1,11 @@
+schema_version: 2
+id: shared/schemas/name-field/unit-tests
+description: Unit tests cover shared/schemas/name-field.
+obligation: must
+compose: all
+triples:
+  - id: covers-reject-empty-or-whitespace-name
+    subject: the unit test
+    predicate: verifies
+    object: that the name field schema does not accept a value that is empty or
+      consists entirely of whitespace characters

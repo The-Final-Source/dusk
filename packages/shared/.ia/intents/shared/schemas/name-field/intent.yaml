@@ -1,0 +1,20 @@
+schema_version: 2
+id: shared/schemas/name-field
+description: The name field schema enforces that user-facing name inputs are
+  non-empty after whitespace trimming at the system boundary. A value consisting
+  entirely of whitespace characters is treated as absent.
+obligation: must
+compose: all
+triples:
+  - id: reject-empty-or-whitespace-name
+    subject: the name field schema
+    predicate: accept
+    object: a value that is empty or consists entirely of whitespace characters
+    polarity: negative
+relates_to:
+  - kind: sibling
+    target: shared/schemas/email-field
+  - kind: sibling
+    target: shared/schemas/notification-title-field
+  - kind: sibling
+    target: shared/schemas/notification-body-field

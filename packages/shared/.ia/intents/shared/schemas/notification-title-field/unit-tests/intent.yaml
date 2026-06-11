@@ -1,0 +1,11 @@
+schema_version: 2
+id: shared/schemas/notification-title-field/unit-tests
+description: Unit tests cover shared/schemas/notification-title-field.
+obligation: must
+compose: all
+triples:
+  - id: covers-reject-title-exceeding-max-length
+    subject: the unit test
+    predicate: verifies
+    object: that the notification title field schema does not accept a value whose
+      length exceeds 255 Unicode code points

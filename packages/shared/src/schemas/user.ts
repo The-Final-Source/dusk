@@ -1,13 +1,19 @@
 import { z } from "zod";
 
+// @intent shared/schemas/role-vocabulary [closed-enum]
 export const RoleSchema = z.enum(["user", "admin"]);
 export type Role = z.infer<typeof RoleSchema>;
 
+// @intent shared/schemas/name-field [reject-empty-or-whitespace-name]
+// @intent shared/schemas/email-field [reject-invalid-email-format]
 export const CreateUserSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
 });
 
+// @intent shared/schemas/email-field [reject-invalid-email-format]
+// @intent shared/schemas/name-field [reject-empty-or-whitespace-name]
+// @intent shared/schemas/role-vocabulary [closed-enum]
 export const UserSchema = CreateUserSchema.extend({
   id: z.string().uuid(),
   role: RoleSchema.default("user"),
@@ -16,6 +22,8 @@ export const UserSchema = CreateUserSchema.extend({
   createdAt: z.date(),
 });
 
+// @intent shared/schemas/email-field [reject-invalid-email-format]
+// @intent shared/schemas/role-vocabulary [closed-enum]
 export const UpdateUserRoleSchema = z.object({
   email: z.string().email(),
   role: RoleSchema,

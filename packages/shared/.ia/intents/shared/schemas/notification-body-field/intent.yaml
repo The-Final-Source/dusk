@@ -1,0 +1,19 @@
+schema_version: 2
+id: shared/schemas/notification-body-field
+description: The notification body field schema enforces a maximum length of
+  2000 Unicode code points at the system boundary.
+obligation: must
+compose: all
+triples:
+  - id: reject-body-exceeding-max-length
+    subject: the notification body field schema
+    predicate: accept
+    object: a value whose length exceeds 2000 Unicode code points
+    polarity: negative
+relates_to:
+  - kind: sibling
+    target: shared/schemas/email-field
+  - kind: sibling
+    target: shared/schemas/name-field
+  - kind: sibling
+    target: shared/schemas/notification-title-field

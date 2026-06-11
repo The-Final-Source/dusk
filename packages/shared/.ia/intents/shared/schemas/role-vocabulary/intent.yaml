@@ -1,0 +1,18 @@
+schema_version: 2
+id: shared/schemas/role-vocabulary
+description: The role schema expresses the role vocabulary as a closed Zod enum
+  constrained to exactly 'user' and 'admin'; no free-string role values are
+  valid wherever the role schema is applied.
+obligation: must
+compose: all
+triples:
+  - id: closed-enum
+    subject: the role schema
+    predicate: express
+    object: the role vocabulary as a closed Zod enum constrained to exactly 'user'
+      and 'admin'
+  - id: no-free-string-role
+    subject: the role schema
+    predicate: accept
+    object: a string value outside the closed role enum
+    polarity: negative

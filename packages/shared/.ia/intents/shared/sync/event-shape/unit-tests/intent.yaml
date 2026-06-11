@@ -1,0 +1,16 @@
+schema_version: 2
+id: shared/sync/event-shape/unit-tests
+description: Unit tests cover shared/sync/event-shape.
+obligation: must
+compose: all
+triples:
+  - id: covers-three-fields-only
+    subject: the unit test
+    predicate: verifies
+    object: that a sync event carry exactly one action field, one opaque payload
+      field, and one epoch-milliseconds timestamp field — and no other fields
+  - id: covers-timestamp-epoch-ms
+    subject: the unit test
+    predicate: verifies
+    object: that the timestamp field represent a non-negative integer in epoch
+      milliseconds

@@ -1,0 +1,12 @@
+schema_version: 2
+id: shared/sync/action-vocabulary
+description: The action field is constrained to exactly the three-value closed
+  enum {created, updated, deleted}. Any other value is a protocol violation.
+obligation: must
+compose: all
+triples:
+  - id: action-unlisted-value
+    subject: the action field
+    predicate: contain
+    object: a value outside the set {created, updated, deleted}
+    polarity: negative

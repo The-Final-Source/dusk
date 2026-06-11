@@ -1,0 +1,17 @@
+schema_version: 2
+id: shared/sync/event-shape
+description: A sync event carries exactly three protocol fields — action,
+  payload, and timestamp — and no other fields. No optional fields, no
+  versioning envelope, and no metadata bag at the protocol layer.
+obligation: must
+compose: all
+triples:
+  - id: three-fields-only
+    subject: a sync event
+    predicate: carry
+    object: exactly one action field, one opaque payload field, and one
+      epoch-milliseconds timestamp field — and no other fields
+  - id: timestamp-epoch-ms
+    subject: the timestamp field
+    predicate: represent
+    object: a non-negative integer in epoch milliseconds

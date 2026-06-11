@@ -1,0 +1,13 @@
+{"kind": "gate_event", "at": "2026-06-11T14:14:12.931Z", "decision": "approve", "false_positive": false, "note": "decorate src/schemas/user.ts: approved"}
+{"kind": "gate_event", "at": "2026-06-11T14:14:13.037Z", "decision": "approve", "false_positive": false, "note": "decorate src/schemas/sync.ts: approved"}
+{"kind": "doctor_run", "at": "2026-06-11T14:15:57.284Z", "mode": "conservative", "findings": 0}
+{"kind": "doctor_run", "at": "2026-06-11T14:15:57.286Z", "mode": "strict-unknowns", "findings": 0}
+{"kind": "package_test_suite", "at": "2026-06-11T14:15:57.286Z", "status": "green"}
+{"kind": "worked_example_regression", "at": "2026-06-11T14:15:57.286Z", "status": "clean"}
+{"kind": "author_dialog", "at": "2026-06-11T14:15:57.286Z", "branches": 1}
+{"kind": "author_dialog", "at": "2026-06-11T14:15:57.286Z", "branches": 2}
+{"kind": "author_dialog", "at": "2026-06-11T14:15:57.287Z", "branches": 1}
+{"kind": "friction", "at": "2026-06-11T14:15:57.287Z", "observation": "decorating an existing file requires intents for EVERY export \u2014 incremental adoption needs per-file intent planning before the first decoration write"}
+{"kind": "friction", "at": "2026-06-11T14:15:57.287Z", "observation": "a multi-concern authoring request can silently narrow at Stage 4 \u2014 the confirm list must be re-read against the original request (sync intents dropped from the role-vocabulary dialog; re-authored in a scoped dialog)"}
+{"kind": "friction", "at": "2026-06-11T14:15:57.287Z", "observation": "dusk init writes the gate hook command assuming a package-local @dusk/pre-tool-use install; in a workspace the path must point at the workspace binary", "commit_summary": "hook path repaired in packages/shared/.claude/settings.json"}
+{"kind": "friction", "at": "2026-06-11T14:15:57.287Z", "observation": "a null-aspect @intent-test-file claim mapped to an empty cover set, so a test-body pre-pass rejection vanished \u2014 fixed in @dusk/runtime-test-runner with a regression test", "commit_sha": "a764432", "commit_summary": "fix(test-runner): null-aspect test-file claims cover all intent triples"}
