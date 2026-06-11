@@ -10,6 +10,8 @@ import { describe, expect, test } from "vitest";
 
 import { duskAuthorContinue, duskAuthorFinalize, duskAuthorStart, listDialogsQuery, type AuthorSurfaceDeps } from "./authorSurface.js";
 import { duskResolveLivelock, type WriteSurfaceDeps } from "./writeSurface.js";
+import { loadProjectContext } from "./context.js";
+import { getIntentQuery, inspectQuery } from "./queries.js";
 
 /**
  * §4 author-mcp-surface + §7.2/7.3 livelock rewire + §9.1 read surface —
@@ -142,7 +144,8 @@ describe("4.2 — dusk_author_continue advances one turn", () => {
 
 describe("4.3 — dusk_author_finalize", () => {
   test("finalize commits and destroys; finalize at an early stage is a typed error", async () => {
-    const repo = createTempRepo({ git: false });
+    const repo = createTempRepo({ git: false, files: { "src/widget.ts": "export const widget = 1;\n" } });
+    const codeBefore = repo.read("src/widget.ts");
     const draft: DraftIntent = {
       id: "api/widget",
       description: "Widget endpoint returns typed widgets.",
@@ -174,6 +177,14 @@ describe("4.3 — dusk_author_finalize", () => {
     expect(finalized.value.intents_created).toEqual(["api/widget"]);
     expect(repo.exists(".ia/intents/api/widget/intent.yaml")).toBe(true);
     expect(repo.exists(`.ia/runtime/dialogs/${id}`)).toBe(false);
+    // No code is modified during authoring — only .ia/intents is touched.
+    expect(repo.read("src/widget.ts")).toBe(codeBefore);
+    // The authored intent is IMMEDIATELY resolvable through the read surface.
+    const ctx = loadProjectContext(repo.dir);
+    const got = getIntentQuery(ctx, "api/widget");
+    expect(got.success).toBe(true);
+    const inspected = inspectQuery(ctx, "api/widget");
+    expect(inspected.success).toBe(true);
     repo.cleanup();
   });
 });
