@@ -13,6 +13,9 @@
       "path": "../core/schema"
     },
     {
+      "path": "../runtime/benchmark"
+    },
+    {
       "path": "../core/parser"
     },
     {

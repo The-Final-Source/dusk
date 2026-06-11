@@ -7,6 +7,8 @@ import { listRoles, renderRoles } from "./roles.js";
 import { listSkills, renderSkills } from "./skills.js";
 import { runVerify } from "./verify.js";
 import { cleanupWorktreesCommand, gcCheckpointsCommand, gcDialogsCommand } from "./doctorP3.js";
+import { BENCHMARK_HELP, runBenchmarkCli } from "./benchmark.js";
+import { runStaticAnalysis } from "./doctorStaticAnalysis.js";
 import { runImplementCli } from "./implement.js";
 import { AUTHOR_HELP, runAuthorCli } from "./author.js";
 import type { ConflictChoice } from "./settingsMerge.js";
@@ -22,7 +24,9 @@ Usage:
   dusk skills                 Introspect installed role-bound skills, grouped by role
   dusk implement <request>    Run the 9-step pipeline (mirror of dusk_implement); --resume <id> to continue
   dusk author <request>       Open an intent-authoring dialog (mirror of dusk_author_*); --continue / --finalize
+  dusk benchmark              Run the seeded-violations benchmark / fresh-Verifier audit / dogfood evaluation
   dusk doctor --check-hook    Verify the gate is installed (--repair to fix)
+  dusk doctor --static-analysis [--strict-unknowns] [path]   Decoration-erosion (S ⊄ D) drift report
   dusk doctor --cleanup-worktrees | --gc-implement-checkpoints | --gc-dialogs   Reap stale runtime state
   dusk --help                 Show this help
 `;
@@ -41,7 +45,7 @@ const HELP_TEXT: Record<string, string> = {
 };
 
 const DOCTOR_HELP =
-  "dusk doctor [--check-hook [--repair] | --cleanup-worktrees | --gc-implement-checkpoints | --gc-dialogs]\n  --check-hook                 verify the PreToolUse gate is installed (--repair to fix)\n  --cleanup-worktrees          reap orphaned dusk/<bead-id> worktrees (idempotent)\n  --gc-implement-checkpoints   reap pause/resume checkpoints older than 24h\n  --gc-dialogs                 reap dialog directories older than 24h\n  Example: dusk doctor --cleanup-worktrees\n";
+  "dusk doctor [--check-hook [--repair] | --static-analysis [--strict-unknowns] [path] | --cleanup-worktrees | --gc-implement-checkpoints | --gc-dialogs]\n  --check-hook                 verify the PreToolUse gate is installed (--repair to fix)\n  --static-analysis [path]     decoration-erosion drift report (S ⊄ D + conflicts-pair co-decoration\n                               + per-file decoration-density baseline); conservative by default —\n                               uninstrumented callees contribute the empty intent set\n  --strict-unknowns            additionally surface uninstrumented callees as the distinct\n                               undecorated_callee finding class\n  --cleanup-worktrees          reap orphaned dusk/<bead-id> worktrees (idempotent)\n  --gc-implement-checkpoints   reap pause/resume checkpoints older than 24h\n  --gc-dialogs                 reap dialog directories older than 24h\n  Example: dusk doctor --static-analysis packages/shared\n  Example: dusk doctor --static-analysis --strict-unknowns\n  Example: dusk doctor --cleanup-worktrees\n";
 
 const wantsHelp = (args: string[]): boolean => args.includes("--help") || args.includes("-h");
 
@@ -125,9 +129,21 @@ async function run(command: string | undefined, rest: string[]): Promise<number>
       process.stdout.write(result.text);
       return result.ok ? 0 : 1;
     }
+    case "benchmark": {
+      if (wantsHelp(rest)) return process.stdout.write(BENCHMARK_HELP), 0;
+      const result = await runBenchmarkCli(root, rest);
+      process.stdout.write(result.text);
+      return result.ok ? 0 : 1;
+    }
     case "doctor": {
       if (wantsHelp(rest)) return process.stdout.write(DOCTOR_HELP), 0;
       const clock = { now: () => Date.now() };
+      if (rest.includes("--static-analysis")) {
+        const scope = rest.filter((a) => !a.startsWith("--"))[0];
+        const result = runStaticAnalysis(root, { strictUnknowns: rest.includes("--strict-unknowns"), scope });
+        process.stdout.write(result.text);
+        return result.ok ? 0 : 1;
+      }
       if (rest.includes("--check-hook")) {
         const result = checkHook(root, { repair: rest.includes("--repair") });
         process.stdout.write(`doctor --check-hook: ${result.message}\n`);

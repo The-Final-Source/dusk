@@ -108,6 +108,9 @@ importers:
       '@dusk/runtime-author':
         specifier: workspace:*
         version: link:../runtime/author
+      '@dusk/runtime-benchmark':
+        specifier: workspace:*
+        version: link:../runtime/benchmark
       '@dusk/runtime-implement-checkpoint':
         specifier: workspace:*
         version: link:../runtime/implement-checkpoint

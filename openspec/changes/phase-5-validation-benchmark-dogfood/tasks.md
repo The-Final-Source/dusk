@@ -51,9 +51,9 @@
 
 ## 8. dusk-cli-substrate (extended)  (spec: dusk-cli-substrate)
 
-- [ ] 8.1 Implement `dusk benchmark` with `--models`, `--audit-verifier-freshness`, `--calibrate-audit`, `--evaluate-dogfood`; human-readable summaries; exit 0 on success/report, non-zero on typed errors (incl. the pre-registration refusals at the CLI boundary). Expose `/dusk-benchmark` as the slash wrapper. Acceptance: spec scenarios *`dusk benchmark` runs the harness and writes the report* + *`--audit-verifier-freshness` enforces pre-registration at the CLI*; Test (zero-model via the double-backed sweep + the refusal paths): report written + exit codes correct; refusal prints the typed error non-zero.
-- [ ] 8.2 Implement `dusk doctor --static-analysis` (+ `--strict-unknowns`) surfacing the `StaticAnalysisReport`. Acceptance: spec scenario *`dusk doctor --static-analysis` produces the structured report*; Test (zero-model): both modes over a fixture produce the same report shape with the added class under strict.
-- [ ] 8.3 Wire `--help` on every new command/flag (usage + ≥1 example). Acceptance: spec scenario *Every new command and flag supports --help*; Test: each `--help` exits 0 with usage substring.
+- [x] 8.1 Implement `dusk benchmark` with `--models`, `--audit-verifier-freshness`, `--calibrate-audit`, `--evaluate-dogfood`; human-readable summaries; exit 0 on success/report, non-zero on typed errors (incl. the pre-registration refusals at the CLI boundary). Expose `/dusk-benchmark` as the slash wrapper. Acceptance: spec scenarios *`dusk benchmark` runs the harness and writes the report* + *`--audit-verifier-freshness` enforces pre-registration at the CLI*; Test (zero-model via the double-backed sweep + the refusal paths): report written + exit codes correct; refusal prints the typed error non-zero.
+- [x] 8.2 Implement `dusk doctor --static-analysis` (+ `--strict-unknowns`) surfacing the `StaticAnalysisReport`. Acceptance: spec scenario *`dusk doctor --static-analysis` produces the structured report*; Test (zero-model): both modes over a fixture produce the same report shape with the added class under strict.
+- [x] 8.3 Wire `--help` on every new command/flag (usage + ≥1 example). Acceptance: spec scenario *Every new command and flag supports --help*; Test: each `--help` exits 0 with usage substring.
 
 ## 9. Benchmark sweep validation (the per-class detection contract)
 
