@@ -122,3 +122,42 @@ describe("9.4 — configurable test-pyramid suffix discovery", () => {
     expect(buildVitestArgv([file])).toEqual(["vitest", "run", file, "--reporter=json"]);
   });
 });
+
+// Phase-5 dogfood regression: an `@intent-test-file` claim carries
+// `aspect_ids: null` (= ALL aspects). Its pre-pass rejection must surface as
+// reenter_step4 covering every triple of the test intent — never vanish into
+// an empty cover set.
+describe("file-scope test claims cover all aspects (P5 regression)", () => {
+  test("a rejected @intent-test-file claim re-enters Step 4 naming every covered triple", async () => {
+    const fileRec: DecorationRecord = {
+      file: TEST_FILE,
+      line: 1,
+      scope: "file",
+      declaration_name: null,
+      marker: "intent-test-file",
+      intent_path: TEST_INTENT,
+      aspect_ids: null,
+      support_triple: null,
+      ignore_clause: null,
+    };
+    const index = buildDerivedIndex([fileRec], new Map([[TEST_INTENT, testIntent(TEST_INTENT, ["covers-a", "covers-b"])]]));
+    const result = await runTestRunner({
+      spawn: makeSpawn([verdict("reject")]),
+      index,
+      beadId: "bd_x",
+      sessionId: "s",
+      testIntentPath: TEST_INTENT,
+      prepassInput: (claim) => `judge ${claim.file}`,
+      cwd: "/repo",
+      vitestRunner: () => {
+        throw new Error("the Test Runner must never run a pre-pass-rejected file");
+      },
+    });
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.value.kind).toBe("reenter_step4");
+    if (result.value.kind !== "reenter_step4") return;
+    expect(result.value.rejected.map((r) => r.triple_id).sort()).toEqual(["covers-a", "covers-b"]);
+    expect(result.value.invokedFiles).toEqual([]);
+  });
+});

@@ -8,6 +8,10 @@
   },
   "include": ["src"],
   "references": [
-    { "path": "../shared" }
+    { "path": "../shared" },
+    { "path": "../core/schema" },
+    { "path": "../core/decoration" },
+    { "path": "../core/index" },
+    { "path": "../core/graph" }
   ]
 }

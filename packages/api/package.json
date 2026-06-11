@@ -37,7 +37,12 @@
     "pino-http": "^10.0.0",
     "postgres": "^3.4.0",
     "ws": "^8.18.0",
-    "zod": "^3.24.0"
+    "zod": "^3.24.0",
+    "@dusk/core-schema": "workspace:*",
+    "@dusk/core-decoration": "workspace:*",
+    "@dusk/core-index": "workspace:*",
+    "@dusk/core-graph": "workspace:*",
+    "yaml": "^2.6.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

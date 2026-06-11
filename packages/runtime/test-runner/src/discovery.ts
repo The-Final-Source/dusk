@@ -16,11 +16,19 @@ export type TestClaim = {
 };
 
 export function discoverTestClaims(index: DerivedIndex, testIntentPath: string): TestClaim[] {
+  // A claim with no aspect list claims ALL aspects (the decoration semantics for
+  // `aspect_ids: null`) — expand to the intent's triple ids so a pre-pass
+  // rejection of an `@intent-test-file` claim never silently vanishes
+  // (Phase-5 dogfood finding; previously mapped to an empty cover set).
+  const intent = index.intents.get(testIntentPath);
+  const allTriples = intent
+    ? (intent.compose === "implies" ? (intent.consequent ?? []) : (intent.triples ?? [])).map((t) => t.id)
+    : [];
   return index.testDiscovery(testIntentPath).map((r) => ({
     file: r.file,
     line: r.line,
     testIntentPath: r.intent_path,
-    coveredTriples: r.aspect_ids ?? [],
+    coveredTriples: r.aspect_ids ?? allTriples,
   }));
 }
 

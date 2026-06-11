@@ -4,8 +4,8 @@ import { runFeature } from "./feature.js";
 
 describe("runFeature", () => {
   it("returns the computed demo value", () => {
-    const expected = "demo";
+    const fixtureInput = "demo";
     runFeature();
-    expect(expected).toBe("demo"); // SEEDED: two-stage-test/asserts-input-not-output
+    expect(fixtureInput.length).toBe(4); // SEEDED: two-stage-test/asserts-input-not-output
   });
 });

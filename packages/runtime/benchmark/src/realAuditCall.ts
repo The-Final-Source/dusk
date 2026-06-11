@@ -11,6 +11,7 @@ import type { AuditCall } from "./auditAxes.js";
 import type { AuditVariant, FixtureVerifierCall } from "./auditRunner.js";
 import type { SeededFixture } from "./fixtureManifest.js";
 import { materializeFixtureProject } from "./fixtureProject.js";
+import { realTestPrepassVerdict } from "./testPrepass.js";
 import { withTransportRetry } from "./transportRetry.js";
 
 /**
@@ -62,6 +63,26 @@ export function realFixtureVerifierCall(opts: {
     let anyReject = false;
     let latencyMs = 0;
     let costUsd = 0;
+
+    // Two-stage-test fixtures route to the Stage-1 test-body pre-pass — the
+    // layer designed to catch them (RFC §3.4; P5-T9).
+    if (fixture.class === "two-stage-test") {
+      const testIntentIds = ctx.intentIds.filter((id) => ctx.index.testDiscovery(id).length > 0);
+      for (const intentId of testIntentIds) {
+        const result = await withTransportRetry(() =>
+          realTestPrepassVerdict(intentId, { index: ctx.index, intents: ctx.intents, readFile: ctx.readFile, modelClient: opts.modelClient }),
+        );
+        if (!result.success) throw new Error(`test pre-pass failed on ${fixture.id}/${intentId}: ${result.error.message}`);
+        if (result.value.decision === "reject") anyReject = true;
+        rationales.push(result.value.aggregate_rationale, ...result.value.per_triple.map((t) => t.rationale));
+      }
+      return {
+        decision: anyReject ? "reject" : "accept",
+        rationale: rationales.filter((r) => r.length > 0).join(" "),
+        evidence: { focal_claims: [] },
+        usage: { latency_ms: latencyMs, cost_usd: costUsd },
+      };
+    }
 
     for (const intentId of ctx.intentIds) {
       const intent = ctx.intents.get(intentId)!;

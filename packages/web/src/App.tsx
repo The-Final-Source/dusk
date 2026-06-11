@@ -7,6 +7,9 @@ import { Home } from "./views/Home.js";
 import { Profile } from "./views/Profile.js";
 import { Users } from "./views/Users.js";
 import { Admin } from "./views/Admin.js";
+import { Adherence } from "./views/registry/Adherence.js";
+import { IntentTree } from "./views/registry/IntentTree.js";
+import { DecorationCoverage } from "./views/registry/DecorationCoverage.js";
 import { AuthGuard } from "./components/AuthGuard.js";
 
 function SessionSync() {
@@ -54,6 +57,10 @@ export function App() {
               </AuthGuard>
             }
           />
+          {/* Phase-5 ecosystem skeletons (read-only registry views; design D9) */}
+          <Route path="/registry/adherence" element={<Adherence />} />
+          <Route path="/registry/intents" element={<IntentTree />} />
+          <Route path="/registry/coverage" element={<DecorationCoverage />} />
         </Routes>
       </main>
     </TRPCProvider>

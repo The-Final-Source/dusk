@@ -15,6 +15,8 @@
     { "path": "../../core/graph" },
     { "path": "../observability" },
     { "path": "../long-cycle" },
+    { "path": "../test-runner" },
+    { "path": "../../delivery/pre-tool-use" },
     { "path": "../verifier" }
   ]
 }

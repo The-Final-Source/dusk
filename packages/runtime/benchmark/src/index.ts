@@ -22,6 +22,7 @@ export { runFreshnessAudit, knownBadFixtures, type AuditVariant, type FixtureVer
 export { calibrateAudit, type CalibrateOptions } from "./calibrate.js";
 export { assembleOrganicCohort } from "./organicCohort.js";
 export { realFixtureVerifierCall } from "./realAuditCall.js";
+export { realGateLeg, realStaticAnalyzerLeg, gateBlocksAnyFile } from "./realLegs.js";
 export { withTransportRetry, TransportLegFailure } from "./transportRetry.js";
 export { runBenchmarkSweep, readSweepRecords, verdictsPath, SweepRecordSchema, type SweepRecord, type SweepModel, type SweepDeps } from "./sweep.js";
 export { assembleBenchmarkReport, perClassAccuracy, perRoleLatencyCost, agreementMatrix } from "./reportPostPass.js";

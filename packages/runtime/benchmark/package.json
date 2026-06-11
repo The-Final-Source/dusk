@@ -27,12 +27,13 @@
     "yaml": "^2.6.0",
     "@dusk/runtime-long-cycle": "workspace:*",
     "@dusk/core-parser": "workspace:*",
-    "@dusk/test-harness": "workspace:*"
+    "@dusk/test-harness": "workspace:*",
+    "@dusk/pre-tool-use": "workspace:*",
+    "@dusk/runtime-test-runner": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
     "vitest": "^3.0.0",
-    "@dusk/runtime-verifier-test-double": "workspace:*",
-    "@dusk/pre-tool-use": "workspace:*"
+    "@dusk/runtime-verifier-test-double": "workspace:*"
   }
 }

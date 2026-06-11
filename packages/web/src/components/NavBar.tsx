@@ -25,6 +25,24 @@ export function NavBar() {
           >
             Home
           </Link>
+          <Link
+            to="/registry/adherence"
+            className={`no-underline font-medium ${isActive("/registry/adherence") ? "text-gray-900" : "text-gray-500"}`}
+          >
+            Adherence
+          </Link>
+          <Link
+            to="/registry/intents"
+            className={`no-underline font-medium ${isActive("/registry/intents") ? "text-gray-900" : "text-gray-500"}`}
+          >
+            Intents
+          </Link>
+          <Link
+            to="/registry/coverage"
+            className={`no-underline font-medium ${isActive("/registry/coverage") ? "text-gray-900" : "text-gray-500"}`}
+          >
+            Coverage
+          </Link>
           {isAuthenticated && (
             <>
               <Link
