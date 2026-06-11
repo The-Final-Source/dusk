@@ -19,6 +19,28 @@ describe("CreateUserSchema", () => {
     const result = CreateUserSchema.safeParse({ name: "", email: "alice@example.com" });
     expect(result.success).toBe(false);
   });
+
+  it("rejects an email without a domain part", () => {
+    const result = CreateUserSchema.safeParse({ name: "Alice", email: "alice@" });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an email without an @ separator", () => {
+    const result = CreateUserSchema.safeParse({ name: "Alice", email: "alice.example.com" });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("RoleSchema", () => {
+  it("accepts each closed-vocabulary role", () => {
+    expect(RoleSchema.safeParse("user").success).toBe(true);
+    expect(RoleSchema.safeParse("admin").success).toBe(true);
+  });
+
+  it("rejects a role outside the closed vocabulary", () => {
+    expect(RoleSchema.safeParse("superadmin").success).toBe(false);
+    expect(UpdateUserRoleSchema.safeParse({ email: "alice@example.com", role: "owner" }).success).toBe(false);
+  });
 });
 
 describe("UserSchema", () => {

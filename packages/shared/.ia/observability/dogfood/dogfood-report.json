@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "package": "packages/shared",
+  "window": {
+    "first_decorated_commit_at": "2026-06-11T14:16:36.344Z",
+    "evaluated_at": "2026-06-11T14:37:42.077Z",
+    "days": 0
+  },
+  "gating": {
+    "e2e_implement_success_count": {
+      "value": 0,
+      "threshold": ">= 1",
+      "pass": false
+    },
+    "gate_false_positive_count": {
+      "value": 0,
+      "threshold": "== 0",
+      "pass": true
+    },
+    "worked_example_regression": {
+      "value": "clean",
+      "threshold": "clean",
+      "pass": true
+    },
+    "package_test_suite": {
+      "value": "green",
+      "threshold": "green",
+      "pass": true
+    },
+    "pass": false
+  },
+  "exploratory": {
+    "gating": false,
+    "iteration_distribution": {},
+    "author_branching_distribution": {
+      "1": 2,
+      "2": 1
+    },
+    "stuckness_fire_count": 0,
+    "livelock_count": 0,
+    "doctor_finding_trend": [
+      {
+        "at": "2026-06-11T14:15:57.284Z",
+        "findings": 0
+      },
+      {
+        "at": "2026-06-11T14:15:57.286Z",
+        "findings": 0
+      }
+    ],
+    "api_expansion": {
+      "begun": false,
+      "notes": ""
+    },
+    "friction_observations": [
+      "decorating an existing file requires intents for EVERY export — incremental adoption needs per-file intent planning before the first decoration write",
+      "a multi-concern authoring request can silently narrow at Stage 4 — the confirm list must be re-read against the original request (sync intents dropped from the role-vocabulary dialog; re-authored in a scoped dialog)",
+      "dusk init writes the gate hook command assuming a package-local @dusk/pre-tool-use install; in a workspace the path must point at the workspace binary",
+      "a null-aspect @intent-test-file claim mapped to an empty cover set, so a test-body pre-pass rejection vanished — fixed in @dusk/runtime-test-runner with a regression test",
+      "production pipeline model calls had no transport retry — a single CLI blip killed a 25-minute run; the pre-registered amendment now wraps the verifier client and the headless engineer agent"
+    ],
+    "friction_commits": [
+      {
+        "sha": "a764432",
+        "summary": "fix(test-runner): null-aspect test-file claims cover all intent triples"
+      },
+      {
+        "sha": "5f02211",
+        "summary": "fix(P5 dogfood): transport-retry the production pipeline model calls"
+      }
+    ]
+  }
+}

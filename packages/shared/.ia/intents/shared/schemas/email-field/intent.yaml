@@ -1,15 +1,16 @@
 schema_version: 2
 id: shared/schemas/email-field
-description: The email field schema validates that input conforms to RFC 5322
-  structural email format at the system boundary, before any business logic
-  runs. Deliverability, MX lookup, and domain-existence checks are out of scope.
+description: The email field schema validates that input has a structural
+  email shape (local part, @, domain) at the system boundary, before any
+  business logic runs. Full RFC 5322 grammar, deliverability, MX lookup, and
+  domain-existence checks are out of scope.
 obligation: must
 compose: all
 triples:
   - id: reject-invalid-email-format
     subject: the email field schema
     predicate: reject
-    object: input that does not conform to RFC 5322 structural email format
+    object: input that lacks a structural email shape (local part, @, domain)
 relates_to:
   - kind: sibling
     target: shared/schemas/name-field
