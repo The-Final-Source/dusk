@@ -8,10 +8,13 @@
   "include": ["src"],
   "references": [
     { "path": "../../core/schema" },
+    { "path": "../../core/parser" },
+    { "path": "../../test-harness" },
     { "path": "../../core/decoration" },
     { "path": "../../core/index" },
     { "path": "../../core/graph" },
     { "path": "../observability" },
+    { "path": "../long-cycle" },
     { "path": "../verifier" }
   ]
 }

@@ -24,12 +24,14 @@
     "@dusk/core-graph": "workspace:*",
     "@dusk/runtime-observability": "workspace:*",
     "@dusk/runtime-verifier": "workspace:*",
-    "yaml": "^2.6.0"
+    "yaml": "^2.6.0",
+    "@dusk/runtime-long-cycle": "workspace:*",
+    "@dusk/core-parser": "workspace:*",
+    "@dusk/test-harness": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
     "vitest": "^3.0.0",
-    "@dusk/test-harness": "workspace:*",
     "@dusk/runtime-verifier-test-double": "workspace:*",
     "@dusk/pre-tool-use": "workspace:*"
   }

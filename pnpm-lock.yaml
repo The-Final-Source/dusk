@@ -523,15 +523,24 @@ importers:
       '@dusk/core-index':
         specifier: workspace:*
         version: link:../../core/index
+      '@dusk/core-parser':
+        specifier: workspace:*
+        version: link:../../core/parser
       '@dusk/core-schema':
         specifier: workspace:*
         version: link:../../core/schema
+      '@dusk/runtime-long-cycle':
+        specifier: workspace:*
+        version: link:../long-cycle
       '@dusk/runtime-observability':
         specifier: workspace:*
         version: link:../observability
       '@dusk/runtime-verifier':
         specifier: workspace:*
         version: link:../verifier
+      '@dusk/test-harness':
+        specifier: workspace:*
+        version: link:../../test-harness
       yaml:
         specifier: ^2.6.0
         version: 2.8.2
@@ -542,9 +551,6 @@ importers:
       '@dusk/runtime-verifier-test-double':
         specifier: workspace:*
         version: link:../verifier-test-double
-      '@dusk/test-harness':
-        specifier: workspace:*
-        version: link:../../test-harness
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
