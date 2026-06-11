@@ -24,6 +24,7 @@
     "@dusk/core-index": "workspace:*",
     "@dusk/core-decoration": "workspace:*",
     "@dusk/runtime-memory": "workspace:*",
+    "@dusk/runtime-observability": "workspace:*",
     "@dusk/runtime-skills": "workspace:*",
     "@dusk/runtime-tool-scope": "workspace:*",
     "@dusk/runtime-decomposer": "workspace:*",

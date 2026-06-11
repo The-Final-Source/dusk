@@ -1,6 +1,3 @@
-import { appendFileSync, mkdirSync } from "node:fs";
-import { dirname, join } from "node:path";
-
 import {
   type RuntimeResult,
   type SubAgentTrace,
@@ -13,6 +10,7 @@ import {
   isDuskError,
 } from "@dusk/core-schema";
 import { materializeMemory, type MemoryScope } from "@dusk/runtime-memory";
+import { appendTraceRotating } from "@dusk/runtime-observability";
 import { loadSkills, renderSkillsBlock } from "@dusk/runtime-skills";
 import { resolveToolScope } from "@dusk/runtime-tool-scope";
 
@@ -67,12 +65,6 @@ function defaultTraceId(clock: Clock): string {
   return `tr_${clock.now()}${String(traceCounter).padStart(4, "0")}`;
 }
 
-function appendTrace(rootDir: string, trace: SubAgentTrace): void {
-  const path = join(rootDir, ".ia/observability/traces.jsonl");
-  mkdirSync(dirname(path), { recursive: true });
-  appendFileSync(path, `${JSON.stringify(trace)}\n`, "utf8");
-}
-
 /** Deterministic prompt assembly: role body + injected skills + prior state + input. */
 export function assemblePrompt(parts: {
   roleBody: string;
@@ -106,7 +98,7 @@ const hasDiagnosis = (rendering: string): boolean => {
 export async function spawnSubAgent(params: SpawnParams, deps: SpawnDeps): Promise<RuntimeResult<SpawnOutcome>> {
   const { role, sessionId, input } = params;
   const { rootDir, env, clock } = deps;
-  const sink = deps.traceSink ?? ((trace: SubAgentTrace) => appendTrace(rootDir, trace));
+  const sink = deps.traceSink ?? ((trace: SubAgentTrace) => appendTraceRotating(rootDir, trace));
   const mkTraceId = deps.traceId ?? (() => defaultTraceId(clock));
 
   // Stage 0: role file + version enforcement (before any spawn).

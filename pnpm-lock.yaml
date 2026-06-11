@@ -255,6 +255,9 @@ importers:
       '@dusk/runtime-livelock-detection':
         specifier: workspace:*
         version: link:../../runtime/livelock-detection
+      '@dusk/runtime-observability':
+        specifier: workspace:*
+        version: link:../../runtime/observability
       '@dusk/runtime-orchestrator':
         specifier: workspace:*
         version: link:../../runtime/orchestrator
@@ -786,6 +789,9 @@ importers:
       '@dusk/runtime-merge':
         specifier: workspace:*
         version: link:../merge
+      '@dusk/runtime-observability':
+        specifier: workspace:*
+        version: link:../observability
       '@dusk/runtime-recovery-ladder':
         specifier: workspace:*
         version: link:../recovery-ladder

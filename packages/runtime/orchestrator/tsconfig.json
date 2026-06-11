@@ -22,6 +22,9 @@
       "path": "../memory"
     },
     {
+      "path": "../observability"
+    },
+    {
       "path": "../skills"
     },
     {

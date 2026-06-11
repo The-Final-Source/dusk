@@ -25,6 +25,9 @@
       "path": "../../core/index"
     },
     {
+      "path": "../../runtime/observability"
+    },
+    {
       "path": "../../runtime/orchestrator"
     },
     {

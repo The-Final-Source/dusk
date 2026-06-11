@@ -11,7 +11,8 @@ import {
   type RuntimeResult,
   type SpawnOutcome,
 } from "@dusk/core-schema";
-import { testPyramidSuffixes } from "@dusk/core-schema";
+import { testPyramidSuffixes, traceRingBytes } from "@dusk/core-schema";
+import { appendTraceRotating } from "@dusk/runtime-observability";
 import { decompose } from "@dusk/runtime-decomposer";
 import { loadForResume, deleteCheckpoint, type Clock as CheckpointClock } from "@dusk/runtime-implement-checkpoint";
 import { commitBead } from "@dusk/runtime-commit";
@@ -110,6 +111,8 @@ export async function runImplement(req: RunImplementRequest, deps: RunImplementD
   const nowIso = new Date(deps.clock.now()).toISOString();
 
   // Bind the spawn with the run's index_snapshot_id so every trace carries it.
+  // Default sink: the ring-buffered append with the config-driven ceiling (D3).
+  const traceSink: TraceSink = deps.traceSink ?? ((trace) => appendTraceRotating(deps.rootDir, trace, { ringBytes: traceRingBytes(deps.config) }));
   const spawn: BoundSpawn = (params) =>
     spawnSubAgent(params, {
       rootDir: deps.rootDir,
@@ -117,7 +120,7 @@ export async function runImplement(req: RunImplementRequest, deps: RunImplementD
       clock: deps.clock,
       taskRunner: deps.taskRunner,
       verifierFactory: deps.verifierFactory,
-      ...(deps.traceSink ? { traceSink: deps.traceSink } : {}),
+      traceSink,
       indexSnapshotId: snapshot.id,
     });
 
@@ -386,7 +389,8 @@ export async function resumeFrozenBead(beadId: string, deps: RunImplementDeps): 
 
   const snapshot = getOrBuildSnapshot(deps.sessionId, { repoDir: deps.rootDir, baseRef: deps.baseRef, buildIndex: deps.buildIndex, resolveCommit: deps.resolveCommit }, { rebuildIndex: deps.rebuildIndex });
   const run = startActiveRun(deps.sessionId, snapshot);
-  const spawn: BoundSpawn = (params) => spawnSubAgent(params, { rootDir: deps.rootDir, env: deps.env, clock: deps.clock, taskRunner: deps.taskRunner, verifierFactory: deps.verifierFactory, ...(deps.traceSink ? { traceSink: deps.traceSink } : {}), indexSnapshotId: snapshot.id });
+  const traceSink: TraceSink = deps.traceSink ?? ((trace) => appendTraceRotating(deps.rootDir, trace, { ringBytes: traceRingBytes(deps.config) }));
+  const spawn: BoundSpawn = (params) => spawnSubAgent(params, { rootDir: deps.rootDir, env: deps.env, clock: deps.clock, taskRunner: deps.taskRunner, verifierFactory: deps.verifierFactory, traceSink, indexSnapshotId: snapshot.id });
 
   try {
     const node = { intent_paths: record.intent_paths, predicted_files: [] as string[] };

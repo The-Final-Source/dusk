@@ -1,6 +1,7 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { duskError, type RuntimeResult } from "@dusk/core-schema";
+import { duskError, traceMirrors, type RuntimeResult } from "@dusk/core-schema";
+import { startConfiguredForwarders } from "@dusk/runtime-observability";
 import { z } from "zod";
 
 import type { DuskContext } from "./context.js";
@@ -72,6 +73,11 @@ export const PHASE4_AUTHOR_TOOL_NAMES = ["dusk_author_start", "dusk_author_conti
  *  Phase-4 author surface (dusk_author_* / /dusk-author) when `author` deps are. */
 export function createDuskMcpServer(ctx: DuskContext, write?: WriteSurfaceDeps, author?: AuthorSurfaceDeps): McpServer {
   const server = new McpServer({ name: "dusk", version: "0.0.1" });
+
+  // Out-of-band trace mirrors (design D4): started by the long-running server
+  // when `observability.mirrors[]` is configured. Tail tasks with unref'd
+  // timers — they never block the pipeline and never keep the process alive.
+  startConfiguredForwarders(ctx.rootDir, traceMirrors(ctx.config));
 
   server.registerTool("dusk_status", { description: "Current state: active beads, recent verdicts, recent test runs, index stats.", inputSchema: {} }, guarded(() => statusQuery(ctx)));
 

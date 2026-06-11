@@ -25,6 +25,7 @@
     "@dusk/core-graph": "workspace:*",
     "@dusk/core-decoration": "workspace:*",
     "@dusk/core-index": "workspace:*",
+    "@dusk/runtime-observability": "workspace:*",
     "@dusk/runtime-orchestrator": "workspace:*",
     "@dusk/runtime-verifier": "workspace:*",
     "@dusk/runtime-implement-checkpoint": "workspace:*",
