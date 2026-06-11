@@ -1,3 +1,6 @@
+// @intent-test-file shared/schemas/name-field/unit-tests
+// @intent-test-file shared/schemas/email-field/unit-tests
+// @intent-test-file shared/schemas/role-vocabulary/unit-tests
 import { describe, it, expect } from "vitest";
 import { CreateUserSchema, UserSchema, RoleSchema, UpdateUserRoleSchema } from "./user.js";
 
