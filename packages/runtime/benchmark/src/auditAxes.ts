@@ -121,13 +121,18 @@ export function quadrantFlag(variant: string, fixtures: AuditFixtureResult[], th
   const pctAligned4of5 = fixtures.length === 0 ? 0 : fixtures.filter(meetsAligned4of5).length / fixtures.length;
   const highSimilarity = meanOverlap > thresholds.axis2_similarity.max_token_overlap_low_precision_flag;
   const lowPrecision = pctAligned4of5 < thresholds.axis3_citation.min_pct_fixtures_aligned_4of5;
+  // A Verifier that (essentially) never cites: ≥90% of fixtures all-`unaligned`
+  // AND ≥90% carrying the per-fixture no-citation flag — surfaced explicitly,
+  // never silently degraded. Threshold-based: a real model under a no-citation
+  // prompt still leaks an occasional file:line; one leak in hundreds of calls
+  // must not mask the condition.
+  const pctAllUnaligned = fixtures.length === 0 ? 0 : fixtures.filter(allUnaligned).length / fixtures.length;
+  const pctNoCitation = fixtures.length === 0 ? 0 : fixtures.filter((f) => f.no_citation_flag).length / fixtures.length;
   return {
     variant,
     high_similarity: highSimilarity,
     low_precision: lowPrecision,
     rubber_stamp_quadrant: highSimilarity && lowPrecision,
-    // A Verifier producing no file:line citations anywhere: all-`unaligned`
-    // with the explicit flag — surfaced, never silently degraded.
-    no_citation_flag: fixtures.length > 0 && fixtures.every((f) => allUnaligned(f) && f.no_citation_flag),
+    no_citation_flag: pctAllUnaligned >= 0.9 && pctNoCitation >= 0.9,
   };
 }
