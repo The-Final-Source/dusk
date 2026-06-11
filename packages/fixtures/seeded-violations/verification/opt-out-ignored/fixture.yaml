@@ -1,0 +1,7 @@
+id: verification/opt-out-ignored
+class: verification
+ground_truth_outcome: verifier_reject
+ground_truth_defect_loc:
+  file: src.ts
+  line: 7
+description: "Claims respect-opt-out but pushes to every user including opted-out ones."

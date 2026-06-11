@@ -1,0 +1,7 @@
+id: static-analysis/erosion-cross-file-two-hops
+class: static-analysis
+ground_truth_outcome: doctor_flag
+ground_truth_defect_loc:
+  file: src.ts
+  line: 6
+description: "Two erosion sites: the caller misses the imported callee's intent (cross-file resolution)."

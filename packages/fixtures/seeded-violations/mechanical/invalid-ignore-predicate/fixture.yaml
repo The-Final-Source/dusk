@@ -1,0 +1,8 @@
+id: mechanical/invalid-ignore-predicate
+class: mechanical
+ground_truth_outcome: gate_reject
+expected_rejection_kind: invalid_ignore_predicate
+ground_truth_defect_loc:
+  file: src.ts
+  line: 1
+description: "An @intent-ignore with a predicate outside the closed vocabulary."

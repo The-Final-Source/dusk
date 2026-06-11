@@ -1,0 +1,19 @@
+schema_version: 2
+id: api/idempotency-on-writes
+description: Write endpoints validate and persist an idempotency key.
+obligation: must
+compose: implies
+antecedent:
+  - id: is-write
+    subject: "the endpoint"
+    predicate: "is decorated with"
+    object: "api/write-endpoint"
+consequent:
+  - id: validates-idempotency
+    subject: "the endpoint"
+    predicate: "validates"
+    object: "an idempotency key on the Idempotency-Key header"
+  - id: stores-idempotency
+    subject: "the endpoint"
+    predicate: "persists"
+    object: "the idempotency key and response under a stable lookup"

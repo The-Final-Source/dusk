@@ -1,0 +1,11 @@
+schema_version: 2
+id: security/no-inline-credentials
+description: Code never embeds credentials inline.
+obligation: must
+compose: all
+triples:
+  - id: no-inline-credentials
+    subject: "the service code"
+    predicate: "embeds"
+    object: "credential literals in source"
+    polarity: negative

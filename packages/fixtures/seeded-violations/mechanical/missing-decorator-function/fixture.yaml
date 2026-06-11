@@ -1,0 +1,8 @@
+id: mechanical/missing-decorator-function
+class: mechanical
+ground_truth_outcome: gate_reject
+expected_rejection_kind: missing_decorator
+ground_truth_defect_loc:
+  file: src.ts
+  line: 1
+description: "An exported function with no @intent decorator."

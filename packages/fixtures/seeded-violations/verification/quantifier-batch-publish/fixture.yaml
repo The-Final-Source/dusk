@@ -1,0 +1,7 @@
+id: verification/quantifier-batch-publish
+class: verification
+ground_truth_outcome: verifier_reject
+ground_truth_defect_loc:
+  file: src.ts
+  line: 4
+description: "Claims exactly-one event per inserted row but publishes once for the whole batch."

@@ -1,0 +1,7 @@
+id: static-analysis/erosion-cross-file-import
+class: static-analysis
+ground_truth_outcome: doctor_flag
+ground_truth_defect_loc:
+  file: src.ts
+  line: 6
+description: "The decorated caller imports a decorated callee from another file; the callee's intent is missing from D(U)."

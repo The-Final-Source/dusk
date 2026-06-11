@@ -1,0 +1,7 @@
+id: two-stage-test/empty-suite
+class: two-stage-test
+ground_truth_outcome: verifier_test_reject
+ground_truth_defect_loc:
+  file: feature.unit.test.ts
+  line: 5
+description: "The describe block contains no test case at all; the file still 'passes'."

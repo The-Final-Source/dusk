@@ -1,0 +1,10 @@
+schema_version: 2
+id: api/write-endpoint
+description: Marks a write endpoint.
+obligation: must
+compose: all
+triples:
+  - id: marks-write
+    subject: "the endpoint"
+    predicate: "performs"
+    object: "a state-changing write"

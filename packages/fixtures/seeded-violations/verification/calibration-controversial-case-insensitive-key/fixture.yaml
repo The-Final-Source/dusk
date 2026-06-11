@@ -1,0 +1,8 @@
+id: verification/calibration-controversial-case-insensitive-key
+class: verification
+ground_truth_outcome: controversial
+ground_truth_defect_loc:
+  file: src.ts
+  line: 7
+calibration: true
+description: "Controversial: the idempotency key is validated case-insensitively — arguably not a stable lookup."

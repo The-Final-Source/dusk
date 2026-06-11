@@ -1,0 +1,8 @@
+id: mechanical/unresolved-aspect-id
+class: mechanical
+ground_truth_outcome: gate_reject
+expected_rejection_kind: unresolved_aspect_id
+ground_truth_defect_loc:
+  file: src.ts
+  line: 1
+description: "A decorator naming an aspect id that resolves to no triple."

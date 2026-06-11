@@ -1,0 +1,8 @@
+id: mechanical/unresolved-intent-path
+class: mechanical
+ground_truth_outcome: gate_reject
+expected_rejection_kind: unresolved_intent_path
+ground_truth_defect_loc:
+  file: src.ts
+  line: 1
+description: "A decorator referencing an intent path not in the graph."

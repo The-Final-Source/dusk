@@ -1,0 +1,8 @@
+id: mechanical/missing-ignore-because
+class: mechanical
+ground_truth_outcome: gate_reject
+expected_rejection_kind: missing_ignore_because
+ground_truth_defect_loc:
+  file: src.ts
+  line: 1
+description: "An @intent-ignore without a because=(...) clause."

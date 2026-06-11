@@ -1,0 +1,8 @@
+id: mechanical/missing-statement-decorator
+class: mechanical
+ground_truth_outcome: gate_reject
+expected_rejection_kind: missing_statement_decorator
+ground_truth_defect_loc:
+  file: src.ts
+  line: 5
+description: "A decorated exported function with an undecorated top-level statement."

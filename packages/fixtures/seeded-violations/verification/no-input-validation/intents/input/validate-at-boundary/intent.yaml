@@ -1,0 +1,10 @@
+schema_version: 2
+id: input/validate-at-boundary
+description: User input is schema-validated at the system boundary.
+obligation: must
+compose: all
+triples:
+  - id: validates-input
+    subject: "the handler"
+    predicate: "validates"
+    object: "the request payload against a schema before use"

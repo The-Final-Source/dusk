@@ -1,0 +1,970 @@
+{
+  "schema_version": 1,
+  "fixture_count": 60,
+  "classes": {
+    "mechanical": 14,
+    "static-analysis": 10,
+    "two-stage-test": 12,
+    "verification": 24
+  },
+  "calibration_fixture_ids": [
+    "verification/calibration-controversial-batched-cleanup",
+    "verification/calibration-controversial-case-insensitive-key",
+    "verification/calibration-controversial-debug-level",
+    "verification/calibration-controversial-promise-all",
+    "verification/calibration-good-no-raw-sql",
+    "verification/calibration-good-opt-out",
+    "verification/calibration-good-persist-first",
+    "verification/calibration-good-structured-logging"
+  ],
+  "fixtures": [
+    {
+      "id": "mechanical/focal-and-support-same-intent",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "focal_and_support_for_same_intent",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "One statement claiming the same intent as both focal and support.",
+      "dir": "mechanical/focal-and-support-same-intent",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "mechanical/invalid-ignore-predicate",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "invalid_ignore_predicate",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 1
+      },
+      "description": "An @intent-ignore with a predicate outside the closed vocabulary.",
+      "dir": "mechanical/invalid-ignore-predicate",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "mechanical/malformed-support-triple-empty",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "malformed_support_triple",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 3
+      },
+      "description": "A support triple with an empty subject slot.",
+      "dir": "mechanical/malformed-support-triple-empty",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "mechanical/malformed-support-triple-negation",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "malformed_support_triple",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 3
+      },
+      "description": "A support triple with a matrix-predicate negation (check 10).",
+      "dir": "mechanical/malformed-support-triple-negation",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "mechanical/missing-decorator-class",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "missing_decorator",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 1
+      },
+      "description": "An exported class with no @intent decorator.",
+      "dir": "mechanical/missing-decorator-class",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "mechanical/missing-decorator-function",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "missing_decorator",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 1
+      },
+      "description": "An exported function with no @intent decorator.",
+      "dir": "mechanical/missing-decorator-function",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "mechanical/missing-ignore-because",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "missing_ignore_because",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 1
+      },
+      "description": "An @intent-ignore without a because=(...) clause.",
+      "dir": "mechanical/missing-ignore-because",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "mechanical/missing-ignore-reason",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "missing_ignore_reason",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 1
+      },
+      "description": "An @intent-ignore without a reason clause.",
+      "dir": "mechanical/missing-ignore-reason",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "mechanical/missing-statement-decorator",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "missing_statement_decorator",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 5
+      },
+      "description": "A decorated exported function with an undecorated top-level statement.",
+      "dir": "mechanical/missing-statement-decorator",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "mechanical/missing-support-triple",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "missing_support_triple",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 3
+      },
+      "description": "An @intent-support without a [subject, predicate, object] triple.",
+      "dir": "mechanical/missing-support-triple",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "mechanical/multiple-intents-one-line",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "multiple_intents_on_one_line",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 1
+      },
+      "description": "Two intent decorators on a single comment line.",
+      "dir": "mechanical/multiple-intents-one-line",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "mechanical/non-test-path-on-intent-test",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "non_test_path_on_intent_test",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 1
+      },
+      "description": "An @intent-test path that does not end in a configured test-pyramid suffix.",
+      "dir": "mechanical/non-test-path-on-intent-test",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "mechanical/unresolved-aspect-id",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "unresolved_aspect_id",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 1
+      },
+      "description": "A decorator naming an aspect id that resolves to no triple.",
+      "dir": "mechanical/unresolved-aspect-id",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "mechanical/unresolved-intent-path",
+      "class": "mechanical",
+      "ground_truth_outcome": "gate_reject",
+      "expected_rejection_kind": "unresolved_intent_path",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 1
+      },
+      "description": "A decorator referencing an intent path not in the graph.",
+      "dir": "mechanical/unresolved-intent-path",
+      "files": [
+        "intents/demo/feature/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "static-analysis/erosion-arrow-callee",
+      "class": "static-analysis",
+      "ground_truth_outcome": "doctor_flag",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "A decorated caller invokes a decorated arrow-function callee with a foreign focal intent.",
+      "dir": "static-analysis/erosion-arrow-callee",
+      "files": [
+        "intents/demo/alpha/intent.yaml",
+        "intents/demo/beta/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "static-analysis/erosion-cross-file-import",
+      "class": "static-analysis",
+      "ground_truth_outcome": "doctor_flag",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 6
+      },
+      "description": "The decorated caller imports a decorated callee from another file; the callee's intent is missing from D(U).",
+      "dir": "static-analysis/erosion-cross-file-import",
+      "files": [
+        "intents/demo/alpha/intent.yaml",
+        "intents/demo/beta/intent.yaml",
+        "src.ts",
+        "util.ts"
+      ]
+    },
+    {
+      "id": "static-analysis/erosion-cross-file-two-hops",
+      "class": "static-analysis",
+      "ground_truth_outcome": "doctor_flag",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 6
+      },
+      "description": "Two erosion sites: the caller misses the imported callee's intent (cross-file resolution).",
+      "dir": "static-analysis/erosion-cross-file-two-hops",
+      "files": [
+        "intents/demo/alpha/intent.yaml",
+        "intents/demo/beta/intent.yaml",
+        "src.ts",
+        "util.ts"
+      ]
+    },
+    {
+      "id": "static-analysis/erosion-gamma-chain",
+      "class": "static-analysis",
+      "ground_truth_outcome": "doctor_flag",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "The caller declares beta but calls a gamma-decorated callee.",
+      "dir": "static-analysis/erosion-gamma-chain",
+      "files": [
+        "intents/demo/alpha/intent.yaml",
+        "intents/demo/beta/intent.yaml",
+        "intents/demo/gamma/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "static-analysis/erosion-nested-call",
+      "class": "static-analysis",
+      "ground_truth_outcome": "doctor_flag",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 5
+      },
+      "description": "The eroding call sits inside an if-block of the decorated unit.",
+      "dir": "static-analysis/erosion-nested-call",
+      "files": [
+        "intents/demo/alpha/intent.yaml",
+        "intents/demo/beta/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "static-analysis/erosion-partial-overlap",
+      "class": "static-analysis",
+      "ground_truth_outcome": "doctor_flag",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "The callee claims alpha AND beta; the caller declares only alpha — beta is missing from D(U).",
+      "dir": "static-analysis/erosion-partial-overlap",
+      "files": [
+        "intents/demo/alpha/intent.yaml",
+        "intents/demo/beta/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "static-analysis/erosion-repeated-call",
+      "class": "static-analysis",
+      "ground_truth_outcome": "doctor_flag",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "The foreign-intent callee is invoked twice; the first call site is the seeded defect location.",
+      "dir": "static-analysis/erosion-repeated-call",
+      "files": [
+        "intents/demo/alpha/intent.yaml",
+        "intents/demo/beta/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "static-analysis/erosion-same-file-call",
+      "class": "static-analysis",
+      "ground_truth_outcome": "doctor_flag",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "A decorated caller invokes a same-file callee whose focal intent is not in the caller's decoration set.",
+      "dir": "static-analysis/erosion-same-file-call",
+      "files": [
+        "intents/demo/alpha/intent.yaml",
+        "intents/demo/beta/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "static-analysis/erosion-two-intent-caller",
+      "class": "static-analysis",
+      "ground_truth_outcome": "doctor_flag",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 5
+      },
+      "description": "The caller declares alpha and gamma but the callee participates in beta.",
+      "dir": "static-analysis/erosion-two-intent-caller",
+      "files": [
+        "intents/demo/alpha/intent.yaml",
+        "intents/demo/beta/intent.yaml",
+        "intents/demo/gamma/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "static-analysis/erosion-with-undecorated-helper",
+      "class": "static-analysis",
+      "ground_truth_outcome": "doctor_flag",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 6
+      },
+      "description": "An undecorated helper contributes ∅ (conservative default); the decorated foreign callee still erodes.",
+      "dir": "static-analysis/erosion-with-undecorated-helper",
+      "files": [
+        "intents/demo/alpha/intent.yaml",
+        "intents/demo/beta/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "two-stage-test/asserts-input-not-output",
+      "class": "two-stage-test",
+      "ground_truth_outcome": "verifier_test_reject",
+      "ground_truth_defect_loc": {
+        "file": "feature.unit.test.ts",
+        "line": 9
+      },
+      "description": "The test asserts on its own fixture input, never the unit's output.",
+      "dir": "two-stage-test/asserts-input-not-output",
+      "files": [
+        "feature.ts",
+        "feature.unit.test.ts",
+        "intents/demo/feature/intent.yaml",
+        "intents/demo/feature/unit-tests/intent.yaml"
+      ]
+    },
+    {
+      "id": "two-stage-test/asserts-mock-not-unit",
+      "class": "two-stage-test",
+      "ground_truth_outcome": "verifier_test_reject",
+      "ground_truth_defect_loc": {
+        "file": "feature.unit.test.ts",
+        "line": 7
+      },
+      "description": "The unit is replaced with a stub and the assertion checks the stub, not runFeature.",
+      "dir": "two-stage-test/asserts-mock-not-unit",
+      "files": [
+        "feature.ts",
+        "feature.unit.test.ts",
+        "intents/demo/feature/intent.yaml",
+        "intents/demo/feature/unit-tests/intent.yaml"
+      ]
+    },
+    {
+      "id": "two-stage-test/catch-and-pass",
+      "class": "two-stage-test",
+      "ground_truth_outcome": "verifier_test_reject",
+      "ground_truth_defect_loc": {
+        "file": "feature.unit.test.ts",
+        "line": 10
+      },
+      "description": "Failures are swallowed by a try/catch and the test always passes.",
+      "dir": "two-stage-test/catch-and-pass",
+      "files": [
+        "feature.ts",
+        "feature.unit.test.ts",
+        "intents/demo/feature/intent.yaml",
+        "intents/demo/feature/unit-tests/intent.yaml"
+      ]
+    },
+    {
+      "id": "two-stage-test/conditional-assertion",
+      "class": "two-stage-test",
+      "ground_truth_outcome": "verifier_test_reject",
+      "ground_truth_defect_loc": {
+        "file": "feature.unit.test.ts",
+        "line": 12
+      },
+      "description": "The meaningful assertion is unreachable behind a constant-false guard.",
+      "dir": "two-stage-test/conditional-assertion",
+      "files": [
+        "feature.ts",
+        "feature.unit.test.ts",
+        "intents/demo/feature/intent.yaml",
+        "intents/demo/feature/unit-tests/intent.yaml"
+      ]
+    },
+    {
+      "id": "two-stage-test/console-log-only",
+      "class": "two-stage-test",
+      "ground_truth_outcome": "verifier_test_reject",
+      "ground_truth_defect_loc": {
+        "file": "feature.unit.test.ts",
+        "line": 8
+      },
+      "description": "The test logs the result and asserts a constant.",
+      "dir": "two-stage-test/console-log-only",
+      "files": [
+        "feature.ts",
+        "feature.unit.test.ts",
+        "intents/demo/feature/intent.yaml",
+        "intents/demo/feature/unit-tests/intent.yaml"
+      ]
+    },
+    {
+      "id": "two-stage-test/empty-suite",
+      "class": "two-stage-test",
+      "ground_truth_outcome": "verifier_test_reject",
+      "ground_truth_defect_loc": {
+        "file": "feature.unit.test.ts",
+        "line": 5
+      },
+      "description": "The describe block contains no test case at all; the file still 'passes'.",
+      "dir": "two-stage-test/empty-suite",
+      "files": [
+        "feature.ts",
+        "feature.unit.test.ts",
+        "intents/demo/feature/intent.yaml",
+        "intents/demo/feature/unit-tests/intent.yaml"
+      ]
+    },
+    {
+      "id": "two-stage-test/mirror-implementation",
+      "class": "two-stage-test",
+      "ground_truth_outcome": "verifier_test_reject",
+      "ground_truth_defect_loc": {
+        "file": "feature.unit.test.ts",
+        "line": 11
+      },
+      "description": "The expected value is recomputed with the same copied logic, so the test can never disagree with the unit.",
+      "dir": "two-stage-test/mirror-implementation",
+      "files": [
+        "feature.ts",
+        "feature.unit.test.ts",
+        "intents/demo/feature/intent.yaml",
+        "intents/demo/feature/unit-tests/intent.yaml"
+      ]
+    },
+    {
+      "id": "two-stage-test/no-assertion",
+      "class": "two-stage-test",
+      "ground_truth_outcome": "verifier_test_reject",
+      "ground_truth_defect_loc": {
+        "file": "feature.unit.test.ts",
+        "line": 7
+      },
+      "description": "The test body invokes the unit but asserts nothing.",
+      "dir": "two-stage-test/no-assertion",
+      "files": [
+        "feature.ts",
+        "feature.unit.test.ts",
+        "intents/demo/feature/intent.yaml",
+        "intents/demo/feature/unit-tests/intent.yaml"
+      ]
+    },
+    {
+      "id": "two-stage-test/no-throw-only",
+      "class": "two-stage-test",
+      "ground_truth_outcome": "verifier_test_reject",
+      "ground_truth_defect_loc": {
+        "file": "feature.unit.test.ts",
+        "line": 7
+      },
+      "description": "The test only asserts the unit does not throw — the claimed value is never checked.",
+      "dir": "two-stage-test/no-throw-only",
+      "files": [
+        "feature.ts",
+        "feature.unit.test.ts",
+        "intents/demo/feature/intent.yaml",
+        "intents/demo/feature/unit-tests/intent.yaml"
+      ]
+    },
+    {
+      "id": "two-stage-test/tautology",
+      "class": "two-stage-test",
+      "ground_truth_outcome": "verifier_test_reject",
+      "ground_truth_defect_loc": {
+        "file": "feature.unit.test.ts",
+        "line": 6
+      },
+      "description": "The test passes at runtime but asserts a tautology, verifying nothing about runFeature.",
+      "dir": "two-stage-test/tautology",
+      "files": [
+        "feature.ts",
+        "feature.unit.test.ts",
+        "intents/demo/feature/intent.yaml",
+        "intents/demo/feature/unit-tests/intent.yaml"
+      ]
+    },
+    {
+      "id": "two-stage-test/type-only",
+      "class": "two-stage-test",
+      "ground_truth_outcome": "verifier_test_reject",
+      "ground_truth_defect_loc": {
+        "file": "feature.unit.test.ts",
+        "line": 7
+      },
+      "description": "The test asserts only the result's runtime type.",
+      "dir": "two-stage-test/type-only",
+      "files": [
+        "feature.ts",
+        "feature.unit.test.ts",
+        "intents/demo/feature/intent.yaml",
+        "intents/demo/feature/unit-tests/intent.yaml"
+      ]
+    },
+    {
+      "id": "two-stage-test/wrong-property",
+      "class": "two-stage-test",
+      "ground_truth_outcome": "verifier_test_reject",
+      "ground_truth_defect_loc": {
+        "file": "feature.unit.test.ts",
+        "line": 7
+      },
+      "description": "The test asserts the result's length, never the claimed value.",
+      "dir": "two-stage-test/wrong-property",
+      "files": [
+        "feature.ts",
+        "feature.unit.test.ts",
+        "intents/demo/feature/intent.yaml",
+        "intents/demo/feature/unit-tests/intent.yaml"
+      ]
+    },
+    {
+      "id": "verification/calibration-controversial-batched-cleanup",
+      "class": "verification",
+      "ground_truth_outcome": "controversial",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 5
+      },
+      "calibration": true,
+      "description": "Controversial: stale tokens are queued for a batch delete rather than deleted inline.",
+      "dir": "verification/calibration-controversial-batched-cleanup",
+      "files": [
+        "intents/notifications/cleanup-stale-devices/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/calibration-controversial-case-insensitive-key",
+      "class": "verification",
+      "ground_truth_outcome": "controversial",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 7
+      },
+      "calibration": true,
+      "description": "Controversial: the idempotency key is validated case-insensitively — arguably not a stable lookup.",
+      "dir": "verification/calibration-controversial-case-insensitive-key",
+      "files": [
+        "intents/api/idempotency-on-writes/intent.yaml",
+        "intents/api/write-endpoint/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/calibration-controversial-debug-level",
+      "class": "verification",
+      "ground_truth_outcome": "controversial",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 7
+      },
+      "calibration": true,
+      "description": "Controversial: the failure is logged at debug level — arguably not observable.",
+      "dir": "verification/calibration-controversial-debug-level",
+      "files": [
+        "intents/error-handling/catch-log-continue/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/calibration-controversial-promise-all",
+      "class": "verification",
+      "ground_truth_outcome": "controversial",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "calibration": true,
+      "description": "Controversial: insert and publish run in Promise.all — ordering is ambiguous, not strictly persist-first.",
+      "dir": "verification/calibration-controversial-promise-all",
+      "files": [
+        "intents/notifications/persist-first/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/calibration-good-no-raw-sql",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_accept",
+      "calibration": true,
+      "description": "Known-good: data access goes through the typed query builder only.",
+      "dir": "verification/calibration-good-no-raw-sql",
+      "files": [
+        "intents/db/no-raw-sql/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/calibration-good-opt-out",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_accept",
+      "calibration": true,
+      "description": "Known-good: opted-out users are skipped before delivery.",
+      "dir": "verification/calibration-good-opt-out",
+      "files": [
+        "intents/notifications/respect-opt-out/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/calibration-good-persist-first",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_accept",
+      "calibration": true,
+      "description": "Known-good: persists before publishing, exactly as claimed.",
+      "dir": "verification/calibration-good-persist-first",
+      "files": [
+        "intents/notifications/persist-first/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/calibration-good-structured-logging",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_accept",
+      "calibration": true,
+      "description": "Known-good: log calls pass a structured object payload first.",
+      "dir": "verification/calibration-good-structured-logging",
+      "files": [
+        "intents/observability/structured-payloads/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/catch-log-rethrow",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 7
+      },
+      "description": "Claims catch-log-continue but rethrows, aborting persistence.",
+      "dir": "verification/catch-log-rethrow",
+      "files": [
+        "intents/error-handling/catch-log-continue/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/cleanup-only-logs",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 5
+      },
+      "description": "Claims cleanup-stale-devices but only logs the stale token instead of deleting it.",
+      "dir": "verification/cleanup-only-logs",
+      "files": [
+        "intents/notifications/cleanup-stale-devices/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/implies-key-not-persisted",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 7
+      },
+      "description": "Validates the idempotency key but never persists it (second consequent unmet).",
+      "dir": "verification/implies-key-not-persisted",
+      "files": [
+        "intents/api/idempotency-on-writes/intent.yaml",
+        "intents/api/write-endpoint/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/implies-no-audit-record",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 5
+      },
+      "description": "Decorated api/delete-endpoint (antecedent true) but writes no audit record.",
+      "dir": "verification/implies-no-audit-record",
+      "files": [
+        "intents/api/delete-endpoint/intent.yaml",
+        "intents/audit/record-on-delete/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/implies-no-idempotency-validation",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 5
+      },
+      "description": "Decorated api/write-endpoint (antecedent true) but never validates the idempotency key.",
+      "dir": "verification/implies-no-idempotency-validation",
+      "files": [
+        "intents/api/idempotency-on-writes/intent.yaml",
+        "intents/api/write-endpoint/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/negative-console-log",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "Claims logging/no-console (negative polarity) yet logs via console.",
+      "dir": "verification/negative-console-log",
+      "files": [
+        "intents/logging/no-console/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/negative-inline-credentials",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "Claims security/no-inline-credentials (negative polarity) yet embeds a credential literal.",
+      "dir": "verification/negative-inline-credentials",
+      "files": [
+        "intents/security/no-inline-credentials/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/negative-raw-sql",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "Claims db/no-raw-sql (negative polarity) yet builds a raw SQL template literal.",
+      "dir": "verification/negative-raw-sql",
+      "files": [
+        "intents/db/no-raw-sql/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/no-input-validation",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "Claims validate-at-boundary but trusts the raw payload.",
+      "dir": "verification/no-input-validation",
+      "files": [
+        "intents/input/validate-at-boundary/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/normalize-passthrough",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "Claims normalize-target but returns the raw input unchanged.",
+      "dir": "verification/normalize-passthrough",
+      "files": [
+        "intents/input/normalize-target/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/opt-out-ignored",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 7
+      },
+      "description": "Claims respect-opt-out but pushes to every user including opted-out ones.",
+      "dir": "verification/opt-out-ignored",
+      "files": [
+        "intents/notifications/respect-opt-out/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/persist-first-violated",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "Claims persist-first but publishes the sync event before the insert completes.",
+      "dir": "verification/persist-first-violated",
+      "files": [
+        "intents/notifications/persist-first/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/quantifier-batch-publish",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "Claims exactly-one event per inserted row but publishes once for the whole batch.",
+      "dir": "verification/quantifier-batch-publish",
+      "files": [
+        "intents/sync/event-per-insert/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/quantifier-double-publish",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 8
+      },
+      "description": "Claims exactly-one event per inserted row but emits two per row.",
+      "dir": "verification/quantifier-double-publish",
+      "files": [
+        "intents/sync/event-per-insert/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/quantifier-none-violated",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 6
+      },
+      "description": "Claims the dry-run path publishes no events (quantifier none) yet emits one.",
+      "dir": "verification/quantifier-none-violated",
+      "files": [
+        "intents/sync/no-dry-run-events/intent.yaml",
+        "src.ts"
+      ]
+    },
+    {
+      "id": "verification/string-concat-logging",
+      "class": "verification",
+      "ground_truth_outcome": "verifier_reject",
+      "ground_truth_defect_loc": {
+        "file": "src.ts",
+        "line": 4
+      },
+      "description": "Claims structured-payloads but logs a concatenated string.",
+      "dir": "verification/string-concat-logging",
+      "files": [
+        "intents/observability/structured-payloads/intent.yaml",
+        "src.ts"
+      ]
+    }
+  ]
+}

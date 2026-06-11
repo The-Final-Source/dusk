@@ -1,0 +1,11 @@
+schema_version: 2
+id: logging/no-console
+description: Production code never logs via console.
+obligation: must
+compose: all
+triples:
+  - id: no-console
+    subject: "the service code"
+    predicate: "writes logs via"
+    object: "the console global"
+    polarity: negative

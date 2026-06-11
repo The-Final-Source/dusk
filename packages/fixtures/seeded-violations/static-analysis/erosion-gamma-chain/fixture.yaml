@@ -1,0 +1,7 @@
+id: static-analysis/erosion-gamma-chain
+class: static-analysis
+ground_truth_outcome: doctor_flag
+ground_truth_defect_loc:
+  file: src.ts
+  line: 4
+description: "The caller declares beta but calls a gamma-decorated callee."

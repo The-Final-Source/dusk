@@ -1,0 +1,8 @@
+id: mechanical/multiple-intents-one-line
+class: mechanical
+ground_truth_outcome: gate_reject
+expected_rejection_kind: multiple_intents_on_one_line
+ground_truth_defect_loc:
+  file: src.ts
+  line: 1
+description: "Two intent decorators on a single comment line."

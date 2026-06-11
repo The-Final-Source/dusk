@@ -1,0 +1,10 @@
+schema_version: 2
+id: error-handling/catch-log-continue
+description: Failures are caught, logged, and execution continues.
+obligation: must
+compose: all
+triples:
+  - id: catch-log-continue
+    subject: "the catch block"
+    predicate: "logs the error and continues"
+    object: "so the failure is observable and persistence is preserved"

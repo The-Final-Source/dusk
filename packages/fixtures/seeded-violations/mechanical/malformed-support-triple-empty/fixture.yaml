@@ -1,0 +1,8 @@
+id: mechanical/malformed-support-triple-empty
+class: mechanical
+ground_truth_outcome: gate_reject
+expected_rejection_kind: malformed_support_triple
+ground_truth_defect_loc:
+  file: src.ts
+  line: 3
+description: "A support triple with an empty subject slot."

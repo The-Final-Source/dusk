@@ -1,0 +1,8 @@
+id: verification/calibration-controversial-batched-cleanup
+class: verification
+ground_truth_outcome: controversial
+ground_truth_defect_loc:
+  file: src.ts
+  line: 5
+calibration: true
+description: "Controversial: stale tokens are queued for a batch delete rather than deleted inline."

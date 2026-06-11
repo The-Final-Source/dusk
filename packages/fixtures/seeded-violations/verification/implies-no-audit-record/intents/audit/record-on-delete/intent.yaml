@@ -1,0 +1,15 @@
+schema_version: 2
+id: audit/record-on-delete
+description: Delete endpoints write an audit record before returning.
+obligation: must
+compose: implies
+antecedent:
+  - id: is-delete
+    subject: "the endpoint"
+    predicate: "is decorated with"
+    object: "api/delete-endpoint"
+consequent:
+  - id: writes-audit-record
+    subject: "the endpoint"
+    predicate: "persists"
+    object: "an audit record naming the deleted entity before returning"

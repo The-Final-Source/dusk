@@ -1,0 +1,12 @@
+schema_version: 2
+id: sync/event-per-insert
+description: Publishing emits exactly one sync event per inserted row.
+obligation: must
+compose: all
+triples:
+  - id: one-event-per-insert
+    subject: "the publish loop"
+    predicate: "emits"
+    object: "a sync event for each inserted row"
+    quantifier: exactly-one
+    scope: "per inserted row"

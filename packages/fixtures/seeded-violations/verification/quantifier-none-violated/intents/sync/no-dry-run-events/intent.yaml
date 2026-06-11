@@ -1,0 +1,12 @@
+schema_version: 2
+id: sync/no-dry-run-events
+description: Dry-run mode publishes no sync events.
+obligation: must
+compose: all
+triples:
+  - id: no-dry-run-events
+    subject: "the dry-run path"
+    predicate: "publishes"
+    object: "sync events"
+    quantifier: none
+    scope: "per dry-run invocation"

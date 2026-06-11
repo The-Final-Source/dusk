@@ -1,0 +1,7 @@
+id: static-analysis/erosion-with-undecorated-helper
+class: static-analysis
+ground_truth_outcome: doctor_flag
+ground_truth_defect_loc:
+  file: src.ts
+  line: 6
+description: "An undecorated helper contributes ∅ (conservative default); the decorated foreign callee still erodes."

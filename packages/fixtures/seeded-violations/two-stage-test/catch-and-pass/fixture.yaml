@@ -1,0 +1,7 @@
+id: two-stage-test/catch-and-pass
+class: two-stage-test
+ground_truth_outcome: verifier_test_reject
+ground_truth_defect_loc:
+  file: feature.unit.test.ts
+  line: 10
+description: "Failures are swallowed by a try/catch and the test always passes."

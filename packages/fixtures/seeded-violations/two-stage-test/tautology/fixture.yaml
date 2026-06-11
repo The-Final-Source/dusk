@@ -1,0 +1,7 @@
+id: two-stage-test/tautology
+class: two-stage-test
+ground_truth_outcome: verifier_test_reject
+ground_truth_defect_loc:
+  file: feature.unit.test.ts
+  line: 6
+description: "The test passes at runtime but asserts a tautology, verifying nothing about runFeature."

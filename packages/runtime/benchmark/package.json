@@ -30,6 +30,7 @@
     "typescript": "^5.7.0",
     "vitest": "^3.0.0",
     "@dusk/test-harness": "workspace:*",
-    "@dusk/runtime-verifier-test-double": "workspace:*"
+    "@dusk/runtime-verifier-test-double": "workspace:*",
+    "@dusk/pre-tool-use": "workspace:*"
   }
 }

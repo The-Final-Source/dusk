@@ -1,0 +1,7 @@
+id: verification/implies-key-not-persisted
+class: verification
+ground_truth_outcome: verifier_reject
+ground_truth_defect_loc:
+  file: src.ts
+  line: 7
+description: "Validates the idempotency key but never persists it (second consequent unmet)."

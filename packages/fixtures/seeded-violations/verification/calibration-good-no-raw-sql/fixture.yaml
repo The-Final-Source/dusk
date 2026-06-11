@@ -1,0 +1,5 @@
+id: verification/calibration-good-no-raw-sql
+class: verification
+ground_truth_outcome: verifier_accept
+calibration: true
+description: "Known-good: data access goes through the typed query builder only."

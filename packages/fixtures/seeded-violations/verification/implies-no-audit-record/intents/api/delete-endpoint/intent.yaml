@@ -1,0 +1,10 @@
+schema_version: 2
+id: api/delete-endpoint
+description: Marks a delete endpoint.
+obligation: must
+compose: all
+triples:
+  - id: marks-delete
+    subject: "the endpoint"
+    predicate: "performs"
+    object: "a destructive delete"

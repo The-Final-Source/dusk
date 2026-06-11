@@ -1,0 +1,7 @@
+id: verification/cleanup-only-logs
+class: verification
+ground_truth_outcome: verifier_reject
+ground_truth_defect_loc:
+  file: src.ts
+  line: 5
+description: "Claims cleanup-stale-devices but only logs the stale token instead of deleting it."

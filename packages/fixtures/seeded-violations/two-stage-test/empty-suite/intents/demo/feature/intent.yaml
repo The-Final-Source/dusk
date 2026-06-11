@@ -1,0 +1,14 @@
+schema_version: 2
+id: demo/feature
+description: Demo feature behavior.
+obligation: must
+compose: all
+triples:
+  - id: do-thing
+    subject: "the feature"
+    predicate: "performs"
+    object: "the demo behavior"
+  - id: log-thing
+    subject: "the feature"
+    predicate: "logs"
+    object: "a structured payload"

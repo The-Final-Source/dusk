@@ -1,0 +1,7 @@
+id: verification/persist-first-violated
+class: verification
+ground_truth_outcome: verifier_reject
+ground_truth_defect_loc:
+  file: src.ts
+  line: 4
+description: "Claims persist-first but publishes the sync event before the insert completes."

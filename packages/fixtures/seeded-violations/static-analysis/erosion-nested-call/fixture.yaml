@@ -1,0 +1,7 @@
+id: static-analysis/erosion-nested-call
+class: static-analysis
+ground_truth_outcome: doctor_flag
+ground_truth_defect_loc:
+  file: src.ts
+  line: 5
+description: "The eroding call sits inside an if-block of the decorated unit."

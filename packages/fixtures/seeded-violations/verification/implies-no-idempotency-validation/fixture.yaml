@@ -1,0 +1,7 @@
+id: verification/implies-no-idempotency-validation
+class: verification
+ground_truth_outcome: verifier_reject
+ground_truth_defect_loc:
+  file: src.ts
+  line: 5
+description: "Decorated api/write-endpoint (antecedent true) but never validates the idempotency key."

@@ -1,0 +1,10 @@
+schema_version: 2
+id: demo/beta
+description: Beta behavior.
+obligation: must
+compose: all
+triples:
+  - id: do-beta
+    subject: "the beta unit"
+    predicate: "performs"
+    object: "the beta behavior"

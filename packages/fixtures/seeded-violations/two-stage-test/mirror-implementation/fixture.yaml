@@ -1,0 +1,7 @@
+id: two-stage-test/mirror-implementation
+class: two-stage-test
+ground_truth_outcome: verifier_test_reject
+ground_truth_defect_loc:
+  file: feature.unit.test.ts
+  line: 11
+description: "The expected value is recomputed with the same copied logic, so the test can never disagree with the unit."

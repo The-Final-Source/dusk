@@ -1,0 +1,11 @@
+schema_version: 2
+id: db/no-raw-sql
+description: Data access never constructs raw SQL string templates.
+obligation: must
+compose: all
+triples:
+  - id: no-raw-sql
+    subject: "the data access layer"
+    predicate: "constructs queries via"
+    object: "raw SQL string templates"
+    polarity: negative

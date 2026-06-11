@@ -1,0 +1,7 @@
+id: verification/quantifier-none-violated
+class: verification
+ground_truth_outcome: verifier_reject
+ground_truth_defect_loc:
+  file: src.ts
+  line: 6
+description: "Claims the dry-run path publishes no events (quantifier none) yet emits one."

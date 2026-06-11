@@ -1,0 +1,10 @@
+schema_version: 2
+id: notifications/cleanup-stale-devices
+description: Stale device tokens are deleted on deviceNotRegistered.
+obligation: must
+compose: all
+triples:
+  - id: cleanup-stale
+    subject: "the cleanup step"
+    predicate: "deletes"
+    object: "push tokens whose delivery returned deviceNotRegistered"

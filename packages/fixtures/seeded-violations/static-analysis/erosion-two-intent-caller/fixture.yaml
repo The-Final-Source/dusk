@@ -1,0 +1,7 @@
+id: static-analysis/erosion-two-intent-caller
+class: static-analysis
+ground_truth_outcome: doctor_flag
+ground_truth_defect_loc:
+  file: src.ts
+  line: 5
+description: "The caller declares alpha and gamma but the callee participates in beta."

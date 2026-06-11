@@ -1,0 +1,7 @@
+id: verification/negative-inline-credentials
+class: verification
+ground_truth_outcome: verifier_reject
+ground_truth_defect_loc:
+  file: src.ts
+  line: 4
+description: "Claims security/no-inline-credentials (negative polarity) yet embeds a credential literal."

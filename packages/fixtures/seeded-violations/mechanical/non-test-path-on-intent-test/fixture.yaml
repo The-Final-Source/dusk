@@ -1,0 +1,8 @@
+id: mechanical/non-test-path-on-intent-test
+class: mechanical
+ground_truth_outcome: gate_reject
+expected_rejection_kind: non_test_path_on_intent_test
+ground_truth_defect_loc:
+  file: src.ts
+  line: 1
+description: "An @intent-test path that does not end in a configured test-pyramid suffix."

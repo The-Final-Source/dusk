@@ -1,0 +1,7 @@
+id: static-analysis/erosion-partial-overlap
+class: static-analysis
+ground_truth_outcome: doctor_flag
+ground_truth_defect_loc:
+  file: src.ts
+  line: 4
+description: "The callee claims alpha AND beta; the caller declares only alpha — beta is missing from D(U)."

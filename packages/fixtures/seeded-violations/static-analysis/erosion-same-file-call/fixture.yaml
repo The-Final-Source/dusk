@@ -1,0 +1,7 @@
+id: static-analysis/erosion-same-file-call
+class: static-analysis
+ground_truth_outcome: doctor_flag
+ground_truth_defect_loc:
+  file: src.ts
+  line: 4
+description: "A decorated caller invokes a same-file callee whose focal intent is not in the caller's decoration set."

@@ -1,0 +1,10 @@
+schema_version: 2
+id: notifications/respect-opt-out
+description: Push delivery skips users who opted out.
+obligation: must
+compose: all
+triples:
+  - id: respect-opt-out
+    subject: "the push delivery"
+    predicate: "skips"
+    object: "users whose pushOptOut preference is true"

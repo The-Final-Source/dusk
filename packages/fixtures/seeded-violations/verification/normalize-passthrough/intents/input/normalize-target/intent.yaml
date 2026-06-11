@@ -1,0 +1,10 @@
+schema_version: 2
+id: input/normalize-target
+description: The target is normalized into a uniform user id array.
+obligation: must
+compose: all
+triples:
+  - id: normalize-target
+    subject: "the function"
+    predicate: "normalizes"
+    object: "the notification target into a uniform user id array"

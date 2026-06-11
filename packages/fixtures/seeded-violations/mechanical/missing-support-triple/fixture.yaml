@@ -1,0 +1,8 @@
+id: mechanical/missing-support-triple
+class: mechanical
+ground_truth_outcome: gate_reject
+expected_rejection_kind: missing_support_triple
+ground_truth_defect_loc:
+  file: src.ts
+  line: 3
+description: "An @intent-support without a [subject, predicate, object] triple."

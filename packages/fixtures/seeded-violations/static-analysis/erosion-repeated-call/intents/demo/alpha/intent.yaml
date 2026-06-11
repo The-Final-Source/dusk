@@ -1,0 +1,10 @@
+schema_version: 2
+id: demo/alpha
+description: Alpha behavior.
+obligation: must
+compose: all
+triples:
+  - id: do-alpha
+    subject: "the alpha unit"
+    predicate: "performs"
+    object: "the alpha behavior"

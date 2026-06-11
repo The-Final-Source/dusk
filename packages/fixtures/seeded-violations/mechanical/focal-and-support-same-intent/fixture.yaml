@@ -1,0 +1,8 @@
+id: mechanical/focal-and-support-same-intent
+class: mechanical
+ground_truth_outcome: gate_reject
+expected_rejection_kind: focal_and_support_for_same_intent
+ground_truth_defect_loc:
+  file: src.ts
+  line: 4
+description: "One statement claiming the same intent as both focal and support."

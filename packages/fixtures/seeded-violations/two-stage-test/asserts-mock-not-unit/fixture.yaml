@@ -1,0 +1,7 @@
+id: two-stage-test/asserts-mock-not-unit
+class: two-stage-test
+ground_truth_outcome: verifier_test_reject
+ground_truth_defect_loc:
+  file: feature.unit.test.ts
+  line: 7
+description: "The unit is replaced with a stub and the assertion checks the stub, not runFeature."

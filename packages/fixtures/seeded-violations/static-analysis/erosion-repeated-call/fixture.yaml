@@ -1,0 +1,7 @@
+id: static-analysis/erosion-repeated-call
+class: static-analysis
+ground_truth_outcome: doctor_flag
+ground_truth_defect_loc:
+  file: src.ts
+  line: 4
+description: "The foreign-intent callee is invoked twice; the first call site is the seeded defect location."

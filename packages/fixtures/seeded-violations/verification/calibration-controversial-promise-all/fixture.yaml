@@ -1,0 +1,8 @@
+id: verification/calibration-controversial-promise-all
+class: verification
+ground_truth_outcome: controversial
+ground_truth_defect_loc:
+  file: src.ts
+  line: 4
+calibration: true
+description: "Controversial: insert and publish run in Promise.all — ordering is ambiguous, not strictly persist-first."

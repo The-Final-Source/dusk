@@ -1,0 +1,10 @@
+schema_version: 2
+id: demo/gamma
+description: Gamma behavior.
+obligation: must
+compose: all
+triples:
+  - id: do-gamma
+    subject: "the gamma unit"
+    predicate: "performs"
+    object: "the gamma behavior"

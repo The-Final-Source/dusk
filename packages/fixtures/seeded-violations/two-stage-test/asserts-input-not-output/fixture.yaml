@@ -1,0 +1,7 @@
+id: two-stage-test/asserts-input-not-output
+class: two-stage-test
+ground_truth_outcome: verifier_test_reject
+ground_truth_defect_loc:
+  file: feature.unit.test.ts
+  line: 9
+description: "The test asserts on its own fixture input, never the unit's output."

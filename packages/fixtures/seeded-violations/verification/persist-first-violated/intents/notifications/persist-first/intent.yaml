@@ -1,0 +1,10 @@
+schema_version: 2
+id: notifications/persist-first
+description: The notification insert completes before any sync event is published.
+obligation: must
+compose: all
+triples:
+  - id: persist-first
+    subject: "the notification insert"
+    predicate: "completes before"
+    object: "any sync event is published"

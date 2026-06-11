@@ -1,0 +1,7 @@
+id: two-stage-test/no-assertion
+class: two-stage-test
+ground_truth_outcome: verifier_test_reject
+ground_truth_defect_loc:
+  file: feature.unit.test.ts
+  line: 7
+description: "The test body invokes the unit but asserts nothing."

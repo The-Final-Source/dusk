@@ -1,0 +1,13 @@
+schema_version: 2
+id: demo/feature/unit-tests
+description: Unit tests cover the demo feature's computed value.
+obligation: must
+compose: all
+triples:
+  - id: covers-do-thing
+    subject: "the unit-test suite"
+    predicate: "includes"
+    object: "a case asserting runFeature returns the computed demo value"
+relates_to:
+  - kind: parent
+    target: demo/feature

@@ -1,0 +1,5 @@
+id: verification/calibration-good-persist-first
+class: verification
+ground_truth_outcome: verifier_accept
+calibration: true
+description: "Known-good: persists before publishing, exactly as claimed."

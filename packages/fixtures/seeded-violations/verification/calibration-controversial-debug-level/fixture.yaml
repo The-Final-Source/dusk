@@ -1,0 +1,8 @@
+id: verification/calibration-controversial-debug-level
+class: verification
+ground_truth_outcome: controversial
+ground_truth_defect_loc:
+  file: src.ts
+  line: 7
+calibration: true
+description: "Controversial: the failure is logged at debug level — arguably not observable."

@@ -1,0 +1,10 @@
+schema_version: 2
+id: observability/structured-payloads
+description: Logs carry structured object payloads.
+obligation: must
+compose: all
+triples:
+  - id: structured-payloads
+    subject: "log calls"
+    predicate: "pass"
+    object: "a structured object payload as the first argument"
