@@ -135,8 +135,11 @@ export function claudeCodeModelClient(opts: ClaudeCodeClientOptions = {}): Model
   return {
     async complete({ system, user }) {
       const start = now();
-      const args = ["--print", "--output-format", "json", "--model", model, "--max-turns", "1"];
-      if (system) args.push("--system-prompt", system);
+      // --max-turns 3: a stray tool ATTEMPT (denied below) must not hard-fail
+      // the call with error_max_turns — the model recovers and answers in text.
+      const args = ["--print", "--output-format", "json", "--model", model, "--max-turns", "3"];
+      const noTools = "You have NO tools available in this context. Never attempt a tool call; reply directly with the requested output only.";
+      args.push("--system-prompt", system ? `${system}\n\n${noTools}` : noTools);
       args.push("--disallowed-tools", ...DISABLED_TOOLS); // variadic — keep last
       const raw = await runClaude(cli, args, user, timeoutMs);
       const parsed = JSON.parse(raw) as { result?: unknown; total_cost_usd?: number; usage?: { input_tokens?: number; output_tokens?: number } };
