@@ -183,14 +183,19 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
       const prepass = await realTestPrepassVerdict(vctx.intentPath, { index: ctx.index, intents: ctx.intents, readFile: ctx.readFile, modelClient });
       return prepass.success ? prepass.value : prepass.error;
     }
-    const result = await verifyIntent(intent, {
-      index: ctx.index,
-      readFile: ctx.readFile,
-      maxLines: verifierEvidenceMaxLines(baseCtx.config),
-      modelClient,
-      systemPrompt: DEFAULT_VERIFIER_SYSTEM_PROMPT,
-      onUsage: vctx.reportUsage,
-    });
+    const verifyOnce = () =>
+      verifyIntent(intent, {
+        index: ctx.index,
+        readFile: ctx.readFile,
+        maxLines: verifierEvidenceMaxLines(baseCtx.config),
+        modelClient,
+        systemPrompt: DEFAULT_VERIFIER_SYSTEM_PROMPT,
+        onUsage: vctx.reportUsage,
+      });
+    let result = await verifyOnce();
+    // A non-JSON model response is recoverable noise (one retry, like transport)
+    // — it must not kill a long pipeline run as "no verdict".
+    if (!result.success && result.error.kind === "verifier_model_call_failed") result = await verifyOnce();
     return result.success ? result.value : result.error;
   };
 
