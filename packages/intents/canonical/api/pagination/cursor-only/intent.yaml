@@ -1,0 +1,17 @@
+schema_version: 2
+id: api/pagination/cursor-only
+description: List pagination is cursor-based; cursors are opaque tokens.
+obligation: must
+compose: all
+triples:
+  - id: cursor-param
+    subject: list endpoints
+    predicate: accept
+    object: a single opaque cursor query parameter
+  - id: opaque-to-clients
+    subject: list endpoints
+    predicate: treat
+    object: the cursor as an opaque token end to end
+relates_to:
+  - kind: sibling
+    target: api/no-offset-pagination

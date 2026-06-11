@@ -8,6 +8,7 @@ import { listSkills, renderSkills } from "./skills.js";
 import { runVerify } from "./verify.js";
 import { cleanupWorktreesCommand, gcCheckpointsCommand, gcDialogsCommand } from "./doctorP3.js";
 import { runImplementCli } from "./implement.js";
+import { AUTHOR_HELP, runAuthorCli } from "./author.js";
 import type { ConflictChoice } from "./settingsMerge.js";
 
 const HELP = `dusk — Intent Architecture CLI
@@ -20,6 +21,7 @@ Usage:
   dusk roles                  List the nine installed role files (memory, model, skill count)
   dusk skills                 Introspect installed role-bound skills, grouped by role
   dusk implement <request>    Run the 9-step pipeline (mirror of dusk_implement); --resume <id> to continue
+  dusk author <request>       Open an intent-authoring dialog (mirror of dusk_author_*); --continue / --finalize
   dusk doctor --check-hook    Verify the gate is installed (--repair to fix)
   dusk doctor --cleanup-worktrees | --gc-implement-checkpoints | --gc-dialogs   Reap stale runtime state
   dusk --help                 Show this help
@@ -111,6 +113,15 @@ async function run(command: string | undefined, rest: string[]): Promise<number>
         return rest.length === 0 && !wantsHelp(rest) ? 1 : 0;
       }
       const result = await runImplementCli(root, rest);
+      process.stdout.write(result.text);
+      return result.ok ? 0 : 1;
+    }
+    case "author": {
+      if (wantsHelp(rest) || rest.length === 0) {
+        process.stdout.write(AUTHOR_HELP);
+        return rest.length === 0 && !wantsHelp(rest) ? 1 : 0;
+      }
+      const result = await runAuthorCli(root, rest);
       process.stdout.write(result.text);
       return result.ok ? 0 : 1;
     }

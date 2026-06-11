@@ -2,9 +2,10 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { buildDerivedIndex, type DerivedIndex } from "@dusk/core-index";
+import type { DecorationRecord } from "@dusk/core-decoration";
 import { loadIntentTree } from "@dusk/core-graph";
 import { readIntentFile } from "@dusk/core-parser";
-import { DuskConfigSchema, type DraftIntent, type ScriptedAuthorResponse } from "@dusk/core-schema";
+import { DuskConfigSchema, type DraftIntent, type ScriptedAuthorResponse, type TestVerifierLivelockReport, type VerifierFactory } from "@dusk/core-schema";
 import { createAuthorRuntime, type AuthorRuntime } from "@dusk/runtime-author";
 import { runRecoveryLadder } from "@dusk/runtime-recovery-ladder";
 import { clearSnapshot, readRuntimeEnv, runImplement, type RunImplementDeps } from "@dusk/runtime-orchestrator";
@@ -18,6 +19,8 @@ import {
   type MockGitWorktree,
 } from "@dusk/test-harness";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+
+import { duskResolveLivelock, type WriteSurfaceDeps } from "./writeSurface.js";
 
 /**
  * §5.4 (P4-T8 cross-tool mechanics) + §6.3 (smoke Variant B) — the
@@ -83,7 +86,7 @@ const REFINED_WIDGET: DraftIntent = {
 
 let mg: MockGitWorktree;
 let seq = 0;
-const SESSIONS = ["p4-smoke", "p4-smoke-resume", "p4-l2", "p4-l2-retry"];
+const SESSIONS = ["p4-smoke", "p4-smoke-resume", "p4-l2", "p4-l2-retry", "p4-livelock", "p4-livelock-resume"];
 beforeEach(() => {
   for (const s of SESSIONS) clearSnapshot(s);
   mg = createMockGitWorktree({ idBase: `2026061014000${seq++}` });
@@ -234,5 +237,116 @@ describe("6.3 / smoke Variant B — L2 error → l2_recovery dialog → refined 
     expect(retried.success).toBe(true);
     if (!retried.success) return;
     expect(retried.value.commits.length).toBeGreaterThanOrEqual(1);
+  }, 60_000);
+});
+
+describe("7.4 — livelock → modify_triple dialog → finalize → resume sees the refreshed intent", () => {
+  const SEND_INTENT = `schema_version: 2
+id: notifications/send
+description: The send service persists notifications before publishing.
+obligation: must
+compose: all
+triples:
+  - id: persist-first
+    subject: the send service
+    predicate: persist
+    object: the notification before publishing
+`;
+  const SEND_TESTS_INTENT = `schema_version: 2
+id: notifications/send/unit-tests
+description: Unit tests cover the persist-before-publish ordering.
+obligation: must
+compose: all
+triples:
+  - id: covers-persist-first
+    subject: the unit test
+    predicate: verifies
+    object: the persist call order via a mock spy
+`;
+  const focal = (file: string, line: number, marker: DecorationRecord["marker"], intentPath: string, aspects: string[]): DecorationRecord => ({
+    file,
+    line,
+    scope: "declaration",
+    declaration_name: "d",
+    marker,
+    intent_path: intentPath,
+    aspect_ids: aspects,
+    support_triple: null,
+    ignore_clause: null,
+  });
+
+  test("the bead re-run's Verifier spawns see the refreshed triple; the run completes", async () => {
+    seedFile(".ia/intents/notifications/send/intent.yaml", SEND_INTENT);
+    seedFile(".ia/intents/notifications/send/unit-tests/intent.yaml", SEND_TESTS_INTENT);
+
+    const decoratedIndex = (): DerivedIndex =>
+      buildDerivedIndex(
+        [
+          focal("src/n.ts", 1, "intent", "notifications/send", ["persist-first"]),
+          focal("src/n.test.ts", 1, "intent-test", "notifications/send/unit-tests", ["covers-persist-first"]),
+        ],
+        loadIntentTree(join(mg.repoDir, ".ia/intents")).intents,
+      );
+
+    // 1 — drive into livelock: the double rejects the test pre-pass with a
+    //     predicate-concentrated rationale on every re-entry.
+    const livelockFactory: VerifierFactory = makeScriptedVerdictFactory((ctx) =>
+      ctx.assembledPrompt.includes("Does the test")
+        ? { intent_path: ctx.intentPath, decision: "reject", per_triple: [], aggregate_rationale: "the test does not constrain the predicate slot" }
+        : { intent_path: ctx.intentPath, decision: "accept", per_triple: [], aggregate_rationale: "ok" },
+    );
+    let report: TestVerifierLivelockReport | undefined;
+    const paused = await runImplement(
+      { request: "notifications send ordering", scopeHint: ["notifications/send"] },
+      implementDeps("p4-livelock", { buildIndex: decoratedIndex, verifierFactory: livelockFactory, onLivelock: (r) => (report = r) }),
+    );
+    expect(paused.success).toBe(false);
+    expect(report).toBeDefined();
+    expect(report!.failing_triple_id).toBe("covers-persist-first");
+
+    // 2 — resolve via the rewired modify_triple verb (scoped dialog, NOT inline payload).
+    const runtime = authorRuntime([]);
+    const writeDeps: WriteSurfaceDeps = {
+      ...implementDeps("p4-livelock"),
+      livelockReports: new Map([[report!.bead_id, report!]]),
+      authorRuntime: runtime,
+    };
+    const opened = await duskResolveLivelock(writeDeps, { bead_id: report!.bead_id, verb: "modify_triple" });
+    expect(opened.success).toBe(true);
+    if (!opened.success || opened.value.verb !== "modify_triple") return;
+    const dialogId = opened.value.dialog_id;
+
+    // 3 — edit the failing triple and finalize: in-place writeback.
+    await runtime.continue({
+      dialog_id: dialogId,
+      response: "assert observable ordering, not mock internals",
+      payload: { edited_triple: { subject: "the unit test", predicate: "verifies", object: "the persisted row exists before the publish event", polarity: "positive" } },
+    });
+    const ready = await runtime.continue({ dialog_id: dialogId, response: "confirm" });
+    if (!ready.success) throw new Error("confirm failed");
+    expect(ready.value).toEqual({ finalize_ready: true });
+    const finalized = await runtime.finalize({ dialog_id: dialogId });
+    expect(finalized.success).toBe(true);
+
+    // 4 — the bead resumes (re-invocation rebuilds the snapshot): every Verifier
+    //     spawn in the new run reads the REFRESHED triple from its index.
+    let tripleSeenByRun: string | undefined;
+    const resumed = await runImplement(
+      { request: "notifications send ordering", scopeHint: ["notifications/send"] },
+      implementDeps("p4-livelock-resume", {
+        // The re-invocation happens later in wall-clock time → a fresh bead id
+        // (the paused bead's worktree is preserved per the livelock contract).
+        clock: fixedClock(2_000),
+        buildIndex: () => {
+          const idx = decoratedIndex();
+          tripleSeenByRun = idx.intents.get("notifications/send/unit-tests")?.triples?.find((t) => t.id === "covers-persist-first")?.object;
+          return idx;
+        },
+      }),
+    );
+    expect(tripleSeenByRun).toBe("the persisted row exists before the publish event");
+    expect(resumed.success).toBe(true);
+    if (!resumed.success) return;
+    expect(resumed.value.test_intents_executed).toContain("notifications/send/unit-tests");
   }, 60_000);
 });

@@ -27,6 +27,7 @@ export function scaffoldProject(root: string): void {
     ".ia/observability",
     ".claude/agents",
     ".claude/skills/dusk",
+    ".claude/commands",
   ]) {
     mkdirSync(join(root, dir), { recursive: true });
   }
@@ -34,8 +35,10 @@ export function scaffoldProject(root: string): void {
   const configPath = join(root, "dusk.config.yml");
   if (!existsSync(configPath)) writeFileSync(configPath, DEFAULT_CONFIG, "utf8");
 
-  // Install the nine role files and the role-bound skills from the bundled assets.
+  // Install the nine role files, the role-bound skills, and the slash commands
+  // (/dusk-author) from the bundled assets.
   const assets = assetsDir();
   cpSync(join(assets, "agents"), join(root, ".claude/agents"), { recursive: true });
   cpSync(join(assets, "skills", "dusk"), join(root, ".claude/skills/dusk"), { recursive: true });
+  cpSync(join(assets, "commands"), join(root, ".claude/commands"), { recursive: true });
 }

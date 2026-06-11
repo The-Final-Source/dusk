@@ -69,6 +69,19 @@ export function implDraft(state: DialogState, suffixes: string[] = [...DEFAULT_T
 
 const scopedDraft = (state: DialogState): DraftIntent | undefined => state.intents_drafted.find((d) => d.in_place_edit !== undefined);
 
+/** Whether the Stage-4 pyramid pick is the pending question. */
+export function pyramidPending(state: DialogState, suffixes: string[] = [...DEFAULT_TEST_PYRAMID_SUFFIXES]): boolean {
+  const impl = implDraft(state, suffixes);
+  return impl !== undefined && impl.pyramid_picked === undefined;
+}
+
+/** Derive a layer pick from free text (the CLI mirror has no structured payload).
+ *  Layer names (or their bare stems) mentioned in the text are picked; "none"/"no"/"skip" picks nothing. */
+export function parseLayersFromText(text: string, suffixes: string[]): string[] {
+  const lower = text.toLowerCase();
+  return suffixes.filter((s) => lower.includes(s) || new RegExp(`\\b${s.replace(/-tests$/, "")}\\b`).test(lower));
+}
+
 /** The first draft slot (Stage-2 scaffold), created on demand. */
 function withScaffold(state: DialogState, mutate: (scaffold: DraftIntent) => DraftIntent): DialogState {
   const drafts = [...state.intents_drafted];
@@ -147,7 +160,9 @@ export function transition(state: DialogState, response: ClassifiedResponse, opt
       const scoped = scopedDraft(next);
 
       if (response.kind === "pick_pyramid_layers") {
-        const layers = Array.isArray(response.payload?.layers) ? (response.payload.layers as string[]) : [];
+        const layers = Array.isArray(response.payload?.layers)
+          ? (response.payload.layers as string[])
+          : parseLayersFromText(response.text, suffixes);
         const impl = implDraft(next, suffixes);
         if (impl?.id) {
           const children = layers.filter((l) => suffixes.includes(l)).map((layer) => pyramidChild(impl, layer));
@@ -251,6 +266,7 @@ export function classifyUserResponse(state: DialogState, text: string, payload?:
     case "4.5": {
       if (Array.isArray(payload?.layers)) return "pick_pyramid_layers";
       if (payload?.edited_triple !== undefined) return "revise_draft";
+      if (pyramidPending(state, suffixes)) return "pick_pyramid_layers"; // free-text pick (CLI mirror)
       if (reciprocalPending(state, suffixes)) return affirmative ? "confirm_reciprocal" : "decline_reciprocal";
       if (affirmative) return "confirm_draft";
       return "revise_draft";
