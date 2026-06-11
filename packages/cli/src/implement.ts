@@ -95,7 +95,7 @@ function runHeadlessAgent(
     });
     child.on("close", (code) => {
       clearTimeout(timer);
-      if (code !== 0) return reject(new Error(`claude CLI exited ${code}: ${errText.slice(0, 500)}`));
+      if (code !== 0) return reject(new Error(`claude CLI exited ${code}: ${errText.slice(0, 500)} ${out.slice(0, 500)}`));
       try {
         const parsed = JSON.parse(out) as { result?: unknown; total_cost_usd?: number; usage?: { input_tokens?: number; output_tokens?: number } };
         resolve({
@@ -108,6 +108,9 @@ function runHeadlessAgent(
         reject(e);
       }
     });
+    // A child exiting before draining stdin raises EPIPE on the write side;
+    // unhandled, it would crash the whole pipeline process.
+    child.stdin.on("error", () => {});
     child.stdin.write(prompt);
     child.stdin.end();
   });

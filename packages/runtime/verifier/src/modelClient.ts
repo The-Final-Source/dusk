@@ -107,8 +107,14 @@ function runClaude(cli: string, args: string[], input: string, timeoutMs: number
     child.on("close", (code) => {
       clearTimeout(timer);
       if (code === 0) resolve(out);
-      else reject(new Error(`claude CLI exited ${code}: ${err.slice(0, 500)}`));
+      // The CLI reports many failures as JSON on STDOUT with a non-zero exit —
+      // include both streams so transport errors are diagnosable.
+      else reject(new Error(`claude CLI exited ${code}: ${err.slice(0, 500)} ${out.slice(0, 500)}`));
     });
+    // A child that exits before draining stdin raises EPIPE on the write side;
+    // unhandled, that crashes the WHOLE process (not just this call). Swallow
+    // it — the `close` handler reports the real exit honestly.
+    child.stdin.on("error", () => {});
     child.stdin.write(input);
     child.stdin.end();
   });
