@@ -1,0 +1,425 @@
+{
+  "schema_version": 1,
+  "run_id": "audit_1781209053882",
+  "generated_at": "2026-06-11T20:17:33.882Z",
+  "n_per_fixture": 10,
+  "curated": {
+    "fixtures": [
+      {
+        "fixture_id": "verification/catch-log-rethrow",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.5944155822843123,
+        "axis3_citation_tiers": [
+          "adjacent",
+          "adjacent",
+          "adjacent",
+          "adjacent",
+          "adjacent",
+          "adjacent",
+          "adjacent",
+          "adjacent",
+          "adjacent",
+          "adjacent"
+        ],
+        "axis3_pct_aligned": 0,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/cleanup-only-logs",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 7,
+          "reject": 3
+        },
+        "axis1_entropy": 0.8812908992306927,
+        "axis2_mean_token_overlap": 0.425112929621351,
+        "axis3_citation_tiers": [
+          "aligned",
+          "aligned",
+          "aligned",
+          "adjacent",
+          "aligned",
+          "aligned",
+          "adjacent",
+          "aligned",
+          "aligned",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 0.8,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/implies-key-not-persisted",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.5217570274514962,
+        "axis3_citation_tiers": [
+          "aligned",
+          "aligned",
+          "adjacent",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "adjacent",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 0.8,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/implies-no-audit-record",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.5379885756140393,
+        "axis3_citation_tiers": [
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 1,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/implies-no-idempotency-validation",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.6414727057168972,
+        "axis3_citation_tiers": [
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 1,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/negative-console-log",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.8355665839536809,
+        "axis3_citation_tiers": [
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 1,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/negative-inline-credentials",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.8164604406520117,
+        "axis3_citation_tiers": [
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 1,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/negative-raw-sql",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.7897934958914017,
+        "axis3_citation_tiers": [
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 1,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/no-input-validation",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.6502740350202583,
+        "axis3_citation_tiers": [
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 1,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/normalize-passthrough",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.6487449397154599,
+        "axis3_citation_tiers": [
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 1,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/opt-out-ignored",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.44216353167810624,
+        "axis3_citation_tiers": [
+          "adjacent",
+          "adjacent",
+          "adjacent",
+          "adjacent",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "adjacent",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 0.5,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/persist-first-violated",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.7599842598339694,
+        "axis3_citation_tiers": [
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 1,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/quantifier-batch-publish",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.7748333010364866,
+        "axis3_citation_tiers": [
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 1,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/quantifier-double-publish",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.5375729737663746,
+        "axis3_citation_tiers": [
+          "adjacent",
+          "aligned",
+          "aligned",
+          "adjacent",
+          "adjacent",
+          "adjacent",
+          "adjacent",
+          "adjacent",
+          "adjacent",
+          "adjacent"
+        ],
+        "axis3_pct_aligned": 0.2,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/quantifier-none-violated",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.7239122798538884,
+        "axis3_citation_tiers": [
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 1,
+        "no_citation_flag": false
+      },
+      {
+        "fixture_id": "verification/string-concat-logging",
+        "n_calls": 10,
+        "verdict_counts": {
+          "accept": 0,
+          "reject": 10
+        },
+        "axis1_entropy": 0,
+        "axis2_mean_token_overlap": 0.9119951725591977,
+        "axis3_citation_tiers": [
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned",
+          "aligned"
+        ],
+        "axis3_pct_aligned": 1,
+        "no_citation_flag": false
+      }
+    ],
+    "scores": {
+      "axis1_variance": {
+        "mean_entropy_known_bad": 0.055080681201918294,
+        "pass": false
+      },
+      "axis2_similarity": {
+        "mean_token_overlap": 0.6632529896655583,
+        "pass": true
+      },
+      "axis3_citation": {
+        "pct_fixtures_aligned_4of5": 0.8125,
+        "pct_fixtures_all_unaligned": 0,
+        "pass": true
+      }
+    }
+  },
+  "quadrant_flags": [
+    {
+      "variant": "standard",
+      "high_similarity": false,
+      "low_precision": false,
+      "rubber_stamp_quadrant": false,
+      "no_citation_flag": false
+    },
+    {
+      "variant": "rubber-stamp",
+      "high_similarity": true,
+      "low_precision": true,
+      "rubber_stamp_quadrant": true,
+      "no_citation_flag": false
+    }
+  ]
+}
