@@ -20,7 +20,8 @@ import {
   verifyIntent,
 } from "@dusk/runtime-verifier";
 import type { VitestRunner } from "@dusk/runtime-test-runner";
-import { realTestPrepassVerdict } from "@dusk/runtime-benchmark";
+import { realTestPrepassVerdict, withTransportRetry } from "@dusk/runtime-benchmark";
+import type { ModelClient } from "@dusk/runtime-verifier";
 
 /**
  * `dusk implement` / `dusk implement --resume <bead-id>` (14.4/14.5) — the CLI
@@ -129,7 +130,13 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
 
   const clock = opts.clock ?? { now: () => Date.now() };
   const model = "claude-sonnet-4-6";
-  const modelClient = claudeCodeModelClient({ model });
+  // The pre-registered transport-failure amendment applies to every real-model
+  // call: a transport blip is a null observation consuming one retry — it must
+  // not kill a long pipeline run. Two deaths still fail honestly.
+  const rawModelClient = claudeCodeModelClient({ model });
+  const modelClient: ModelClient = {
+    complete: (req) => withTransportRetry(() => rawModelClient.complete(req)),
+  };
   const baseCtx = loadProjectContext(root, { modelClient, systemPrompt: DEFAULT_VERIFIER_SYSTEM_PROMPT });
 
   // The project may be a package INSIDE the repo: worktrees are full-repo
@@ -153,7 +160,7 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
       // Phase-5 dogfood mode: the Engineer is a REAL file-writing headless agent
       // working inside the active bead's worktree.
       const cwd = activeWorktreePackageDir() ?? root;
-      const result = await runHeadlessAgent(`${call.prompt}${ENGINEER_FILE_INSTRUCTION}`, cwd, model, 15 * 60 * 1000);
+      const result = await withTransportRetry(() => runHeadlessAgent(`${call.prompt}${ENGINEER_FILE_INSTRUCTION}`, cwd, model, 15 * 60 * 1000));
       return { output: result.text, model, promptTokens: result.promptTokens, completionTokens: result.completionTokens, costUsd: result.costUsd, latencyMs: 0 };
     }
     const completion = await modelClient.complete({ system: call.prompt, user: "Proceed.", temperature: 0 });
