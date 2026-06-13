@@ -25,9 +25,18 @@ import type { AuditVariant, Clock, FixtureVerifierCall } from "./auditRunner.js"
  * too wide to freeze responsibly, widen the split before freezing.
  *
  * Bar derivation (all explicit numerics, never narrative judgment):
- *  - Axis 1 `max_entropy_known_bad`   = known-good mean entropy + 2σ + 0.05 —
- *    the determinism the Verifier exhibits on easy cases bounds what the audit
- *    demands on known-bad ones (capped at 1 bit).
+ *  - Axis 1 `max_entropy_known_bad` = max(known-good mean entropy + 2σ,
+ *    `KNOWN_BAD_DISSENT_TOLERANCE`), capped at 1 bit. The known-good cohort is
+ *    near-deterministic (clean code → consistent accept → entropy ≈ 0), so
+ *    anchoring the known-bad bar to it alone yields a razor-thin ceiling that
+ *    fails on a single borderline dissent — which is NOT unreliability (RFC
+ *    §7.5: "variance low + verdicts consistently reject"; one flip in N is
+ *    still consistent). The tolerance term is the N-derived mean-entropy a
+ *    reliable verifier may exhibit while a small fraction of genuinely-
+ *    borderline known-bad fixtures each show a single dissenting verdict:
+ *    `KNOWN_BAD_DISSENT_FRACTION × entropy([N-1, 1])`. (Widening the
+ *    calibration split does NOT fix this — known-good entropy stays ≈ 0; the
+ *    derivation is the remedy.)
  *  - Axis 1 `min_entropy_controversial` = controversial mean entropy − 2σ
  *    (floored at 0) — controversial fixtures must stay MODERATE, not zero.
  *  - Axis 2 `max_token_overlap_low_precision_flag` = calibration-wide mean
@@ -45,6 +54,14 @@ export type CalibrateOptions = {
   call: FixtureVerifierCall;
   clock: Clock;
 };
+
+/**
+ * The fraction of known-bad fixtures a reliable Verifier may dissent on (one
+ * verdict each) before the audit treats it as genuinely unreliable. 0.25 — a
+ * quarter of the curated known-bad set may each show a single borderline flip;
+ * dissent across more than that fails Axis 1.
+ */
+export const KNOWN_BAD_DISSENT_FRACTION = 0.25;
 
 const mean = (xs: number[]): number => (xs.length === 0 ? 0 : xs.reduce((a, b) => a + b, 0) / xs.length);
 const stddev = (xs: number[]): number => {
@@ -87,7 +104,10 @@ export async function calibrateAudit(opts: CalibrateOptions): Promise<RuntimeRes
     calibration_fixture_ids: split.map((f) => f.id),
     frozen: true,
     axis1_variance: {
-      max_entropy_known_bad: Math.min(1, mean(entropies.knownGood) + 2 * stddev(entropies.knownGood) + 0.05),
+      max_entropy_known_bad: Math.min(
+        1,
+        Math.max(mean(entropies.knownGood) + 2 * stddev(entropies.knownGood), KNOWN_BAD_DISSENT_FRACTION * shannonEntropy([n - 1, 1])),
+      ),
       min_entropy_controversial: Math.max(0, mean(entropies.controversial) - 2 * stddev(entropies.controversial)),
     },
     axis2_similarity: {

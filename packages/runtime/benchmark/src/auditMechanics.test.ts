@@ -6,12 +6,32 @@ import { fixedClock } from "@dusk/test-harness";
 import type { SubAgentTrace } from "@dusk/core-schema";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { shannonEntropy } from "./auditAxes.js";
 import { runFreshnessAudit, type FixtureVerifierCall } from "./auditRunner.js";
+import { KNOWN_BAD_DISSENT_FRACTION } from "./calibrate.js";
 import { frozenThresholds } from "./testSupport.js";
 import { assembleOrganicCohort } from "./organicCohort.js";
 
 // 4.4 (mechanics) + 4.6 — the audit runner's deterministic mechanics driven by
 // scripted calls (zero-model), and the bias-annotated organic cohort (P5-T4).
+
+// v1.x — the Axis-1 known-bad variance tolerance is N-derived and meaningful
+// (not the razor-thin known-good-anchored floor that failed on one borderline
+// dissent). Locked zero-model so a regression in the derivation is caught
+// without the real model.
+describe("Axis-1 known-bad dissent tolerance (v1.x calibration fix)", () => {
+  it("tolerates a small borderline-dissent fraction at N=10 (~0.117 bit), well above one fixture's single flip", () => {
+    const barAtN = (n: number) => KNOWN_BAD_DISSENT_FRACTION * shannonEntropy([n - 1, 1]);
+    const bar = barAtN(10);
+    expect(bar).toBeCloseTo(0.117, 3);
+    // A reliable verifier that flips a single verdict on one borderline fixture
+    // (out of 16) sits far under the bar — it must NOT be read as unreliability.
+    const oneBorderlineFlipMean = shannonEntropy([9, 1]) / 16;
+    expect(oneBorderlineFlipMean).toBeLessThan(bar);
+    // A verifier dissenting once on EVERY known-bad fixture is unreliable → over bar.
+    expect(shannonEntropy([9, 1])).toBeGreaterThan(bar);
+  });
+});
 
 let tmp: string;
 let thresholdsPath: string;

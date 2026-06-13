@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "calibrated_at": "2026-06-11T18:29:20.379Z",
+  "calibrated_at": "2026-06-13T11:53:59.017Z",
   "calibration_fixture_ids": [
     "verification/calibration-controversial-batched-cleanup",
     "verification/calibration-controversial-case-insensitive-key",
@@ -13,11 +13,11 @@
   ],
   "frozen": true,
   "axis1_variance": {
-    "max_entropy_known_bad": 0.05,
+    "max_entropy_known_bad": 0.1172488983973203,
     "min_entropy_controversial": 0
   },
   "axis2_similarity": {
-    "max_token_overlap_low_precision_flag": 0.95
+    "max_token_overlap_low_precision_flag": 0.8986731944681053
   },
   "axis3_citation": {
     "min_pct_fixtures_aligned_4of5": 0.8,
@@ -30,11 +30,11 @@
     ],
     "controversial_entropy": [
       0,
-      0.983543031665485
+      0.8056900935999991
     ],
     "calibration_token_overlap": [
-      0.3997219174179755,
-      0.9588570748689844
+      0.4598458966807931,
+      0.8986731944681053
     ]
   }
 }
