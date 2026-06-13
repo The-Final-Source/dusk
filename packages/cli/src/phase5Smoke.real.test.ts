@@ -142,9 +142,17 @@ describe.skipIf(!RUN_CORRECTNESS)("Phase-5 smoke — Real run", () => {
       .filter((l) => l.trim().length > 0)
       .map((l) => SubAgentTraceSchema.parse(JSON.parse(l)));
     expect(traces.length).toBeGreaterThan(0);
-    expect(traces.every((t) => t.index_snapshot_id !== undefined)).toBe(true);
+    // `index_snapshot_id` is stamped everywhere IN-PIPELINE (RFC §2.10; P5-T1) —
+    // i.e. on every spawn of a `dusk_implement` run. `dusk_author` dialog spawns
+    // run OUTSIDE the pipeline (no session snapshot) and correctly carry none;
+    // scope the invariant to the pipeline traces.
+    const PIPELINE_SITES = new Set(["implement", "short-cycle", "long-cycle", "test-execution", "merge"]);
+    const pipeline = traces.filter((t) => PIPELINE_SITES.has(t.invocation_site));
+    expect(pipeline.length).toBeGreaterThan(0);
+    expect(pipeline.every((t) => t.index_snapshot_id !== undefined)).toBe(true);
+    // `skills_loaded[]` is universal — every spawn, pipeline or dialog.
     expect(traces.every((t) => Array.isArray(t.skills_loaded))).toBe(true);
-    expect(traces.some((t) => t.iteration_number !== undefined)).toBe(true);
+    expect(pipeline.some((t) => t.iteration_number !== undefined)).toBe(true);
 
     expect(readDogfoodEvents(SHARED).length).toBeGreaterThan(0);
     const evaluation = evaluateDogfood({ root: SHARED, clock: { now: () => Date.now() } });

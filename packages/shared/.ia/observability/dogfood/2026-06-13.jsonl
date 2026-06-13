@@ -1,0 +1,3 @@
+{"kind":"doctor_run","at":"2026-06-13T08:29:10.714Z","mode":"conservative","findings":0}
+{"kind":"package_test_suite","at":"2026-06-13T08:29:10.716Z","status":"green"}
+{"kind":"worked_example_regression","at":"2026-06-13T08:29:10.716Z","status":"clean"}
