@@ -116,7 +116,10 @@ export function realFixtureVerifierCall(opts: {
       if (verdict.decision === "reject") anyReject = true;
       rationales.push(verdict.aggregate_rationale, ...verdict.per_triple.map((t) => t.rationale));
       for (const t of verdict.per_triple) {
-        if (t.evidence.focal_claim) focalClaims.push({ file: t.evidence.focal_claim.file, lines: t.evidence.focal_claim.lines });
+        // Prefer ALL focal claimants (v1.x) so a defect on any claimant line is
+        // citable; fall back to the single primary claim for older verdicts.
+        const claims = t.evidence.focal_claims ?? (t.evidence.focal_claim ? [t.evidence.focal_claim] : []);
+        for (const c of claims) focalClaims.push({ file: c.file, lines: c.lines });
       }
     }
 
