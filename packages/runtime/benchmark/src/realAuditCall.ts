@@ -86,7 +86,7 @@ export function realFixtureVerifierCall(opts: {
 
     for (const intentId of ctx.intentIds) {
       const intent = ctx.intents.get(intentId)!;
-      const result = await withTransportRetry(() =>
+      const verifyOnce = () =>
         verifyIntent(intent, {
           index: ctx.index,
           readFile: ctx.readFile,
@@ -97,10 +97,19 @@ export function realFixtureVerifierCall(opts: {
             latencyMs += usage.latencyMs;
             costUsd += usage.costUsd;
           },
-        }),
-      );
+        });
+      // Transport blips are null observations consuming a retry (the amendment).
+      // A non-JSON parse flake (`verifier_model_call_failed`, a returned Result)
+      // is the same class of recoverable noise — over hundreds of calls a single
+      // flake must not abort the statistical instrument. Both get exactly ONE
+      // retry; a second failure throws (a genuine systematic problem).
+      let result = await withTransportRetry(verifyOnce);
+      if (!result.success && result.error.kind === "verifier_model_call_failed") {
+        result = await withTransportRetry(verifyOnce);
+      }
       if (!result.success) {
-        // A structural verifier error is NOT transport noise — fail the leg loudly.
+        // Any other structural verifier error, or a repeated parse flake, is NOT
+        // transport noise — fail the leg loudly.
         throw new Error(`verifier procedure failed on ${fixture.id}/${intentId}: ${result.error.message}`);
       }
       const verdict = result.value;
