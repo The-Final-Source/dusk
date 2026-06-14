@@ -3,7 +3,7 @@ import { existsSync, readFileSync, readdirSync, symlinkSync } from "node:fs";
 import { join, relative } from "node:path";
 
 import { duskError, verifierEvidenceMaxLines, type SpawnOutcome, type VerifierFactory } from "@dusk/core-schema";
-import { runGate } from "@dusk/pre-tool-use";
+import { isGatedFile, runGate } from "@dusk/pre-tool-use";
 import type { GateResult } from "@dusk/runtime-short-cycle";
 import { loadProjectContext } from "@dusk/mcp-server";
 import {
@@ -43,6 +43,46 @@ const sanityNumber = (config: Record<string, unknown>, key: string, fallback: nu
   const sanity = (config.sanity ?? {}) as Record<string, unknown>;
   return typeof sanity[key] === "number" ? (sanity[key] as number) : fallback;
 };
+
+/**
+ * The headless engineer's enforcement boundary — the REAL mechanical gate for
+ * `dusk implement` (RFC §4.6). The headless `claude --print` engineer's writes
+ * do NOT pass through the interactive Claude Code PreToolUse hook (no
+ * settings.json is provisioned into its worktree, and it runs
+ * `--permission-mode acceptEdits`). Instead the short cycle gates the engineer's
+ * draft HERE, post-hoc: scan the worktree's changed files and run every GATED
+ * file (the shared `isGatedFile` set — `.ts`/`.tsx` and `.intent`, aligned with
+ * runGate so the two enforcement paths can't disagree on WHICH files to check)
+ * through the SAME `runGate` mechanical checks the hook runs. A block re-drafts
+ * WITHOUT spawning the verifier (§6.2).
+ *
+ * Pure over a worktree root (exported for unit tests). Uses `git status
+ * --porcelain -z -uall`: `-z` is NUL-separated + UNQUOTED so paths with
+ * special chars parse correctly (plain `--porcelain` quotes them, which
+ * `slice(3)` would mangle into a silent fail-open); `-uall` lists every
+ * untracked FILE individually (default `--porcelain` collapses an untracked
+ * directory to one `dir/` entry, so new files in a new dir would escape the
+ * gate entirely — a fail-open).
+ */
+export function gateWorktreeEdits(worktreeRoot: string): GateResult {
+  let raw: string;
+  try {
+    raw = execFileSync("git", ["-C", worktreeRoot, "status", "--porcelain", "-z", "-uall"], { encoding: "utf8" });
+  } catch {
+    return { blocked: false };
+  }
+  // -z entries are `XY <path>` terminated by NUL (status = 2 cols + a space).
+  const changed = raw.split("\0").filter((e) => e.length > 3).map((e) => e.slice(3)).filter(isGatedFile);
+  for (const rel of changed) {
+    const abs = join(worktreeRoot, rel);
+    if (!existsSync(abs)) continue;
+    const out = runGate({ tool: "Write", args: { file_path: abs, content: readFileSync(abs, "utf8") } });
+    if (out.decision === "block") {
+      return { blocked: true, rejection: `gate: ${out.structured_rejection.kind} at ${rel}:${out.structured_rejection.line} — ${out.reason}` };
+    }
+  }
+  return { blocked: false };
+}
 
 export type ImplementCliResult = { ok: boolean; text: string };
 
@@ -174,33 +214,11 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
     return packageRel && pkgDir.endsWith(packageRel) ? pkgDir.slice(0, pkgDir.length - packageRel.length - 1) : pkgDir;
   };
 
-  // The PreToolUse gate over the engineer's actual worktree edits (the real
-  // enforcement boundary, RFC §4.6). The headless engineer's file writes do NOT
-  // pass through the interactive Claude Code hook, so the short cycle gates the
-  // engineer's draft here: every changed .ts file is run through the 10
-  // mechanical checks; a block re-drafts WITHOUT spawning the verifier (§6.2).
+  // The headless engineer is gated POST-HOC, in-process, over its worktree diff
+  // (NOT via the interactive Claude Code PreToolUse hook — see gateWorktreeEdits).
   const gate = (_engineer: SpawnOutcome): GateResult => {
     const worktreeRoot = activeWorktreeRoot();
-    if (!worktreeRoot) return { blocked: false };
-    let changed: string[];
-    try {
-      changed = execFileSync("git", ["-C", worktreeRoot, "status", "--porcelain"], { encoding: "utf8" })
-        .split("\n")
-        .filter((l) => l.trim().length > 0)
-        .map((l) => l.slice(3).trim())
-        .filter((f) => /\.(ts|tsx)$/.test(f) && !f.endsWith(".d.ts"));
-    } catch {
-      return { blocked: false };
-    }
-    for (const rel of changed) {
-      const abs = join(worktreeRoot, rel);
-      if (!existsSync(abs)) continue;
-      const out = runGate({ tool: "Write", args: { file_path: abs, content: readFileSync(abs, "utf8") } });
-      if (out.decision === "block") {
-        return { blocked: true, rejection: `gate: ${out.structured_rejection.kind} at ${rel}:${out.structured_rejection.line} — ${out.reason}` };
-      }
-    }
-    return { blocked: false };
+    return worktreeRoot ? gateWorktreeEdits(worktreeRoot) : { blocked: false };
   };
 
   const taskRunner: TaskRunner = async (call) => {

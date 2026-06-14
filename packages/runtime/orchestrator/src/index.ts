@@ -27,3 +27,6 @@ export * from "./beadDelta.js";
 export * from "./activeRun.js";
 export * from "./summary.js";
 export * from "./stateMachine.js";
+// The short-cycle gate contract, re-exported so the MCP write surface can type
+// its forwarded `gate` without a direct short-cycle dependency.
+export type { GateResult } from "@dusk/runtime-short-cycle";
