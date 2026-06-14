@@ -948,7 +948,7 @@ Two sprints. Sprint 9 instruments and benchmarks. Sprint 10 dogfoods on real cod
 - A fresh standalone repository (its own git history, purely Dusk-authored and independently auditable — not a monorepo package), `dusk init` from zero.
 - A minimal **notifications API** on Dusk's own stack (TS strict ESM, Express + tRPC, Drizzle + Postgres, Vitest) — deliberately the canonical-intents / App. B domain so the Author's Stage-2/3 machinery operates on familiar ground: 4–6 endpoints, a cursor-paginated list, an idempotent write under a `compose: implies` intent, structured-logging + error-handling cross-cutting intents, full pyramid with integration + e2e children.
 - A **trailer-audit script** (zero-model pass over `git log`) proving every application-source commit carries the full v9 trailer set — the mechanical form of the zero-hand-written-code constraint.
-- A **`PocReport`** (the `DogfoodReport` shape reused) separating hard gates from exploratory greenfield-friction data (dialog turn counts, Stage-3 acceptance rates, intent-granularity stats, time-to-endpoint) that seeds the v1.x backlog.
+- A **`PocReport`** (a new sibling schema modeled on `DogfoodReport`'s gating/exploratory two-section pattern — not a literal reuse; the dogfood gating section is locked to its own four thresholds) separating hard gates from exploratory greenfield-friction data (dialog turn counts, Stage-3 acceptance rates, intent-granularity stats, time-to-endpoint) that seeds the v1.x backlog.
 
 **Human-input whitelist (the constraint's boundary):** authoring-dialog responses, `dusk_implement` requests, `dusk_resolve_livelock` / recovery resolutions, commit review/merge approval. Nothing else.
 
