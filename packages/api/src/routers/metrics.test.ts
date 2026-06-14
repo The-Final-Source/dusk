@@ -133,11 +133,15 @@ describe("resolveArtifact — no disk writes", () => {
   // @intent-support api/metrics/unit-tests [covers-no-disk-writes] ["the unit test" "asserts" "that the artifact resolver leaves the artifact directory unchanged when reading a present artifact"]
   it("does not write any file to disk when the artifact is present", () => {
     tmp = mkdtempSync(join(tmpdir(), "dusk-metrics-"));
-    mkdirSync(join(tmp, "packages/api/.ia/artifacts"), { recursive: true });
-    writeFileSync(join(tmp, "packages/api/.ia/artifacts/dogfood-report.json"), JSON.stringify(VALID_DOGFOOD), "utf8");
-    const before = readdirSync(join(tmp, "packages/api/.ia/artifacts")).length;
-    resolveArtifact("packages/api", "dogfood-report", tmp);
-    expect(readdirSync(join(tmp, "packages/api/.ia/artifacts"))).toHaveLength(before);
+    // The real layout (core-schema iaPaths SSoT) — write where the resolver reads,
+    // so this genuinely exercises the PRESENT branch's no-write behavior.
+    const dir = join(tmp, "packages/api/.ia/observability/dogfood");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "dogfood-report.json"), JSON.stringify(VALID_DOGFOOD), "utf8");
+    const before = readdirSync(dir).length;
+    const result = resolveArtifact("packages/api", "dogfood-report", tmp);
+    expect(result.present).toBe(true);
+    expect(readdirSync(dir)).toHaveLength(before);
   });
 });
 

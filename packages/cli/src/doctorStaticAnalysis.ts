@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
 
 import { parseDecorations } from "@dusk/core-decoration";
 import { loadIntentTree } from "@dusk/core-graph";
@@ -9,7 +9,7 @@ import {
   conflictsCoDecoration,
   type StaticAnalysisMode,
 } from "@dusk/core-index";
-import { DuskConfigSchema, StaticAnalysisReportSchema, intentsDir, type StaticAnalysisReport, type StaticFinding } from "@dusk/core-schema";
+import { DuskConfigSchema, StaticAnalysisReportSchema, intentsDir, staticAnalysisReportPath, type StaticAnalysisReport, type StaticFinding } from "@dusk/core-schema";
 import { parse as parseYaml } from "yaml";
 
 /**
@@ -83,9 +83,9 @@ export function runStaticAnalysis(
     density_baseline,
   });
 
-  const outDir = join(rootDir, ".ia/observability");
-  mkdirSync(outDir, { recursive: true });
-  writeFileSync(join(outDir, "static-analysis-report.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  const reportPath = staticAnalysisReportPath(rootDir);
+  mkdirSync(dirname(reportPath), { recursive: true });
+  writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
   const counts = new Map<string, number>();
   for (const f of allFindings) counts.set(f.class, (counts.get(f.class) ?? 0) + 1);

@@ -1,8 +1,15 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
-import type { BenchmarkReport, DuskError } from "@dusk/core-schema";
+import {
+  auditReportPath,
+  benchmarkReportPath,
+  benchmarkRunDir,
+  dogfoodReportPath,
+  type BenchmarkReport,
+  type DuskError,
+} from "@dusk/core-schema";
 import { claudeCodeModelClient, type ModelClient } from "@dusk/runtime-verifier";
 import {
   assembleBenchmarkReport,
@@ -82,9 +89,9 @@ export async function runBenchmarkCli(root: string, args: string[], deps: Benchm
     const result = evaluateDogfood({ root, clock });
     if (!result.success) return { ok: false, text: errText("benchmark --evaluate-dogfood", result.error) };
     const report = result.value;
-    const outDir = join(root, ".ia/observability/dogfood");
-    mkdirSync(outDir, { recursive: true });
-    writeFileSync(join(outDir, "dogfood-report.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+    const reportPath = dogfoodReportPath(root);
+    mkdirSync(dirname(reportPath), { recursive: true });
+    writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
     const g = report.gating;
     const lines = [
       `dogfood ${report.package} — day ${report.window.days} of the window`,
@@ -127,9 +134,9 @@ export async function runBenchmarkCli(root: string, args: string[], deps: Benchm
       const result = await runFreshnessAudit({ thresholdsPath: deps.thresholdsPath, root: deps.fixtureRoot, call, clock });
       if (!result.success) return { ok: false, text: errText("benchmark --audit-verifier-freshness", result.error) };
       const report = result.value;
-      const outDir = join(root, ".ia/observability/benchmark-runs", report.run_id);
-      mkdirSync(outDir, { recursive: true });
-      writeFileSync(join(outDir, "audit-report.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+      const reportPath = auditReportPath(root, report.run_id);
+      mkdirSync(dirname(reportPath), { recursive: true });
+      writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
       const s = report.curated.scores;
       const lines = [
         `audit ${report.run_id} — N=${report.n_per_fixture} over ${report.curated.fixtures.length} known-bad fixtures`,
@@ -147,7 +154,7 @@ export async function runBenchmarkCli(root: string, args: string[], deps: Benchm
   // Default: the per-model sweep + report post-passes.
   const models = (flagValue(args, "--models") ?? "claude-sonnet-4-6").split(",").map((m) => m.trim()).filter(Boolean);
   const runId = `bench_${new Date(clock.now()).toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}`;
-  const outDir = join(root, ".ia/observability/benchmark-runs", runId);
+  const outDir = benchmarkRunDir(root, runId);
   const workDir = mkdtempSync(join(tmpdir(), "dusk-bench-"));
   try {
     const sweepModels: SweepModel[] =
@@ -155,7 +162,7 @@ export async function runBenchmarkCli(root: string, args: string[], deps: Benchm
     const sweep = await runBenchmarkSweep({ root: deps.fixtureRoot, outDir, models: sweepModels, gate: realGateLeg, staticAnalyzer: realStaticAnalyzerLeg, clock });
     if (!sweep.success) return { ok: false, text: errText("benchmark", sweep.error) };
     const report = assembleBenchmarkReport({ runId, records: sweep.value.records, models: sweepModels.map((m) => m.name), clock });
-    writeFileSync(join(outDir, "benchmark-report.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+    writeFileSync(benchmarkReportPath(root, runId), `${JSON.stringify(report, null, 2)}\n`, "utf8");
     return { ok: true, text: renderBenchmarkSummary(report) };
   } finally {
     rmSync(workDir, { recursive: true, force: true });

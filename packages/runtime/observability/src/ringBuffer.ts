@@ -1,7 +1,7 @@
 import { appendFileSync, closeSync, existsSync, fstatSync, mkdirSync, openSync, readSync, renameSync, statSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 
-import { DEFAULT_TRACE_RING_BYTES, type SubAgentTrace } from "@dusk/core-schema";
+import { DEFAULT_TRACE_RING_BYTES, rotatedTracePath, tracePath, type SubAgentTrace } from "@dusk/core-schema";
 
 /**
  * `traces.jsonl` ring buffer — Phase 5 design D3. The trace file rotates when it
@@ -9,17 +9,13 @@ import { DEFAULT_TRACE_RING_BYTES, type SubAgentTrace } from "@dusk/core-schema"
  * prior generation kept; rename, NEVER truncate-in-place) and a fresh file
  * starts. POSIX rename semantics keep an open read handle on the renamed file
  * valid, so an in-flight audit/benchmark reader's window survives rotation.
+ *
+ * The path layout is the SSoT in `@dusk/core-schema` (iaPaths) so the readers
+ * (MCP, benchmark) resolve the same file this writer rotates; re-exported here
+ * for existing call sites.
  */
 
-export { DEFAULT_TRACE_RING_BYTES };
-
-export function tracePath(rootDir: string): string {
-  return join(rootDir, ".ia/observability/traces.jsonl");
-}
-
-export function rotatedTracePath(rootDir: string): string {
-  return join(rootDir, ".ia/observability/traces.1.jsonl");
-}
+export { DEFAULT_TRACE_RING_BYTES, rotatedTracePath, tracePath };
 
 /**
  * Append one trace event, rotating when the file exceeds the ring ceiling.

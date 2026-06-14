@@ -24,3 +24,4 @@ export * from "./auditReport.js";
 export * from "./benchmarkReport.js";
 export * from "./dogfoodReport.js";
 export * from "./staticAnalysisReport.js";
+export * from "./iaPaths.js";

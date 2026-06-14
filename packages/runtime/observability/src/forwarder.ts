@@ -1,9 +1,12 @@
 import { closeSync, existsSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 
-import type { MirrorConfig } from "@dusk/core-schema";
+import { traceCursorPath, type MirrorConfig } from "@dusk/core-schema";
 
 import { rotatedTracePath, tracePath } from "./ringBuffer.js";
+
+/** Cursor-file path for a sink — the layout SSoT lives in `@dusk/core-schema`. */
+export const cursorPath = traceCursorPath;
 
 /**
  * Out-of-band mirror forwarders — Phase 5 design D4 (P5-T12). Forwarders TAIL
@@ -30,10 +33,6 @@ type Cursor = {
   /** Inode of the generation the offset refers to — rename-based rotation detection. */
   ino?: number;
 };
-
-export function cursorPath(rootDir: string, sinkName: string): string {
-  return join(rootDir, `.ia/observability/.cursor-${sinkName}`);
-}
 
 function readCursor(rootDir: string, sinkName: string): Cursor {
   const path = cursorPath(rootDir, sinkName);
