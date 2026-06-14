@@ -446,3 +446,78 @@ describe("entry modes (4.1 surface behavior at the runtime layer)", () => {
     repo.cleanup();
   });
 });
+
+describe("3.x — Stage-4 set-mutation: a revision that REMOVES drafts is honored at finalize (arch-board A4)", () => {
+  test("removedDraftIds drops a drafted child + cascades to its pyramid children; finalize does NOT write them", async () => {
+    const repo = createTempRepo({ git: false });
+    // Draft the impl + a second conditional intent WITH its own pyramid child, then
+    // a Stage-4 revision drops the conditional intent by id.
+    const conditional: DraftIntent = {
+      id: "api/pagination/cursor-only/cursor-decode",
+      description: "Cursor decoding parses an opaque token back to typed state.",
+      obligation: "must",
+      triples: [{ id: "parse", subject: "the cursor decode function", predicate: "parse", object: "an opaque token to typed state", polarity: "positive" }],
+    };
+    const conditionalChild: DraftIntent = {
+      id: "api/pagination/cursor-only/cursor-decode/unit-tests",
+      description: "Unit tests cover cursor decode.",
+      obligation: "must",
+      triples: [{ id: "covers", subject: "the unit test", predicate: "cover", object: "decode round-trip", polarity: "positive" }],
+    };
+    const script: ScriptedAuthorResponse[] = [
+      ...FULL_SCRIPT,
+      // Stage-4 revision: emit the conditional + its child first…
+      { expectStage: 4, question: "Added a decode intent + its unit child.", drafts: [conditional, conditionalChild] },
+      // …then a later revision DROPS the decode intent by id (cascades to the child).
+      { expectStage: 4, question: "Dropped the decode intent.", removedDraftIds: [conditional.id!] },
+    ];
+    const { runtime, id } = await driveToFinalizeReady(repo, script);
+
+    // First revision adds decode + child.
+    const added = await runtime.continue({ dialog_id: id, response: "add a decode intent", payload: { kind: "revise_draft" } });
+    expect(added.success).toBe(true);
+    // Second revision removes decode (and its child by cascade).
+    const removed = await runtime.continue({ dialog_id: id, response: "drop the decode intent", payload: { kind: "revise_draft" } });
+    expect(removed.success).toBe(true);
+    const confirmed = await runtime.continue({ dialog_id: id, response: "confirm" });
+    expect(confirmed.success).toBe(true);
+
+    const finalized = await runtime.finalize({ dialog_id: id });
+    expect(finalized.success).toBe(true);
+    if (!finalized.success) return;
+    // The dropped intent + its cascaded child are absent; impl + its picked children remain.
+    expect(finalized.value.intents_created).not.toContain(conditional.id);
+    expect(finalized.value.intents_created).not.toContain(conditionalChild.id);
+    expect(finalized.value.intents_created).toContain("api/pagination/cursor-only/cursor-encode");
+    expect(repo.exists(`.ia/intents/${conditional.id}/intent.yaml`)).toBe(false);
+    repo.cleanup();
+  });
+
+  test("a pyramid RE-PICK to fewer layers removes de-selected children and never duplicates a retained one", async () => {
+    const repo = createTempRepo({ git: false });
+    const runtime = makeRuntime(repo, FULL_SCRIPT);
+    const started = await runtime.start({ request: "add cursor encoding for paginated lists" });
+    if (!started.success) throw new Error("start failed");
+    const id = started.value.dialog_id;
+    await runtime.continue({ dialog_id: id, response: "yes that framing is correct" });
+    await runtime.continue({
+      dialog_id: id,
+      response: "extend the parent",
+      payload: { resolutions: [{ target: "api/pagination/cursor-only", resolution: "extend the parent" }] },
+    });
+    await runtime.continue({ dialog_id: id, response: "accept" });
+    // Pick two layers, then RE-PICK keeping only unit-tests.
+    await runtime.continue({ dialog_id: id, response: "unit + integration", payload: { layers: ["unit-tests", "integration-tests"] } });
+    await runtime.continue({ dialog_id: id, response: "actually just unit", payload: { layers: ["unit-tests"] } });
+    const confirmed = await runtime.continue({ dialog_id: id, response: "confirm" });
+    expect(confirmed.success).toBe(true);
+
+    const finalized = await runtime.finalize({ dialog_id: id });
+    expect(finalized.success).toBe(true);
+    if (!finalized.success) return;
+    const children = finalized.value.intents_created.filter((p) => p.startsWith("api/pagination/cursor-only/cursor-encode/"));
+    // Exactly one child, unit-tests; integration-tests de-selected; no duplicate.
+    expect(children).toEqual(["api/pagination/cursor-only/cursor-encode/unit-tests"]);
+    repo.cleanup();
+  });
+});
