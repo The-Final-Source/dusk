@@ -1,0 +1,29 @@
+schema_version: 2
+id: api/metrics/static-analysis-report
+description: The static-analysis-report query procedure reads the
+  static-analysis artifact through the artifact resolver, validates the payload
+  against the @dusk/core-schema static-analysis Zod schema, and returns a
+  presence envelope. Schema validation failures return an error envelope rather
+  than throwing.
+obligation: must
+compose: all
+triples:
+  - id: no-throw-on-failure
+    subject: the static-analysis report procedure
+    predicate: throw
+    object: a TRPCError or any uncaught error on schema validation failure
+    polarity: negative
+  - id: read-via-resolver
+    subject: the static-analysis report procedure
+    predicate: read
+    object: the static-analysis artifact through the artifact resolver
+  - id: validate-schema
+    subject: the static-analysis report procedure
+    predicate: validate
+    object: the raw payload against the @dusk/core-schema static-analysis Zod schema
+      before returning it
+relates_to:
+  - kind: sibling
+    target: api/metrics/dogfood-report
+  - kind: implies
+    target: api/metrics/artifact-resolution

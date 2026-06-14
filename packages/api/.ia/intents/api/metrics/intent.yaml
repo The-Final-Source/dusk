@@ -1,0 +1,27 @@
+schema_version: 2
+id: api/metrics
+description: The metrics router is the read-only tRPC surface that delivers
+  Dusk's own measurement artifacts. It exposes only query procedures, requires a
+  packageName parameter on every call, and guarantees a typed presence envelope
+  on every response.
+obligation: must
+compose: all
+triples:
+  - id: expose-queries
+    subject: the metrics router
+    predicate: expose
+    object: query procedures for the dogfood and static-analysis report artifacts
+  - id: no-mutations
+    subject: the metrics router
+    predicate: expose
+    object: mutations or subscriptions
+    polarity: negative
+  - id: package-name-param
+    subject: all metrics query procedures
+    predicate: accept
+    object: a packageName string parameter validated by Zod
+  - id: presence-envelope
+    subject: all metrics query procedures
+    predicate: return
+    object: "{ present: false, data: null } when the artifact is absent, or {
+      present: true, data: <validated payload> } when it is present"

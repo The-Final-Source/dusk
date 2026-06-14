@@ -1,0 +1,48 @@
+schema_version: 2
+id: api/metrics/unit-tests
+description: Unit tests for the api/metrics surface covering the parent router
+  contract, the artifact resolver, and both report procedures under mock-first
+  isolation. A stub resolver is injected; Zod schemas are stubbed to return pass
+  or fail paths. No real file I/O and no real tRPC server.
+obligation: must
+compose: all
+triples:
+  - id: covers-absent-sentinel
+    subject: the unit test
+    predicate: verifies
+    object: "that the artifact resolver returns { present: false } without throwing
+      when the artifact file is absent"
+  - id: covers-construct-path
+    subject: the unit test
+    predicate: verifies
+    object: that the artifact resolver constructs the correct file path from a
+      package name and artifact type
+  - id: covers-expose-queries
+    subject: the unit test
+    predicate: verifies
+    object: that the metrics router exposes query procedures for the dogfood and
+      static-analysis report artifacts
+  - id: covers-no-disk-writes
+    subject: the unit test
+    predicate: verifies
+    object: that the artifact resolver does not write any file to disk
+  - id: covers-no-mutations
+    subject: the unit test
+    predicate: verifies
+    object: that the metrics router does not expose mutations or subscriptions
+  - id: covers-no-throw-on-failure
+    subject: the unit test
+    predicate: verifies
+    object: that each report procedure does not throw on schema validation failure
+      but returns an error envelope instead
+  - id: covers-presence-envelope
+    subject: the unit test
+    predicate: verifies
+    object: "that each procedure returns { present: false, data: null } on artifact
+      absence and { present: true, data: <validated payload> } on artifact
+      presence"
+  - id: covers-validate-schema
+    subject: the unit test
+    predicate: verifies
+    object: that each report procedure validates the raw payload against its
+      @dusk/core-schema Zod schema before returning
