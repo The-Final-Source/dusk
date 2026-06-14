@@ -111,6 +111,12 @@ describe("resolveArtifact — path construction", () => {
       expect((result.raw as DogfoodReport).schema_version).toBe(1);
     }
   });
+
+  // @intent-support api/metrics/unit-tests [covers-construct-path] ["the unit test" "asserts" "that an artifact type with no registered iaPaths helper throws instead of inventing a path"]
+  it("throws on an unregistered artifact type rather than inventing a path (fail loud, no silent drift)", () => {
+    tmp = mkdtempSync(join(tmpdir(), "dusk-metrics-"));
+    expect(() => resolveArtifact("packages/api", "not-a-real-artifact", tmp)).toThrow(/unknown artifact type/);
+  });
 });
 
 // @intent-support api/metrics/unit-tests [covers-no-disk-writes] ["the unit test" "verifies" "that the artifact resolver does not write any file to disk"]

@@ -72,7 +72,7 @@ export function evaluateDogfood(opts: { root: string; clock: Clock }): RuntimeRe
   const started = events.find((e) => e.kind === "window_started");
   if (!started || started.kind !== "window_started") {
     return err(
-      duskError("config_invalid", "no dogfood window has been started (no window_started event in .ia/observability/dogfood/)", {
+      duskError("config_invalid", `no dogfood window has been started (no window_started event in ${dogfoodDir(opts.root)})`, {
         recoverable: true,
         recovery_hint: "append a window_started event when the first decorated commit lands",
       }),

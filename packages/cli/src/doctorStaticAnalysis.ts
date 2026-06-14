@@ -99,7 +99,7 @@ export function runStaticAnalysis(
       ? ["  findings: none"]
       : [...counts.entries()].map(([cls, n]) => `  ${cls}: ${n}`)),
     ...allFindings.slice(0, 50).map((f) => `    ${f.file}:${f.line}  [${f.class}] ${f.suggestion}`),
-    `  report: .ia/observability/static-analysis-report.json`,
+    `  report: ${relative(rootDir, staticAnalysisReportPath(rootDir))}`,
   ];
   return { ok: true, text: `${lines.join("\n")}\n`, report };
 }
