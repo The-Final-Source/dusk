@@ -1,6 +1,7 @@
 import { createAuthorRuntime, makeModelAuthorGenerator, type AuthorRuntime } from "@dusk/runtime-author";
 import { readRuntimeEnv, spawnSubAgent, type TaskRunner } from "@dusk/runtime-orchestrator";
 import { claudeCodeAvailable, claudeCodeModelClient } from "@dusk/runtime-verifier";
+import { withTransportRetry } from "@dusk/runtime-benchmark";
 
 /**
  * `dusk author` (Phase-4 CLI surface) — the direct-invocation mirror of the
@@ -30,9 +31,15 @@ export type AuthorCliOptions = {
 };
 
 export function buildAmbientRuntime(root: string, clock: { now: () => number }): AuthorRuntime {
-  const modelClient = claudeCodeModelClient({ model: "claude-sonnet-4-6" });
+  // maxTurns 8: the Author's large multi-skill prompt can burn the default 3-turn
+  // budget on denied Read/Grep tool attempts before emitting its framing JSON
+  // (surfacing as error_max_turns). The extra headroom lets it recover in-budget.
+  const modelClient = claudeCodeModelClient({ model: "claude-sonnet-4-6", maxTurns: 8 });
   const taskRunner: TaskRunner = async (call) => {
-    const completion = await modelClient.complete({ system: call.prompt, user: "Proceed.", temperature: 0 });
+    // Mirror the implement pipeline: a transport blip (CLI timeout / non-zero
+    // exit, incl. a transient error_max_turns) is null observation, not content —
+    // retry it once rather than failing the whole dialog turn.
+    const completion = await withTransportRetry(() => modelClient.complete({ system: call.prompt, user: "Proceed.", temperature: 0 }));
     return { output: completion.text, model: "claude-sonnet-4-6", promptTokens: completion.usage.promptTokens, completionTokens: completion.usage.completionTokens, costUsd: completion.usage.costUsd ?? 0, latencyMs: 0 };
   };
   const sessionId = `cli_author_${clock.now()}`;

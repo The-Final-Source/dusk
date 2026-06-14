@@ -84,6 +84,10 @@ export type ClaudeCodeClientOptions = {
   /** The `claude` CLI binary (default: resolved from PATH). */
   cliPath?: string;
   timeoutMs?: number;
+  /** `--max-turns` ceiling. Default 3 (the Verifier emits one JSON turn; a stray
+   *  denied tool attempt recovers within the budget). The Author's larger prompt
+   *  can burn turns on denied Read/Grep attempts, so it raises this. */
+  maxTurns?: number;
   now?: () => number;
 };
 
@@ -131,13 +135,16 @@ export function claudeCodeModelClient(opts: ClaudeCodeClientOptions = {}): Model
   const model = opts.model ?? "claude-sonnet-4-6";
   const cli = opts.cliPath ?? "claude";
   const timeoutMs = opts.timeoutMs ?? 120_000;
+  const maxTurns = opts.maxTurns ?? 3;
   const now = opts.now ?? (() => Date.now());
   return {
     async complete({ system, user }) {
       const start = now();
-      // --max-turns 3: a stray tool ATTEMPT (denied below) must not hard-fail
-      // the call with error_max_turns — the model recovers and answers in text.
-      const args = ["--print", "--output-format", "json", "--model", model, "--max-turns", "3"];
+      // --max-turns: a stray tool ATTEMPT (denied below) must not hard-fail the
+      // call with error_max_turns — the model recovers and answers in text within
+      // the budget. The default (3) suits the Verifier's single JSON turn; callers
+      // with larger prompts (the Author) raise it for more recovery headroom.
+      const args = ["--print", "--output-format", "json", "--model", model, "--max-turns", String(maxTurns)];
       const noTools = "You have NO tools available in this context. Never attempt a tool call; reply directly with the requested output only.";
       args.push("--system-prompt", system ? `${system}\n\n${noTools}` : noTools);
       args.push("--disallowed-tools", ...DISABLED_TOOLS); // variadic — keep last

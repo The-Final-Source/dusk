@@ -102,20 +102,30 @@ export function makeModelAuthorGenerator(deps: ModelGeneratorDeps): AuthorGenera
       ids: { dialogId: ctx.state.dialog_id },
     });
 
-    const spawned = await deps.spawn({
-      role: "author",
-      sessionId: deps.sessionId,
-      dialogId: ctx.state.dialog_id,
-      input,
-      invocationSite: "author",
-    });
-    if (!spawned.success) return spawned.error;
-
-    const parsed = extractJson(spawned.value.output ?? "");
+    // The model occasionally answers (esp. Stage-1 framing) in prose instead of
+    // the required JSON object — a transient instruction-following miss, not
+    // content evidence. Retry once before surfacing the error, mirroring the
+    // verifier's "a non-JSON model response is recoverable noise" one-retry in
+    // the implement pipeline. (Transport blips are retried a level down.)
+    let parsed: Record<string, unknown> | null = null;
+    let lastOutput = "";
+    for (let attempt = 0; attempt < 2 && parsed === null; attempt += 1) {
+      const spawned = await deps.spawn({
+        role: "author",
+        sessionId: deps.sessionId,
+        dialogId: ctx.state.dialog_id,
+        input,
+        invocationSite: "author",
+      });
+      if (!spawned.success) return spawned.error;
+      lastOutput = spawned.value.output ?? "";
+      const candidate = extractJson(lastOutput);
+      if (candidate && typeof candidate.question === "string") parsed = candidate;
+    }
     if (!parsed || typeof parsed.question !== "string") {
       return duskError("internal_error", "the Author model returned no parseable generation JSON", {
         recoverable: true,
-        details: { stage: ctx.stage, output_head: (spawned.value.output ?? "").slice(0, 200) },
+        details: { stage: ctx.stage, output_head: lastOutput.slice(0, 200) },
       });
     }
 
