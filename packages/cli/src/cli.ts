@@ -11,6 +11,7 @@ import { BENCHMARK_HELP, runBenchmarkCli } from "./benchmark.js";
 import { runStaticAnalysis } from "./doctorStaticAnalysis.js";
 import { runImplementCli } from "./implement.js";
 import { AUTHOR_HELP, runAuthorCli } from "./author.js";
+import { MCP_HELP, runMcpServer } from "./mcp.js";
 import type { ConflictChoice } from "./settingsMerge.js";
 
 const HELP = `dusk — Intent Architecture CLI
@@ -24,6 +25,7 @@ Usage:
   dusk skills                 Introspect installed role-bound skills, grouped by role
   dusk implement <request>    Run the 9-step pipeline (mirror of dusk_implement); --resume <id> to continue
   dusk author <request>       Open an intent-authoring dialog (mirror of dusk_author_*); --continue / --finalize
+  dusk mcp                    Serve the dusk_* tools over stdio for an MCP host (Claude Code, etc.)
   dusk benchmark              Run the seeded-violations benchmark / fresh-Verifier audit / dogfood evaluation
   dusk doctor --check-hook    Verify the gate is installed (--repair to fix)
   dusk doctor --static-analysis [--strict-unknowns] [path]   Decoration-erosion (S ⊄ D) drift report
@@ -128,6 +130,11 @@ async function run(command: string | undefined, rest: string[]): Promise<number>
       const result = await runAuthorCli(root, rest);
       process.stdout.write(result.text);
       return result.ok ? 0 : 1;
+    }
+    case "mcp": {
+      if (wantsHelp(rest)) return process.stdout.write(MCP_HELP), 0;
+      // The stdio transport owns stdout (JSON-RPC); write nothing else there.
+      return await runMcpServer(root);
     }
     case "benchmark": {
       if (wantsHelp(rest)) return process.stdout.write(BENCHMARK_HELP), 0;

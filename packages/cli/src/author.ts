@@ -29,7 +29,7 @@ export type AuthorCliOptions = {
   clock?: { now: () => number };
 };
 
-function buildAmbientRuntime(root: string, clock: { now: () => number }): AuthorRuntime {
+export function buildAmbientRuntime(root: string, clock: { now: () => number }): AuthorRuntime {
   const modelClient = claudeCodeModelClient({ model: "claude-sonnet-4-6" });
   const taskRunner: TaskRunner = async (call) => {
     const completion = await modelClient.complete({ system: call.prompt, user: "Proceed.", temperature: 0 });
