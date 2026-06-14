@@ -1,8 +1,10 @@
 import { execFileSync, spawn as spawnChild } from "node:child_process";
-import { existsSync, readdirSync, symlinkSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, symlinkSync } from "node:fs";
 import { join, relative } from "node:path";
 
-import { duskError, verifierEvidenceMaxLines, type VerifierFactory } from "@dusk/core-schema";
+import { duskError, verifierEvidenceMaxLines, type SpawnOutcome, type VerifierFactory } from "@dusk/core-schema";
+import { runGate } from "@dusk/pre-tool-use";
+import type { GateResult } from "@dusk/runtime-short-cycle";
 import { loadProjectContext } from "@dusk/mcp-server";
 import {
   getActiveRun,
@@ -165,6 +167,42 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
     return existsSync(pkgDir) ? pkgDir : null;
   };
 
+  /** The active worktree's repo root (the package dir minus the package-relative suffix). */
+  const activeWorktreeRoot = (): string | null => {
+    const pkgDir = activeWorktreePackageDir();
+    if (!pkgDir) return null;
+    return packageRel && pkgDir.endsWith(packageRel) ? pkgDir.slice(0, pkgDir.length - packageRel.length - 1) : pkgDir;
+  };
+
+  // The PreToolUse gate over the engineer's actual worktree edits (the real
+  // enforcement boundary, RFC §4.6). The headless engineer's file writes do NOT
+  // pass through the interactive Claude Code hook, so the short cycle gates the
+  // engineer's draft here: every changed .ts file is run through the 10
+  // mechanical checks; a block re-drafts WITHOUT spawning the verifier (§6.2).
+  const gate = (_engineer: SpawnOutcome): GateResult => {
+    const worktreeRoot = activeWorktreeRoot();
+    if (!worktreeRoot) return { blocked: false };
+    let changed: string[];
+    try {
+      changed = execFileSync("git", ["-C", worktreeRoot, "status", "--porcelain"], { encoding: "utf8" })
+        .split("\n")
+        .filter((l) => l.trim().length > 0)
+        .map((l) => l.slice(3).trim())
+        .filter((f) => /\.(ts|tsx)$/.test(f) && !f.endsWith(".d.ts"));
+    } catch {
+      return { blocked: false };
+    }
+    for (const rel of changed) {
+      const abs = join(worktreeRoot, rel);
+      if (!existsSync(abs)) continue;
+      const out = runGate({ tool: "Write", args: { file_path: abs, content: readFileSync(abs, "utf8") } });
+      if (out.decision === "block") {
+        return { blocked: true, rejection: `gate: ${out.structured_rejection.kind} at ${rel}:${out.structured_rejection.line} — ${out.reason}` };
+      }
+    }
+    return { blocked: false };
+  };
+
   const taskRunner: TaskRunner = async (call) => {
     if (call.subagentType === "dusk-engineer") {
       // Phase-5 dogfood mode: the Engineer is a REAL file-writing headless agent
@@ -226,6 +264,7 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
     env: readRuntimeEnv(),
     taskRunner,
     verifierFactory,
+    gate,
     buildIndex: () => loadProjectContext(root).index,
     clock,
     config: baseCtx.config,

@@ -1,0 +1,10 @@
+schema_version: 2
+id: api/router-composition
+description: The root appRouter composes the feature routers into one typed tRPC surface.
+obligation: must
+compose: all
+triples:
+  - id: composes-feature-routers
+    subject: the root appRouter
+    predicate: composes
+    object: the feature routers into one typed tRPC surface

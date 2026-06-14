@@ -102,8 +102,9 @@ describe("resolveArtifact — path construction", () => {
   // @intent-support api/metrics/unit-tests [covers-construct-path] ["the unit test" "asserts" "that the artifact file is found when the path is constructed from packageName and artifactType"]
   it("constructs the correct artifact file path from packageName and artifactType", () => {
     tmp = mkdtempSync(join(tmpdir(), "dusk-metrics-"));
-    mkdirSync(join(tmp, "packages/api/.ia/artifacts"), { recursive: true });
-    writeFileSync(join(tmp, "packages/api/.ia/artifacts/dogfood-report.json"), JSON.stringify(VALID_DOGFOOD), "utf8");
+    // Real artifact location (operator wiring fix): .ia/observability/dogfood/.
+    mkdirSync(join(tmp, "packages/api/.ia/observability/dogfood"), { recursive: true });
+    writeFileSync(join(tmp, "packages/api/.ia/observability/dogfood/dogfood-report.json"), JSON.stringify(VALID_DOGFOOD), "utf8");
     const result = resolveArtifact("packages/api", "dogfood-report", tmp);
     expect(result.present).toBe(true);
     if (result.present) {
