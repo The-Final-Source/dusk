@@ -38,6 +38,22 @@ export type HookInput = {
   transcript_path?: string;
 };
 
+/**
+ * Claude Code's ACTUAL PreToolUse stdin payload. The keys it sends are
+ * `tool_name` / `tool_input` — NOT `tool` / `args`. The legacy `tool` / `args`
+ * aliases are accepted too (older callers / in-proc tests) so the gate tolerates
+ * either. `normalizeHookInput` maps this to the internal HookInput at the stdin
+ * boundary; runGate only ever sees the normalized shape.
+ */
+export type RawHookInput = {
+  tool_name?: string;
+  tool?: string;
+  tool_input?: HookInput["args"];
+  args?: HookInput["args"];
+  session_id?: string;
+  transcript_path?: string;
+};
+
 export type HookOutput =
   | { decision: "approve"; warnings?: GateWarning[] }
   | { decision: "block"; reason: string; structured_rejection: Rejection; warnings?: GateWarning[] };

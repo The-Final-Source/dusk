@@ -1,4 +1,4 @@
-import { runGate } from "./runGate.js";
+import { normalizeHookInput, runGate } from "./runGate.js";
 import type { HookOutput } from "./rejections.js";
 
 /**
@@ -17,7 +17,9 @@ process.stdin.on("data", (chunk) => {
 });
 process.stdin.on("end", () => {
   try {
-    const input = JSON.parse(raw);
+    // Claude Code sends `tool_name` / `tool_input`; normalize at the boundary
+    // before the (pure) gate reads `args.file_path`.
+    const input = normalizeHookInput(JSON.parse(raw));
     emit(runGate(input));
   } catch (error) {
     emit({
