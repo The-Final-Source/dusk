@@ -1,14 +1,17 @@
 import { spawnSync } from "node:child_process";
 
 /**
- * Drive the REAL PreToolUse hook process: spawn `node <binPath>`, pipe a HookInput
- * as JSON on stdin, and parse the structured HookOutput. This exercises the
- * actual out-of-process contract, not an in-proc shim.
+ * Drive the REAL PreToolUse hook process: spawn `node <binPath>`, pipe a payload
+ * as JSON on stdin, and parse any structured HookOutput. This exercises the
+ * actual out-of-process contract, not an in-proc shim. `input` is serialized
+ * verbatim, so callers can drive EITHER the Claude Code wire shape
+ * (`{ hook_event_name, tool_name, tool_input }`) or the internal `{ tool, args }`
+ * shape — the gate's `normalizeHookInput` accepts both.
  *
- * The hook puts the structured JSON on STDOUT for approve (exit 0) and on STDERR
- * for block (exit 2 — Claude Code only honors the block when stdout is empty),
- * so the result is parsed from stdout-or-stderr. `exitCode` IS the decision:
- * 0 = approve, 2 = block.
+ * In the PRODUCTION contract (no `--json`): approve → EMPTY stdout, exit 0;
+ * block → plain-text reason on stderr, empty stdout, exit 2. So `output` is
+ * populated only via `{ json: true }` (machine-readable mode); otherwise use
+ * `exitCode` (0 = approve, 2 = block) and `stderr` for the reason.
  */
 export type HookResult = {
   exitCode: number;

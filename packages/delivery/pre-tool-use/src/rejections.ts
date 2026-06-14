@@ -27,8 +27,16 @@ export type Rejection = {
 
 export type GateWarning = { kind: string; file: string; line: number; message: string };
 
+/**
+ * The tools the gate's matcher routes to it. `MultiEdit` matches the
+ * `Write|Edit|MultiEdit` matcher (it carries `edits[]` like Edit). `tool` is
+ * INFORMATIONAL only — `runGate` keys off `file_path`/`content`/`edits`, never
+ * the tool name.
+ */
+export type ToolName = "Write" | "Edit" | "MultiEdit";
+
 export type HookInput = {
-  tool: "Write" | "Edit";
+  tool?: ToolName;
   args: {
     file_path: string;
     content?: string;
@@ -37,6 +45,46 @@ export type HookInput = {
   session_id?: string;
   transcript_path?: string;
 };
+
+/**
+ * Normalize a raw PreToolUse payload into the internal `HookInput`. Claude Code
+ * sends `{ hook_event_name, tool_name, tool_input: { file_path, content?, edits? } }`;
+ * programmatic/test callers use the internal `{ tool, args }` shape. We accept
+ * BOTH (the `??` order prefers the internal shape, so existing callers are
+ * unchanged). If neither carries a `file_path`, the result has `file_path:
+ * undefined`; `isGatedFile` then returns false and `runGate` approves — safe
+ * because a real Write/Edit/MultiEdit ALWAYS carries `file_path`, so a missing
+ * one is not a gated code write. Genuinely broken input (unparseable JSON, a
+ * thrown error) fails SAFE to a block via the `cli.ts` catch — never a crash.
+ *
+ * This adapter is why the live hook works at all: before it, `cli.ts` fed the
+ * raw `{ tool_name, tool_input }` payload straight to `runGate`, which read
+ * `input.args.file_path` on an `undefined` `args` → TypeError → fail-safe block
+ * on EVERY real write (the gate fired into a crash).
+ */
+export function normalizeHookInput(raw: unknown): HookInput {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const tool = (r.tool ?? r.tool_name) as ToolName | undefined;
+  const ti = (r.args ?? r.tool_input ?? {}) as HookInput["args"];
+  return {
+    tool,
+    args: { file_path: ti.file_path, content: ti.content, edits: ti.edits },
+    session_id: r.session_id as string | undefined,
+    transcript_path: r.transcript_path as string | undefined,
+  };
+}
+
+/**
+ * The single definition of which files the gate enforces over — `.ts`/`.tsx`
+ * (excluding generated `.d.ts` declarations) and `.intent` files. The SSoT so
+ * the CLI gate (`runGate`) and the headless-engineer post-hoc gate (the
+ * `implement` git-status scan) can never disagree on WHICH files to check.
+ */
+export function isGatedFile(filePath: string): boolean {
+  if (!filePath) return false;
+  if (filePath.endsWith(".intent")) return true;
+  return /\.(ts|tsx)$/.test(filePath) && !filePath.endsWith(".d.ts");
+}
 
 export type HookOutput =
   | { decision: "approve"; warnings?: GateWarning[] }

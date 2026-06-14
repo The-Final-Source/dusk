@@ -2,13 +2,13 @@
   "hooks": {
     "PreToolUse": [
       {
-        "_dusk_managed": "v1",
+        "_dusk_managed": "v2",
         "_dusk_marker": "dusk-pre-tool-use-gate",
-        "matcher": "Write|Edit",
+        "matcher": "Write|Edit|MultiEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "node ../delivery/pre-tool-use/dist/cli.js"
+            "command": "node \"$CLAUDE_PROJECT_DIR/../delivery/pre-tool-use/dist/cli.js\""
           }
         ]
       }

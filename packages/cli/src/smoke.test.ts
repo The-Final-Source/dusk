@@ -53,9 +53,16 @@ describe("Phase 1 substrate — end-to-end smoke (phase-landing)", () => {
     // 3. validate all -> green.
     expect(validateIntents(repo.dir).ok).toBe(true);
 
-    const writeInput = (content: string) => ({ tool: "Write" as const, args: { file_path: join(repo.dir, "src/notify.ts"), content } });
+    // The REAL Claude Code wire payload — the smoke test exercises exactly what
+    // the live hook receives in production.
+    const writeInput = (content: string) => ({
+      hook_event_name: "PreToolUse" as const,
+      tool_name: "Write" as const,
+      tool_input: { file_path: join(repo.dir, "src/notify.ts"), content },
+    });
 
-    // 4. a fully-decorated write is approved by the REAL hook.
+    // 4. a fully-decorated write is approved by the REAL hook — production
+    // contract: exit 0 + EMPTY stdout (the allow IS the exit code).
     const clean = `// @intent notifications/send [persist-first]
 export function sendNotification() {
   // @intent-support notifications/send [persist-first] ["the row builder", "constructs", "the rows"]
@@ -64,7 +71,10 @@ export function sendNotification() {
   publish(rows);
 }
 `;
-    expect(invokeHook(GATE, writeInput(clean)).output).toMatchObject({ decision: "approve" });
+    const approvedHook = invokeHook(GATE, writeInput(clean));
+    expect(approvedHook.exitCode).toBe(0);
+    expect(approvedHook.stdout.trim()).toBe("");
+    expect(invokeHook(GATE, writeInput(clean), { json: true }).output).toMatchObject({ decision: "approve" });
 
     // 5. an undecorated statement is blocked with the typed rejection.
     const dirty = `// @intent notifications/send [persist-first]

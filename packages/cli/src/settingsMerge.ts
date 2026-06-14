@@ -1,5 +1,9 @@
 export const DUSK_MARKER = "dusk-pre-tool-use-gate";
-export const DUSK_MANAGED = "v1";
+// Bumped v1 → v2 when the entry shape changed to the Claude Code `{ matcher,
+// hooks }` schema. v1 was stamped on the OLD `{ match, type, command }` shape
+// (which Claude Code never fired), so checkHook gates on this version + the
+// firing-shape check to reject stale v1 installs instead of green-lighting them.
+export const DUSK_MANAGED = "v2";
 
 export type ConflictChoice = "append" | "replace" | "abort";
 /** Resolve a conflict with an existing non-Dusk Write/Edit hook. The real CLI prompts; tests inject. */
@@ -26,7 +30,9 @@ type HookEntry = Record<string, unknown> & {
  * the gate failed OPEN. Fixed to the real schema.)
  */
 function duskEntry(command: string): HookEntry {
-  return { _dusk_managed: DUSK_MANAGED, _dusk_marker: DUSK_MARKER, matcher: "Write|Edit", hooks: [{ type: "command", command }] };
+  // MultiEdit matches the matcher substring and writes code — it MUST be gated;
+  // listing it explicitly is honest about what the gate receives.
+  return { _dusk_managed: DUSK_MANAGED, _dusk_marker: DUSK_MARKER, matcher: "Write|Edit|MultiEdit", hooks: [{ type: "command", command }] };
 }
 
 /** The command of a hook entry, reading the Claude Code shape first, then the legacy flat shape. */
@@ -40,6 +46,19 @@ function matchesWriteEdit(entry: HookEntry): boolean {
   // Legacy shape: a flat command entry scoped to Write/Edit tools.
   const tools = entry.match?.tools ?? [];
   return entry.type === "command" && (tools.includes("Write") || tools.includes("Edit"));
+}
+
+/**
+ * Is this the exact entry shape Claude Code will FIRE — a top-level `matcher`
+ * regex hitting write/edit AND a `hooks[]` array carrying a command? This is the
+ * load-bearing check `checkHook` uses: `matchesWriteEdit` is NOT sufficient
+ * because it returns true for the legacy `{ match: { tools } }` shape that Claude
+ * Code silently never fired (the exact bug this guards against re-shipping).
+ */
+export function isClaudeCodeFiringShape(entry: HookEntry): boolean {
+  const matcherHits = typeof entry.matcher === "string" && /write|edit/i.test(entry.matcher);
+  const hasCommandHook = Array.isArray(entry.hooks) && entry.hooks.some((h) => h.type === "command" && typeof h.command === "string" && h.command.length > 0);
+  return matcherHits && hasCommandHook;
 }
 
 /**

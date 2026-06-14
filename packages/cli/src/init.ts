@@ -4,7 +4,12 @@ import { dirname, join } from "node:path";
 import { scaffoldProject } from "./scaffold.js";
 import { mergeHook, type ConflictResolver, type MergeAction } from "./settingsMerge.js";
 
-export const DEFAULT_HOOK_COMMAND = "node node_modules/@dusk/pre-tool-use/dist/cli.js";
+// `$CLAUDE_PROJECT_DIR` (not a bare relative path): Claude Code does NOT
+// guarantee the hook's cwd is the project root, so a relative command can
+// silently fail to resolve → the gate fails OPEN again. The documented
+// project-root placeholder is cwd-independent AND git-safe (no absolute machine
+// path baked into a committed settings.json). checkHook expands it against root.
+export const DEFAULT_HOOK_COMMAND = 'node "$CLAUDE_PROJECT_DIR/node_modules/@dusk/pre-tool-use/dist/cli.js"';
 
 export type InitOptions = { hookCommand?: string; conflictResolver?: ConflictResolver };
 export type InitResult = { action: MergeAction; settingsPath: string };

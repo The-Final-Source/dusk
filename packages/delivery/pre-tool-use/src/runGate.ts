@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 
 import { runChecks } from "./checks.js";
 import { loadProject } from "./loadProject.js";
-import type { HookInput, HookOutput } from "./rejections.js";
+import { isGatedFile, type HookInput, type HookOutput } from "./rejections.js";
 
 function resolveContent(input: HookInput): string {
   if (input.args.content !== undefined) return input.args.content;
@@ -16,12 +16,10 @@ function resolveContent(input: HookInput): string {
   return (input.args.edits ?? []).map((edit) => edit.new_string).join("\n");
 }
 
-const GATED_FILE = /\.(ts|tsx)$/;
-
 /** Run the 10 mechanical checks against the would-be content. Pure; safe to call in-process or from the CLI. */
 export function runGate(input: HookInput): HookOutput {
   const file = input.args.file_path;
-  if (!GATED_FILE.test(file) && !file.endsWith(".intent")) return { decision: "approve" };
+  if (!isGatedFile(file)) return { decision: "approve" };
   const project = loadProject(file);
   if (!project) return { decision: "approve" }; // not a Dusk project — do not gate
   const content = resolveContent(input);
