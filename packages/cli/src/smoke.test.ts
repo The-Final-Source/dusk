@@ -72,7 +72,11 @@ export function sendNotification() {
   const rows = build();
 }
 `;
-    const blocked = invokeHook(GATE, writeInput(dirty)).output as HookOutput;
+    // The production hook contract: a block exits 2 (the only signal Claude Code
+    // honors under every permission mode); --json exposes the structured kind.
+    const blockedHook = invokeHook(GATE, writeInput(dirty));
+    expect(blockedHook.exitCode).toBe(2);
+    const blocked = invokeHook(GATE, writeInput(dirty), { json: true }).output as HookOutput;
     expect(blocked.decision).toBe("block");
     if (blocked.decision === "block") expect(blocked.structured_rejection.kind).toBe("missing_statement_decorator");
 

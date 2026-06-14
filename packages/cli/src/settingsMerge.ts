@@ -8,13 +8,36 @@ export type ConflictResolver = (existingCommand: string) => ConflictChoice;
 export type MergeAction = "installed" | "idempotent" | "appended" | "replaced" | "aborted";
 export type MergeResult = { settings: Record<string, unknown>; action: MergeAction; backup?: Record<string, unknown> };
 
-type HookEntry = Record<string, unknown> & { type?: string; command?: string; match?: { tools?: string[] }; _dusk_marker?: string };
+type CommandHook = { type?: string; command?: string };
+type HookEntry = Record<string, unknown> & {
+  matcher?: string;
+  hooks?: CommandHook[];
+  _dusk_marker?: string;
+  // Legacy (pre-fix) shape, still recognized for conflict detection / migration.
+  type?: string;
+  command?: string;
+  match?: { tools?: string[] };
+};
 
+/**
+ * The Claude Code PreToolUse hook entry shape: `{ matcher: "<toolRegex>", hooks:
+ * [{ type: "command", command }] }`. (The earlier `{ match: { tools }, type,
+ * command }` shape was NOT recognized by Claude Code — the hook never fired, so
+ * the gate failed OPEN. Fixed to the real schema.)
+ */
 function duskEntry(command: string): HookEntry {
-  return { _dusk_managed: DUSK_MANAGED, _dusk_marker: DUSK_MARKER, match: { tools: ["Write", "Edit"] }, type: "command", command };
+  return { _dusk_managed: DUSK_MANAGED, _dusk_marker: DUSK_MARKER, matcher: "Write|Edit", hooks: [{ type: "command", command }] };
+}
+
+/** The command of a hook entry, reading the Claude Code shape first, then the legacy flat shape. */
+export function hookEntryCommand(entry: HookEntry): string {
+  return String(entry.hooks?.find((h) => h.type === "command")?.command ?? entry.command ?? "");
 }
 
 function matchesWriteEdit(entry: HookEntry): boolean {
+  // Claude Code shape: a `matcher` regex that hits Write or Edit.
+  if (typeof entry.matcher === "string" && /write|edit/i.test(entry.matcher)) return true;
+  // Legacy shape: a flat command entry scoped to Write/Edit tools.
   const tools = entry.match?.tools ?? [];
   return entry.type === "command" && (tools.includes("Write") || tools.includes("Edit"));
 }
@@ -39,11 +62,12 @@ export function mergeHook(settings: Record<string, unknown>, hookCommand: string
 
   const foreign = list.find((entry) => matchesWriteEdit(entry));
   if (foreign) {
-    const choice = resolver(typeof foreign.command === "string" ? foreign.command : "");
+    const foreignCommand = hookEntryCommand(foreign);
+    const choice = resolver(foreignCommand);
     if (choice === "abort") return { settings, action: "aborted" };
     if (choice === "replace") {
       const backup = JSON.parse(JSON.stringify(settings)) as Record<string, unknown>;
-      hooks.PreToolUse = [...list.filter((entry) => entry !== foreign), { ...duskEntry(hookCommand), _dusk_replaced: foreign.command }];
+      hooks.PreToolUse = [...list.filter((entry) => entry !== foreign), { ...duskEntry(hookCommand), _dusk_replaced: foreignCommand }];
       return { settings: next, action: "replaced", backup };
     }
     list.push(duskEntry(hookCommand));

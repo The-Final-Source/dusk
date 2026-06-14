@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { isAbsolute, join } from "node:path";
 
-import { DUSK_MARKER } from "./settingsMerge.js";
+import { DUSK_MARKER, hookEntryCommand } from "./settingsMerge.js";
 import { initProject } from "./init.js";
 
 export type CheckHookOptions = { repair?: boolean; hookCommand?: string };
@@ -31,13 +31,17 @@ export function checkHook(root: string, options: CheckHookOptions = {}): CheckHo
   const entry = list.find((e) => e?._dusk_marker === DUSK_MARKER);
   if (!entry) return configIssue("Dusk hook marker not found");
 
-  const command = String(entry.command ?? "");
-  const binPath = command.replace(/^node\s+/, "").trim();
+  // The hook command lives at entry.hooks[].command (Claude Code shape); the
+  // legacy flat entry.command is read as a fallback during migration.
+  const command = hookEntryCommand(entry as Record<string, unknown>);
+  const binPath = command.replace(/^node\s+/, "").replace(/^["']|["']$/g, "").trim();
   const resolved = isAbsolute(binPath) ? binPath : join(root, binPath);
   if (!existsSync(resolved)) return configIssue(`hook command path unresolvable: ${resolved}`);
 
+  // Round-trip the binary in --json mode so the structured decision is on stdout
+  // regardless of the approve/block stream contract.
   const synthetic = { tool: "Write", args: { file_path: join(root, "README.md"), content: "# round-trip" } };
-  const result = spawnSync(process.execPath, [resolved], { input: JSON.stringify(synthetic), encoding: "utf8" });
+  const result = spawnSync(process.execPath, [resolved, "--json"], { input: JSON.stringify(synthetic), encoding: "utf8" });
   try {
     const output = JSON.parse(result.stdout.trim()) as { decision?: string };
     if (output?.decision === "approve" || output?.decision === "block") {

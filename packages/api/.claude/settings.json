@@ -4,14 +4,13 @@
       {
         "_dusk_managed": "v1",
         "_dusk_marker": "dusk-pre-tool-use-gate",
-        "match": {
-          "tools": [
-            "Write",
-            "Edit"
-          ]
-        },
-        "type": "command",
-        "command": "node ../delivery/pre-tool-use/dist/cli.js"
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ../delivery/pre-tool-use/dist/cli.js"
+          }
+        ]
       }
     ]
   }
