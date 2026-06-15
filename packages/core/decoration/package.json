@@ -18,7 +18,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@dusk/core-schema": "workspace:*"
+    "@dusk/core-schema": "workspace:*",
+    "jsonc-parser": "^3.3.1"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

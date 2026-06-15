@@ -1,9 +1,9 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { parse as parseYaml } from "yaml";
 import { DuskConfigSchema, intentsDir, type DuskConfig } from "@dusk/core-schema";
-import { parseDecorations, type DecorationRecord } from "@dusk/core-decoration";
+import { loadIgnoreGlobs, scanDecorations as sharedScanDecorations, type DecorationRecord } from "@dusk/core-decoration";
 
 export function loadConfig(root: string): DuskConfig {
   const path = join(root, "dusk.config.yml");
@@ -19,22 +19,14 @@ export function intentsDirOf(root: string, config: DuskConfig): string {
   return join(root, intentsDir(config));
 }
 
-const SKIP_DIRS = new Set(["node_modules", "dist", ".git", ".ia", ".claude"]);
-
-/** Scan a project's TypeScript for decoration records (for inspect / doctor). */
+/**
+ * Scan a project's decorations (for inspect / doctor) via the single shared
+ * `.intent`-aware scanner (keystone, design D1) — so directory `.intent` and
+ * per-file sidecar records are visible here too, and the `decoration.ignore`
+ * SSoT replaces the former hardcoded `SKIP_DIRS` (board M2).
+ */
 export function scanDecorations(root: string): DecorationRecord[] {
-  const records: DecorationRecord[] = [];
-  const walk = (dir: string): void => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isDirectory()) {
-        if (!SKIP_DIRS.has(entry.name)) walk(join(dir, entry.name));
-      } else if (/\.(ts|tsx)$/.test(entry.name) && !entry.name.endsWith(".test.ts")) {
-        records.push(...parseDecorations(readFileSync(join(dir, entry.name), "utf8"), join(dir, entry.name)));
-      }
-    }
-  };
-  walk(root);
-  return records;
+  return sharedScanDecorations(root, { ignore: loadIgnoreGlobs(loadConfig(root)) });
 }
 
 /** Best-effort line of a field within a YAML file (for file:line reporting). */

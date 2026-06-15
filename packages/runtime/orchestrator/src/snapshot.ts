@@ -61,6 +61,11 @@ export function serializeIndex(index: DerivedIndex): string {
       scope: r.scope,
       declaration_name: r.declaration_name,
       support_triple: r.support_triple,
+      // D.28 additive fields: without these, two structurally-different indices
+      // (same lines, different anchors/verify) would hash identically and
+      // `index_snapshot_id` would lose determinism w.r.t. them.
+      anchor: r.anchor ?? null,
+      verify: r.verify ?? "semantic",
     }))
     .sort((a, b) =>
       a.file !== b.file
@@ -69,7 +74,9 @@ export function serializeIndex(index: DerivedIndex): string {
           ? a.line - b.line
           : a.marker !== b.marker
             ? a.marker.localeCompare(b.marker)
-            : a.intent_path.localeCompare(b.intent_path),
+            : a.intent_path !== b.intent_path
+              ? a.intent_path.localeCompare(b.intent_path)
+              : (a.anchor ?? "").localeCompare(b.anchor ?? ""),
     );
   const intents = [...index.intents.keys()].sort().map((id) => {
     const intent = index.intents.get(id)!;

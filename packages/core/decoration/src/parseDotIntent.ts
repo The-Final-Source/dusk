@@ -35,6 +35,8 @@ export function parseDotIntent(source: string, file: string): DotIntentParse {
       aspect_ids: aspectIds,
       support_triple: null,
       ignore_clause: null,
+      anchor: null,
+      verify: "semantic",
     });
   }
   return { records, errors };

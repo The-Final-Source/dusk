@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 
-import { parseDecorations } from "@dusk/core-decoration";
+import { createIgnoreMatcher, loadIgnoreGlobs, scanDecorations, type IgnoreMatcher } from "@dusk/core-decoration";
 import { loadIntentTree } from "@dusk/core-graph";
 import {
   analyzeStaticDecoration,
@@ -20,16 +20,20 @@ import { parse as parseYaml } from "yaml";
  * structured report. Zero-model.
  */
 
+// TypeScript-only file map for the S ⊆ D call-graph density (config has no call
+// graph — leave it TS-scoped, design D6). The former hardcoded `SKIP_DIRS` is
+// gone: pruning now consults the single `decoration.ignore` SSoT (board M2).
 const SOURCE_EXT = new Set([".ts", ".tsx"]);
-const SKIP_DIRS = new Set(["node_modules", ".git", ".ia", "dist", ".turbo", ".next", "build", "coverage"]);
 
-function collectSources(rootDir: string, scope?: string): Record<string, string> {
+function collectSources(rootDir: string, isIgnored: IgnoreMatcher, scope?: string): Record<string, string> {
   const files: Record<string, string> = {};
   const start = scope ? join(rootDir, scope) : rootDir;
   if (!existsSync(start)) return files;
   const walk = (dir: string): void => {
     for (const entry of readdirSync(dir)) {
       const full = join(dir, entry);
+      const rel = relative(rootDir, full);
+      if (isIgnored(rel)) continue;
       let stat;
       try {
         stat = statSync(full);
@@ -37,12 +41,12 @@ function collectSources(rootDir: string, scope?: string): Record<string, string>
         continue;
       }
       if (stat.isDirectory()) {
-        if (!SKIP_DIRS.has(entry)) walk(full);
+        walk(full);
         continue;
       }
       const dot = entry.lastIndexOf(".");
       if (dot === -1 || !SOURCE_EXT.has(entry.slice(dot)) || entry.endsWith(".d.ts")) continue;
-      files[relative(rootDir, full)] = readFileSync(full, "utf8");
+      files[rel] = readFileSync(full, "utf8");
     }
   };
   walk(start);
@@ -66,9 +70,13 @@ export function runStaticAnalysis(
     }
   }
 
-  const files = collectSources(rootDir, opts.scope);
+  const ignoreGlobs = loadIgnoreGlobs(config);
+  const isIgnored = createIgnoreMatcher(ignoreGlobs);
+  const files = collectSources(rootDir, isIgnored, opts.scope);
   const tree = loadIntentTree(join(rootDir, intentsDir(config)));
-  const records = Object.entries(files).flatMap(([file, source]) => parseDecorations(source, file));
+  // Index records come from the shared scanner so directory `.intent` and per-file
+  // sidecar records are visible to doctor too (keystone), not only the TS files.
+  const records = scanDecorations(rootDir, { ignore: ignoreGlobs });
   const index = buildDerivedIndex(records, tree.intents);
 
   const { findings, density_baseline } = analyzeStaticDecoration({ files, index, mode });

@@ -8,6 +8,7 @@ export * from "./intent.js";
 export * from "./migration.js";
 export * from "./load.js";
 export * from "./config.js";
+export * from "./decorationSidecar.js";
 export * from "./verdict.js";
 export * from "./duskError.js";
 export * from "./result.js";

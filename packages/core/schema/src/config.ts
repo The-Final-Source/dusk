@@ -22,6 +22,13 @@ export const DuskConfigSchema = z
       .partial()
       .optional(),
     verifier_evidence_max_lines: z.number().int().positive().optional(),
+    // D.28 (universal-decoration-coverage): the single ignore SSoT. Project
+    // additions merge with built-in defaults (see `loadIgnoreGlobs` in
+    // @dusk/core-decoration); replaces the three hardcoded `SKIP_DIRS`.
+    decoration: z
+      .object({ ignore: z.array(z.string().min(1)).default([]) })
+      .partial()
+      .optional(),
     // Phase 5 addition (additive; defaults preserve current behavior).
     observability: z
       .object({
