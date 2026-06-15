@@ -34,7 +34,12 @@ export function buildAmbientRuntime(root: string, clock: { now: () => number }):
   // maxTurns 8: the Author's large multi-skill prompt can burn the default 3-turn
   // budget on denied Read/Grep tool attempts before emitting its framing JSON
   // (surfacing as error_max_turns). The extra headroom lets it recover in-budget.
-  const modelClient = claudeCodeModelClient({ model: "claude-sonnet-4-6", maxTurns: 8 });
+  // timeoutMs 300s: Stage-4 drafting can emit a large generation (multiple intents
+  // + triples across an accepted practice decomposition) that exceeds the default
+  // 120s CLI wall-clock — twice, exhausting the transport retry. (The extra turn
+  // budget also consumes more wall-clock, so the two go together.) The Verifier
+  // keeps the 120s default; only this heavier Author path is widened.
+  const modelClient = claudeCodeModelClient({ model: "claude-sonnet-4-6", maxTurns: 8, timeoutMs: 300_000 });
   const taskRunner: TaskRunner = async (call) => {
     // Mirror the implement pipeline: a transport blip (CLI timeout / non-zero
     // exit, incl. a transient error_max_turns) is null observation, not content —
