@@ -379,7 +379,7 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
       let semantic = await verifyOnce();
       if (!semantic.success && semantic.error.kind === "verifier_model_call_failed") semantic = await verifyOnce();
       if (!semantic.success) return semantic.error;
-      return mergeStructuralSemantic(structural.value, semantic.value, new Set(structuralIds), new Set(semanticIds));
+      return mergeStructuralSemantic(structural.value, semantic.value, new Set(structuralIds), new Set(semanticIds), intent.compose);
     }
     let result = await verifyOnce();
     // A non-JSON model response is recoverable noise (one retry, like transport)

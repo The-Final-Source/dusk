@@ -1,6 +1,9 @@
 import type { DerivedIndex } from "@dusk/core-index";
 import { computeSidecarCoverage, parseFileIntentSidecar } from "@dusk/core-decoration";
-import { duskError, type Intent, type PerTripleVerdict, type RuntimeResult, type Verdict } from "@dusk/core-schema";
+import { duskError, type ComposeRule, type FocalVerdict, type Intent, type PerTripleVerdict, type RuntimeResult, type Verdict } from "@dusk/core-schema";
+
+import { aggregateDecision } from "./composeAgg.js";
+import { evaluateAntecedent, resolveUnit } from "./antecedent.js";
 
 /**
  * The structural (mechanical) Verifier — RFC App. D.29. A triple whose focal
@@ -78,6 +81,25 @@ export function structuralVerdict(intentPath: string, deps: StructuralDeps): Run
     return { success: false, error: duskError("intent_path_unresolved", `intent not found: ${intentPath}`, { recoverable: true }) };
   }
   const triples = intentTriples(intent);
+
+  // `compose: implies` — gate on the deterministic, zero-LLM antecedent exactly
+  // as the semantic procedure does (RFC App. D.18). An implication whose
+  // antecedent does not hold is a vacuous accept; the consequent is not demanded.
+  // Antecedent predicates read `semanticRecords` (antecedents are never
+  // structural), so this is correct on the structural channel too (D.31/G7).
+  let antecedentHeld: boolean | undefined;
+  if (intent.compose === "implies") {
+    const unit = resolveUnit(intentPath, deps.index);
+    if (!unit.success) return unit;
+    antecedentHeld = evaluateAntecedent(intent, unit.value, deps.index).held;
+    if (!antecedentHeld) {
+      return {
+        success: true,
+        value: { intent_path: intentPath, decision: "accept", implies_antecedent_held: false, per_triple: [], aggregate_rationale: "vacuous accept — antecedent does not hold (structural)" },
+      };
+    }
+  }
+
   const structuralIds = new Set(deps.index.structuralAspects(intentPath));
   // Gather focal claimants by MARKER, not by record `verify`: an inline claim on
   // a comment-bearing config file (e.g. vitest.config.ts) the author marked
@@ -104,6 +126,16 @@ export function structuralVerdict(intentPath: string, deps: StructuralDeps): Run
       polarity: t.polarity,
       evidence: { support_claims: [] },
     };
+    // Backstop (D.31/G1): the structural channel verifies PRESENCE + coverage —
+    // it can witness neither an ABSENCE (negative polarity) nor a CARDINALITY
+    // bound (quantifier). Validation rejects these combinations at authoring
+    // time; if one still reaches here it FAILS LOUD, never a vacuous pass.
+    if (t.polarity === "negative") {
+      return { ...base, focal_verdict: "fail" as const, rationale: "structural channel cannot verify a negative (absence) claim — mark this triple verify: semantic" };
+    }
+    if (t.quantifier) {
+      return { ...base, focal_verdict: "fail" as const, rationale: "structural channel cannot verify a quantified (cardinality) claim — mark this triple verify: semantic" };
+    }
     if (!structuralIds.has(t.id)) {
       return { ...base, focal_verdict: "fail" as const, rationale: "no structural claimant: aspect is verified semantically or uncovered" };
     }
@@ -125,14 +157,19 @@ export function structuralVerdict(intentPath: string, deps: StructuralDeps): Run
     return { ...base, focal_verdict: "pass" as const, rationale: `structural: claim(s) resolve and ${where} mechanically verified (coverage/presence)` };
   });
 
-  const decision = per_triple.some((t) => t.focal_verdict === "fail") ? "reject" : "accept";
+  // Honor the intent's `compose` operator via the SAME aggregator the semantic
+  // path uses (D.31/G5) — a hardcoded all-semantics silently inverted `none` and
+  // mis-decided `any`. Single source of truth, both channels.
+  const focalVerdicts = per_triple.map((t) => t.focal_verdict);
+  const decision = aggregateDecision(intent.compose, focalVerdicts, { antecedentHeld });
   return {
     success: true,
     value: {
       intent_path: intentPath,
       decision,
+      ...(intent.compose === "implies" ? { implies_antecedent_held: antecedentHeld } : {}),
       per_triple,
-      aggregate_rationale: `${decision} — structural (mechanical) verification over ${per_triple.length} triple(s)`,
+      aggregate_rationale: `${decision} under compose:${intent.compose} — structural (mechanical) verification over ${per_triple.length} triple(s)`,
     },
   };
 }
@@ -149,6 +186,7 @@ export function mergeStructuralSemantic(
   semantic: Verdict,
   structuralIds: Set<string>,
   semanticIds: Set<string>,
+  compose: ComposeRule,
 ): Verdict {
   const sMap = new Map(structural.per_triple.map((t) => [t.triple_id, t]));
   const mMap = new Map(semantic.per_triple.map((t) => [t.triple_id, t]));
@@ -172,14 +210,26 @@ export function mergeStructuralSemantic(
     }
     if (isStruct && s) return s;
     if (m) return m;
-    return s as PerTripleVerdict;
+    if (s) return s;
+    // A triple in the union but classified into neither channel is a programmer
+    // error — fail loud rather than leak `undefined` into the verdict (D.31/G11).
+    return {
+      triple_id: id,
+      focal_verdict: "fail" as const,
+      channel: "mechanical" as const,
+      support_quality: "ok" as const,
+      polarity: "positive" as const,
+      evidence: { support_claims: [] },
+      rationale: "triple unclassified by channel (neither structural nor semantic claimant)",
+    };
   });
 
-  const decision = per_triple.some((t) => t.focal_verdict === "fail") ? "reject" : "accept";
+  // Honor `compose` via the shared aggregator (D.31/G5), not a hardcoded all.
+  const decision = aggregateDecision(compose, per_triple.map((t) => t.focal_verdict) as FocalVerdict[]);
   return {
     intent_path: structural.intent_path,
     decision,
     per_triple,
-    aggregate_rationale: `${decision} — mixed structural+semantic verification`,
+    aggregate_rationale: `${decision} under compose:${compose} — mixed structural+semantic verification`,
   };
 }

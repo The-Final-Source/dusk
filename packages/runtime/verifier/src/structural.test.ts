@@ -103,6 +103,39 @@ describe("structuralVerdict — zero-LLM mechanical satisfaction (RFC App. D.29)
   });
 });
 
+describe("structuralVerdict — D.31 honesty hardening (compose + polarity/quantifier backstop)", () => {
+  const intentWith = (overrides: Record<string, unknown>, triple: Record<string, unknown>): Intent =>
+    IntentSchema.parse({ id: "cfg/x", description: "d", obligation: "must", ...overrides, triples: [{ id: "a", subject: "s", predicate: "p", object: "o", ...triple }] });
+
+  test("compose: none INVERTS — a passing structural triple yields reject (was silently accept)", () => {
+    const src = sidecar([{ anchor: "", marker: "intent-file", intent_path: "cfg/x" }]);
+    const intent = intentWith({ compose: "none" }, { verify: "structural" });
+    const res = structuralVerdict("cfg/x", { index: indexFor(src, intent), intents: mapOf(intent), readFile: readerFor(src) });
+    expect(res.success).toBe(true);
+    const v = (res as { value: Verdict }).value;
+    expect(v.per_triple[0].focal_verdict).toBe("pass");
+    expect(v.decision).toBe("reject"); // none: a holding focal claim must reject
+  });
+
+  test("a negative-polarity structural triple FAILS LOUD (cannot verify an absence)", () => {
+    const src = sidecar([{ anchor: "", marker: "intent-file", intent_path: "cfg/x" }]);
+    const intent = intentWith({}, { verify: "structural", polarity: "negative" });
+    const res = structuralVerdict("cfg/x", { index: indexFor(src, intent), intents: mapOf(intent), readFile: readerFor(src) });
+    const v = (res as { value: Verdict }).value;
+    expect(v.per_triple[0].focal_verdict).toBe("fail");
+    expect(v.per_triple[0].rationale).toContain("negative");
+  });
+
+  test("a quantified structural triple FAILS LOUD (cannot verify cardinality)", () => {
+    const src = sidecar([{ anchor: "", marker: "intent-file", intent_path: "cfg/x" }]);
+    const intent = intentWith({}, { verify: "structural", quantifier: "at-most-one" });
+    const res = structuralVerdict("cfg/x", { index: indexFor(src, intent), intents: mapOf(intent), readFile: readerFor(src) });
+    const v = (res as { value: Verdict }).value;
+    expect(v.per_triple[0].focal_verdict).toBe("fail");
+    expect(v.per_triple[0].rationale).toContain("quantified");
+  });
+});
+
 describe("mergeStructuralSemantic — mixed-intent per-triple combination", () => {
   const pt = (id: string, fv: "pass" | "fail", channel: "mechanical" | "semantic") => ({
     triple_id: id,
@@ -123,7 +156,7 @@ describe("mergeStructuralSemantic — mixed-intent per-triple combination", () =
   test("a triple claimed BOTH ways must pass both — structural fail overrides a semantic pass", () => {
     const structural = verdict([pt("both", "fail", "mechanical")]);
     const semantic = verdict([pt("both", "pass", "semantic")]);
-    const merged = mergeStructuralSemantic(structural, semantic, new Set(["both"]), new Set(["both"]));
+    const merged = mergeStructuralSemantic(structural, semantic, new Set(["both"]), new Set(["both"]), "all");
     expect(merged.per_triple[0].focal_verdict).toBe("fail");
     expect(merged.per_triple[0].channel).toBe("semantic");
     expect(merged.decision).toBe("reject");
@@ -132,7 +165,7 @@ describe("mergeStructuralSemantic — mixed-intent per-triple combination", () =
   test("structural-only and semantic-only triples each take their own channel's verdict", () => {
     const structural = verdict([pt("cfg", "pass", "mechanical"), pt("code", "fail", "mechanical")]);
     const semantic = verdict([pt("cfg", "fail", "semantic"), pt("code", "pass", "semantic")]);
-    const merged = mergeStructuralSemantic(structural, semantic, new Set(["cfg"]), new Set(["code"]));
+    const merged = mergeStructuralSemantic(structural, semantic, new Set(["cfg"]), new Set(["code"]), "all");
     const byId = new Map(merged.per_triple.map((t) => [t.triple_id, t]));
     expect(byId.get("cfg")?.focal_verdict).toBe("pass"); // structural-only → structural verdict
     expect(byId.get("cfg")?.channel).toBe("mechanical");

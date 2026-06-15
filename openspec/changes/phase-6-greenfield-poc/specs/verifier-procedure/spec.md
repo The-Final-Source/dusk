@@ -48,3 +48,17 @@ A triple's verification channel SHALL be resolved from the author-declared `trip
 
 - **WHEN** a triple is declared `verify: semantic` in an intent that also has a whole-file structural sidecar claim (`aspect_ids: null`)
 - **THEN** the triple is classified semantic (the author declaration overrides the modality fallback) and is judged by the semantic Verifier, not vacuously passed as structural
+
+### Requirement: The structural channel honors compose and refuses claims it cannot mechanically verify
+
+`structuralVerdict` and the mixed-intent merge SHALL aggregate per-triple verdicts via the SAME `compose` operator the semantic path uses (`all`/`any`/`none`/`implies`) — never a hardcoded `all`. For `compose: implies`, the structural path SHALL evaluate the deterministic antecedent and vacuously accept when it does not hold. A `verify: structural` triple with `polarity: negative` or with a `quantifier` SHALL be rejected at authoring time (`dusk validate` and the author Stage-4.5 pass), because the structural channel verifies presence/coverage and can witness neither an absence nor a cardinality bound; if such a triple nonetheless reaches `structuralVerdict` it SHALL fail loud, never emit a vacuous pass. (RFC §3.3, App. D.31.)
+
+#### Scenario: A compose: none structural intent rejects when a focal claim holds
+
+- **WHEN** `structuralVerdict` evaluates a `compose: none` intent whose structural triple passes coverage
+- **THEN** the intent `decision` is `reject` (not the inverted `accept` a hardcoded-`all` aggregation produced)
+
+#### Scenario: A negative or quantified structural triple is rejected at authoring time
+
+- **WHEN** `dusk validate` (or the author Stage-4.5 pass) encounters a triple with `verify: structural` and `polarity: negative`, or with a `quantifier`
+- **THEN** it reports a `verify_channel` violation naming the triple and directing the author to the semantic channel, and the runtime structural verifier fails such a triple loudly rather than passing it on coverage
