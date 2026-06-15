@@ -21,7 +21,7 @@ describe("4.1 — bead-id format + parallel/serial worktree decision (P3-T23)", 
     const dag: BeadDag = { nodes: [node(a, ["src/a.ts"]), node(b, ["src/b.ts"])], edges: [] };
 
     expect(planWorktrees(dag)).toHaveLength(2);
-    const result = createWorktreesForDag(mg.repoDir, dag);
+    const result = createWorktreesForDag(mg.repoDir, dag, { baseRef: "origin/main" });
     expect(result.success).toBe(true);
     if (!result.success) return;
 
@@ -45,7 +45,7 @@ describe("4.1 — bead-id format + parallel/serial worktree decision (P3-T23)", 
     expect(groups).toHaveLength(1);
     expect(groups[0].beads).toEqual([a, b]); // a before b (topological)
 
-    const result = createWorktreesForDag(mg.repoDir, dag);
+    const result = createWorktreesForDag(mg.repoDir, dag, { baseRef: "origin/main" });
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.value.handles).toHaveLength(1); // only the group's first bead got a worktree
@@ -54,10 +54,18 @@ describe("4.1 — bead-id format + parallel/serial worktree decision (P3-T23)", 
   });
 
   test("a malformed bead-id is refused with worktree_creation_failed", () => {
-    const result = addWorktree(mg.repoDir, "not-a-bead-id");
+    const result = addWorktree(mg.repoDir, "not-a-bead-id", { baseRef: "origin/main" });
     expect(result.success).toBe(false);
     if (result.success) return;
     expect(result.error.kind).toBe("worktree_creation_failed");
+  });
+
+  test("a missing baseRef fails LOUD — no implicit origin/main default (Phase 6 §A1)", () => {
+    const result = addWorktree(mg.repoDir, newBeadId({ now: () => 1_000 }, 1), {});
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.kind).toBe("worktree_creation_failed");
+    expect(result.error.message).toContain("baseRef");
   });
 });
 

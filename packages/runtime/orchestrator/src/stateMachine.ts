@@ -141,7 +141,10 @@ export async function runImplement(req: RunImplementRequest, deps: RunImplementD
     const groups = planWorktrees(dag);
     const worktreeForBead = new Map<string, string>();
     for (const group of groups) for (const beadId of group.beads) worktreeForBead.set(beadId, worktreePathFor(deps.rootDir, group.worktreeBead));
-    const created = createWorktreesForDag(deps.rootDir, dag, { baseRef: deps.baseRef });
+    // Use the snapshot's already-resolved merge-base SHA (honors deps.baseRef or
+    // the standalone-repo fallback) — a concrete commit always resolves, unlike
+    // a hardcoded `origin/main` ref absent in a fresh standalone repo.
+    const created = createWorktreesForDag(deps.rootDir, dag, { baseRef: snapshot.mergeBaseCommit });
     if (!created.success) return created;
 
     for (const node of dag.nodes) {
