@@ -936,13 +936,15 @@ Two sprints. Sprint 9 instruments and benchmarks. Sprint 10 dogfoods on real cod
 
 ---
 
-## Post-v1 — Sprint 11: Greenfield POC (the first v1.x change)
+## Post-v1 — Sprint 11: Greenfield POC
 
-**Not part of the v1 gate.** Sprint 11 begins only after Sprint 10's dogfood gate passes and the Phase-5 OpenSpec change archives — v1 is landed first. It is specified here (and as **Phase 6** in the implementation plan, which carries the full behavioral-test contract P6-T1..T8) because its shape was settled during the v1 build and it is the natural first v1.x milestone.
+**Not part of the v1 gate.** Sprint 11 begins only after Sprint 10's dogfood gate passes and the Phase-5 OpenSpec change archives — v1 is landed first. It is specified here (and as **Phase 6** in the implementation plan, which carries the full behavioral-test contract P6-T1..T8) because its shape was settled during the v1 build.
+
+**Two v1.x changes, in order.** The POC is **not** the first v1.x change. It has a prerequisite — **universal decoration coverage** (RFC App. D.28; its own validated OpenSpec change `universal-decoration-coverage`) — which lands **first**, because the POC produces its own `package.json`/configs through Dusk and those comment-less files can only be decoration-covered (and so reach the POC's 100%-coverage bar) once the per-file sidecar exists. Sequence: v1 lands → `universal-decoration-coverage` → the Greenfield POC restarts from scratch. (The capability is detailed in "What gets built" below and in the implementation plan's "Post-v1 prerequisite" section.)
 
 **Goal.** Validate the v9 thesis in its pure form on Dusk's native terrain: a small but real **API application built greenfield, with zero hand-written application code** — every line produced through `dusk_author` + `dusk_implement`, mechanically auditable via the commit-trailer record.
 
-**Why this is the right first v1.x move.** v9 is greenfield-first by design — decorate-at-authorship is the native mode; legacy bootstrap (RFC §8.2) is deferred precisely because retro-decoration is the *un*-native mode. Yet v1 never tests the native mode purely: Sprint 10's dogfood is brownfield-lite on a pure-leaf package (no DB, no HTTP, unit-only pyramid). Sprint 11 closes the three residual gaps in one artifact: the zero-hand-written-code thesis, the full test pyramid (integration vs live Postgres + e2e vs real HTTP) on real non-fixture code, and greenfield intent-tree authoring at application scale with Stage-2 tension detection operating as the tree grows.
+**Why the POC is the right first thesis validation** (the first v1.x *change* is its prerequisite, universal decoration coverage, above; the POC is the first thing that *validates the thesis*). v9 is greenfield-first by design — decorate-at-authorship is the native mode; legacy bootstrap (RFC §8.2) is deferred precisely because retro-decoration is the *un*-native mode. Yet v1 never tests the native mode purely: Sprint 10's dogfood is brownfield-lite on a pure-leaf package (no DB, no HTTP, unit-only pyramid). Sprint 11 closes the three residual gaps in one artifact: the zero-hand-written-code thesis, the full test pyramid (integration vs live Postgres + e2e vs real HTTP) on real non-fixture code, and greenfield intent-tree authoring at application scale with Stage-2 tension detection operating as the tree grows.
 
 **What gets built.**
 - A fresh standalone repository (its own git history, purely Dusk-authored and independently auditable — not a monorepo package), `dusk init` from zero.
@@ -1060,7 +1062,7 @@ The build also surfaced a genuine capability gap (RFC App. D.28): inline decorat
 
 These are intentional cuts. The proposal calls them out in Ch. 8; the roadmap doesn't pretend they're v1 work.
 
-**v1.x sequencing note:** the first v1.x change is already specified — the **Greenfield POC** (Sprint 11 above; Phase 6 in the implementation plan). It requires none of the items on this list; in particular it does NOT pull legacy bootstrap forward — greenfield is v9's native mode and needs no retro-decoration machinery. Everything below remains demand-triggered, with the POC's exploratory friction data as the primary prioritization input.
+**v1.x sequencing note:** the first two v1.x changes are already specified, in order — **(1) universal decoration coverage** (RFC App. D.28; the `<file>.intent` sidecar + `decoration.ignore` SSoT + the keystone index fix), then **(2) the Greenfield POC** (Sprint 11 above; Phase 6 in the implementation plan), which depends on (1) for full coverage of its comment-less files. Neither requires any item on *this* list — in particular neither pulls legacy bootstrap forward; greenfield is v9's native mode and needs no retro-decoration machinery. Everything below remains demand-triggered, with the POC's exploratory friction data as the primary prioritization input. (Universal decoration coverage is itself a closed gap, not a deferral — it ships as its own change before the POC.)
 
 - ~~**Decorate-or-decompose static-analysis gating.**~~ **REPROMOTED to Sprint 9.** Framed as drift detection (decoration erosion over time), not real-time enforcement. `/dusk-doctor --static-analysis` ships in v1. (RFC §4.6, §8.9.)
 - **Semantic / vector / RAG search for Author Stage 2.** v1 ships agent-driven grep over `.ia/intents/`. Embedding-based discovery is v1.x, triggered by reports of recurring missed tensions in Stage 2. (RFC §8.10.)
