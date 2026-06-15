@@ -24,7 +24,7 @@ This change delivers **exactly Phase 6 of the v9 implementation plan** (`docs/rf
 
 The greenfield/external-repo load surfaced three tightly-scoped robustness fixes that change v1 spec-level behavior — handled as D11 support work with living-spec deltas (the design's §6.5 / D11 policy), distinct from this change's deliverable scope:
 
-- `author-five-stage-flow`: **ADDED** — Stage-2 gains a *foundation-gap* detector. The runtime supplies the Author a deterministic `foundation` signal (intent census + `empty_tree`); when a behavior intent presupposes absent foundation (project/stack, bootstrap, persistence), the Author steers foundation-first authoring rather than silently drafting it. A dialog responsibility, no pipeline special-case. (RFC App. D.24/D.25.)
+- `author-five-stage-flow`: **ADDED** — Stage-2 tension detection gains a general fifth class, `prerequisite` (the request depends on an intent not yet in the tree). The runtime supplies a general `intent_census`; the Author surfaces a `prerequisite` tension (the greenfield foundation being its canonical instance) and steers authoring the dependency first. A surfaced tension flows through the existing transition — no bootstrap state in the orchestration, no pipeline special-case. (RFC App. D.24/D.25.)
 - `worktree-orchestration`: **MODIFIED** — worktree creation uses the session snapshot's resolved merge-base SHA and **requires** an explicit `baseRef` (fail-loud), with no hardcoded `origin/main` default (absent in a standalone repo). (RFC App. D.27.)
 - `session-snapshot-index`: **MODIFIED** — the default base ref resolves through `origin/main → main → HEAD`; an explicit `--base-ref` stays strict. (RFC App. D.27.)
 

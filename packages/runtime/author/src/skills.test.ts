@@ -19,7 +19,7 @@ const AUTHOR_SKILLS = [
   "typed-relates-to",
   "implies-antecedent-grammar",
   "tension-detection",
-  "foundation-gap-detection",
+  "prerequisite-tension",
   "discovery-grep-patterns",
   "best-practices-application",
   "test-pyramid-proposal",

@@ -1,23 +1,27 @@
 ## ADDED Requirements
 
-### Requirement: Stage 2 detects an unmet foundation / prerequisite gap and steers foundation-first authoring
+### Requirement: Stage 2 detects an unmet dependency as a general `prerequisite` tension
 
-Stage-2 tension detection SHALL run in both directions: against intents that *exist* (the conflict/overlap/gray/adjacent classes) AND against intents that *should exist but do not* — the **foundation gap**. The runtime SHALL supply the Author a deterministic `foundation` signal alongside the grep candidates: the census of existing intent paths plus an `empty_tree` flag (true when `.ia/intents/` holds no intents — the greenfield-first-intent case). When the requested behavior intent presupposes foundational intents/decisions absent from the tree (project/tech-stack setup, module structure, app bootstrap, the persistence layer — unconditionally when `empty_tree` is true), the Author SHALL surface this in its Stage-2 question and recommend authoring the prerequisite foundation intents **first**, in dependency order (project/stack → bootstrap → persistence → behavior), rather than silently drafting a behavior intent that would force the implementation pipeline to birth the whole application inside one bead. This is the proactive authoring-time complement to the Decomposer's reactive mid-`dusk_implement` missing-intent pause (App. D.10). It is a **dialog-agent** responsibility — the 9-step pipeline gains no greenfield special-case; the foundation is simply the project's first intents. (RFC §5, §8.2; App. D.24, D.25.)
+Stage-2 tension detection SHALL run in both directions: against intents that *exist* (the conflict/overlap/gray/adjacent classes) AND against an intent the request *depends on but that does not exist in the tree* — a fifth, general classification, **`prerequisite`**. The runtime SHALL supply the Author a general `intent_census` (the set of intent paths currently in the tree, and whether it is empty) so its judgment is grounded. When the request plainly requires a capability/decision no intent provides (e.g. an endpoint depending on a not-yet-authored persistence or auth intent), the Author SHALL surface a `prerequisite` tension whose `target` is the missing intent's proposed path and recommend authoring the dependency first. The greenfield foundation (an empty/near-empty census: project/stack, app bootstrap, persistence not yet authored) is the **canonical instance** of a `prerequisite`, not a special mode. A `prerequisite` SHALL be an ordinary surfaced tension (a non-empty `tensions[]`) handled by the existing transition — there SHALL be **no bootstrap-specific state, signal, or branch in the orchestration flow** (App. D.24); the dependency is resolved through the normal authoring dialog, not a pipeline phase. (RFC §5, §8.2; App. D.24, D.25.)
 
-#### Scenario: An empty tree yields a foundation-gap signal
+#### Scenario: The tension vocabulary includes `prerequisite`
+
+- **WHEN** the Stage-2 tension classification vocabulary is read
+- **THEN** it contains `prerequisite` alongside `conflict`, `overlap`, `gray`, and `adjacent`
+
+#### Scenario: An empty intent tree yields an empty census the Author reasons over
 
 - **WHEN** the Author runs Stage-2 discovery against a `.ia/intents/` tree with no intents
-- **THEN** the `foundation` signal carries `empty_tree: true` and an empty census
-- **AND** the signal is supplied to the Author generator alongside the grep candidates
+- **THEN** the `intent_census` reports `is_empty: true` and an empty path list
+- **AND** the census is supplied to the Author generator alongside the grep candidates
 
-#### Scenario: A populated tree carries the census and is not an automatic gap
+#### Scenario: A populated tree reports the sorted census
 
 - **WHEN** the Author runs Stage-2 discovery against a tree that already contains intents
-- **THEN** the `foundation` signal carries `empty_tree: false` and the sorted census of existing intent paths
-- **AND** the Author judges from the census whether the specific presupposed foundation is present
+- **THEN** the `intent_census` reports `is_empty: false` and the sorted list of existing intent paths
 
-#### Scenario: The foundation-gap detection is a dialog responsibility, not a pipeline phase
+#### Scenario: A prerequisite is resolved through the dialog, not the pipeline
 
-- **WHEN** a behavior intent presupposing an absent foundation is authored
-- **THEN** the gap is surfaced and resolved through the authoring dialog (author the foundation intents first)
-- **AND** no synthesized foundation bead, bootstrap spawn, or canonical foundation Block is introduced into the pipeline
+- **WHEN** the request depends on an intent absent from the census
+- **THEN** the Author surfaces a `prerequisite` tension and steers authoring the dependency first
+- **AND** no synthesized foundation bead, bootstrap spawn, canonical foundation Block, or bootstrap branch is introduced into the orchestration flow

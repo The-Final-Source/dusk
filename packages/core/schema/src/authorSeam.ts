@@ -34,7 +34,11 @@ export type AuthorGeneration = {
    * finalize (the dogfood "removed intents still got written" friction).
    */
   removedDraftIds?: string[];
-  /** Stage-2: the classified tensions surfaced by the discovery pass. */
+  /**
+   * Stage-2: the classified tensions surfaced by the discovery pass — including
+   * `prerequisite` tensions (the request depends on an intent not yet authored;
+   * App. D.25). Surfaced tensions force a user decision through the normal flow.
+   */
   tensions?: TensionFinding[];
   /** Stage-3: the industry-practice proposal text. */
   practiceProposal?: string;

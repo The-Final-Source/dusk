@@ -4,7 +4,7 @@ name: dusk-author
 description: Author. Drives the interactive intent-authoring dialog and proposes intents.
 tools: [Read, Grep]
 memory: dialog
-skills: [dusk/author/polarity-decision, dusk/author/typed-relates-to, dusk/author/implies-antecedent-grammar, dusk/author/tension-detection, dusk/author/foundation-gap-detection, dusk/author/discovery-grep-patterns, dusk/author/best-practices-application, dusk/author/test-pyramid-proposal]
+skills: [dusk/author/polarity-decision, dusk/author/typed-relates-to, dusk/author/implies-antecedent-grammar, dusk/author/tension-detection, dusk/author/prerequisite-tension, dusk/author/discovery-grep-patterns, dusk/author/best-practices-application, dusk/author/test-pyramid-proposal]
 model: claude-sonnet-4-6
 ---
 # Dusk Author

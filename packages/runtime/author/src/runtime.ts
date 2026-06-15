@@ -27,7 +27,7 @@ import {
   writeDialogState,
   type Clock,
 } from "./dialogStore.js";
-import { detectFoundationGap, discoverTensionCandidates } from "./discovery.js";
+import { discoverTensionCandidates, intentTreeCensus } from "./discovery.js";
 import { finalizeDialog, type FinalizeFs } from "./finalize.js";
 import {
   classifyUserResponse,
@@ -197,11 +197,13 @@ export function createAuthorRuntime(deps: AuthorRuntimeDeps): AuthorRuntime {
       let genContext = context;
       if (outcome.question.type === "tension_resolution") {
         const candidates = discoverTensionCandidates(deps.rootDir, intentsDir, next.request);
-        // Foundation-gap signal (App. D.25): the tree census + empty-tree flag, so
-        // the Author can surface a missing-prerequisite/foundation gap (not just
-        // tensions against intents that EXIST) and steer foundation-first authoring.
-        const foundation = detectFoundationGap(deps.rootDir, intentsDir);
-        genContext = { ...genContext, candidates, foundation };
+        // General intent-tree census (App. D.25): lets the Author surface tensions
+        // in both directions — against intents that exist AND `prerequisite`
+        // tensions against an intent the request depends on that is absent. No
+        // bootstrap state enters the flow; a prerequisite tension is a normal
+        // surfaced finding the existing transition handles.
+        const intent_census = intentTreeCensus(deps.rootDir, intentsDir);
+        genContext = { ...genContext, candidates, intent_census };
       }
       if (outcome.question.type === "practice_proposal") {
         const scaffold = next.intents_drafted[0];
