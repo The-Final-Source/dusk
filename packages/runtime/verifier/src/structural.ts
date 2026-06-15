@@ -79,9 +79,12 @@ export function structuralVerdict(intentPath: string, deps: StructuralDeps): Run
   }
   const triples = intentTriples(intent);
   const structuralIds = new Set(deps.index.structuralAspects(intentPath));
-  const structRecords = deps.index
-    .forward(intentPath)
-    .filter((r) => r.verify === "structural" && STRUCTURAL_FOCAL.has(r.marker));
+  // Gather focal claimants by MARKER, not by record `verify`: an inline claim on
+  // a comment-bearing config file (e.g. vitest.config.ts) the author marked
+  // `verify: structural` is stamped `semantic` on the record (modality), but the
+  // triple is structural (D.30). The channel decision is already made by
+  // `structuralAspects`; here we only mechanically check the claimants.
+  const focalRecords = deps.index.forward(intentPath).filter((r) => STRUCTURAL_FOCAL.has(r.marker));
 
   // One config file backs many triples — evaluate each target at most once.
   const cache = new Map<string, TargetCheck>();
@@ -102,16 +105,24 @@ export function structuralVerdict(intentPath: string, deps: StructuralDeps): Run
       evidence: { support_claims: [] },
     };
     if (!structuralIds.has(t.id)) {
-      return { ...base, focal_verdict: "fail" as const, rationale: "no structural claimant: aspect is uncovered by any <file>.intent sidecar" };
+      return { ...base, focal_verdict: "fail" as const, rationale: "no structural claimant: aspect is verified semantically or uncovered" };
     }
-    const targets = [
-      ...new Set(structRecords.filter((r) => r.aspect_ids === null || r.aspect_ids.includes(t.id)).map((r) => r.file)),
-    ];
-    const broken = targets.map((f) => ({ f, res: coverOf(f) })).find((x) => !x.res.ok);
+    const claimants = focalRecords.filter((r) => r.aspect_ids === null || r.aspect_ids.includes(t.id));
+    if (claimants.length === 0) {
+      return { ...base, focal_verdict: "fail" as const, rationale: "no structural claimant: aspect is uncovered by any decoration" };
+    }
+    // A sidecar claimant (anchor present) is checked by JSON coverage tiling; an
+    // inline claimant (anchor null) on a comment-bearing file IS the anchor — its
+    // presence in the live index means the decoration resolved, and the file's
+    // line-coverage is already enforced by the gate. So inline claims pass on
+    // presence; only sidecar targets need a coverage check here.
+    const sidecarTargets = [...new Set(claimants.filter((r) => r.anchor != null).map((r) => r.file))];
+    const broken = sidecarTargets.map((f) => ({ f, res: coverOf(f) })).find((x) => !x.res.ok);
     if (broken && !broken.res.ok) {
       return { ...base, focal_verdict: "fail" as const, rationale: `structural coverage failed for ${broken.f}: ${broken.res.reason}` };
     }
-    return { ...base, focal_verdict: "pass" as const, rationale: `structural: anchor(s) resolve and ${targets.join(", ")} fully decoration-covered` };
+    const where = [...new Set(claimants.map((r) => r.file))].join(", ");
+    return { ...base, focal_verdict: "pass" as const, rationale: `structural: claim(s) resolve and ${where} mechanically verified (coverage/presence)` };
   });
 
   const decision = per_triple.some((t) => t.focal_verdict === "fail") ? "reject" : "accept";

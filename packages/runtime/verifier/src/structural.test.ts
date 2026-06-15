@@ -60,6 +60,42 @@ describe("structuralVerdict — zero-LLM mechanical satisfaction (RFC App. D.29)
     expect(v.per_triple[0].rationale).toContain("no structural claimant");
   });
 
+  test("an inline-backed structural triple PASSES on presence — no sidecar read (D.30)", () => {
+    // A comment-bearing config file (vitest.config.ts) the author marked
+    // `verify: structural`: the inline decoration IS the anchor, so the triple
+    // passes on presence in the live index — structuralVerdict must NOT try to
+    // read a <file>.intent sidecar (there is none).
+    const intent = IntentSchema.parse({
+      id: "cfg/vitest",
+      description: "d",
+      obligation: "must",
+      triples: [{ id: "native-esm", subject: "s", predicate: "p", object: "o", verify: "structural" }],
+    });
+    const inlineRecord = {
+      file: "vitest.config.ts",
+      line: 4,
+      scope: "declaration" as const,
+      declaration_name: null,
+      marker: "intent" as const,
+      intent_path: "cfg/vitest",
+      aspect_ids: ["native-esm"],
+      support_triple: null,
+      ignore_clause: null,
+      anchor: null,
+      verify: "semantic" as const, // modality stamp; the triple is what makes it structural
+    };
+    const index = buildDerivedIndex([inlineRecord], mapOf(intent));
+    const throwOnAnyRead = (f: string): string => {
+      throw new Error(`structuralVerdict must not read files for an inline claim (tried: ${f})`);
+    };
+    const res = structuralVerdict("cfg/vitest", { index, intents: mapOf(intent), readFile: throwOnAnyRead });
+    expect(res.success).toBe(true);
+    const v = (res as { value: Verdict }).value;
+    expect(v.decision).toBe("accept");
+    expect(v.per_triple[0].focal_verdict).toBe("pass");
+    expect(v.per_triple[0].channel).toBe("mechanical");
+  });
+
   test("an unresolvable intent path is a recoverable error", () => {
     const res = structuralVerdict("missing/intent", { index: buildDerivedIndex([], new Map()), intents: new Map(), readFile: () => "" });
     expect(res.success).toBe(false);

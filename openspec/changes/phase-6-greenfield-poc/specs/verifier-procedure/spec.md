@@ -33,3 +33,18 @@ The `verifierFactory` SHALL classify an intent's triples via the derived-index `
 
 - **WHEN** a mixed intent has one structural-only triple and one semantic-only triple
 - **THEN** the structural-only triple takes the structural verdict with `channel: "mechanical"` and the semantic-only triple takes the semantic verdict with `channel: "semantic"`
+
+### Requirement: The verification channel is a property of the claim, declared by the author, not derived from decoration modality
+
+A triple's verification channel SHALL be resolved from the author-declared `triple.verify` field (`"structural" | "semantic"`) when present, and SHALL fall back to decoration modality (a `<file>.intent` sidecar claimant ⇒ structural) only when `triple.verify` is absent. The channel SHALL NOT be derived from file format alone. A triple decorated INLINE on a comment-bearing file (e.g. a `.ts` config file) that the author marked `verify: structural` SHALL be verified MECHANICALLY by presence (its claimant resolving in the live worktree index) — never routed to the semantic LLM. The Engineer SHALL NOT be able to set or change a triple's channel (it is declared in the version-controlled intent, not in the worktree code the Engineer edits). (RFC §3.3, App. D.11, App. D.30.)
+
+#### Scenario: A comment-bearing config triple marked structural converges with zero model calls
+
+- **WHEN** an intent's triple is decorated inline on a `.ts` config file and the author declared `verify: structural`
+- **THEN** the verifier routes it to the structural (mechanical) channel and it passes on presence, converging iteration-1 with no semantic LLM call
+- **AND** the verdict carries `channel: "mechanical"`
+
+#### Scenario: An author-declared semantic triple is not swept structural by a whole-file config claim
+
+- **WHEN** a triple is declared `verify: semantic` in an intent that also has a whole-file structural sidecar claim (`aspect_ids: null`)
+- **THEN** the triple is classified semantic (the author declaration overrides the modality fallback) and is judged by the semantic Verifier, not vacuously passed as structural

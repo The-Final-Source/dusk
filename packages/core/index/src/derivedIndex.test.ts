@@ -140,4 +140,41 @@ describe("D.28 — structural records partitioned from the semantic path", () =>
     expect(idx.structuralAspects("mixed/i")).toEqual(["cfg"]);
     expect(idx.semanticAspects("mixed/i")).toEqual(["code"]);
   });
+
+  // D.30 — the AUTHOR's declared `triple.verify` is authoritative over modality.
+  const inlineRecord = (intentPath: string, aspect: string): DecorationRecord => ({
+    file: "vitest.config.ts",
+    line: 4,
+    scope: "declaration",
+    declaration_name: null,
+    marker: "intent",
+    intent_path: intentPath,
+    aspect_ids: [aspect],
+    support_triple: null,
+    ignore_clause: null,
+    anchor: null,
+    verify: "semantic", // modality (inline) — but the triple says structural
+  });
+  const intentWithVerify = (id: string, triples: { id: string; verify?: "structural" | "semantic" }[]): Intent =>
+    IntentSchema.parse({
+      id,
+      description: "d",
+      obligation: "must",
+      triples: triples.map((t) => ({ id: t.id, subject: "s", predicate: "p", object: "o", ...(t.verify ? { verify: t.verify } : {}) })),
+    });
+
+  test("an author-declared `verify: structural` routes structural even with an inline (modality-semantic) claimant", () => {
+    const intent = intentWithVerify("cfg/vitest", [{ id: "a", verify: "structural" }]);
+    const idx = buildDerivedIndex([inlineRecord("cfg/vitest", "a")], mapOf(intent));
+    expect(idx.structuralAspects("cfg/vitest")).toEqual(["a"]);
+    expect(idx.semanticAspects("cfg/vitest")).toEqual([]);
+  });
+
+  test("an author-declared `verify: semantic` stays semantic even when a structural sidecar claims it (no vacuous sweep)", () => {
+    const intent = intentWithVerify("cfg/mixed", [{ id: "behavior", verify: "semantic" }]);
+    // a whole-file structural sidecar (null aspect_ids) would otherwise sweep it
+    const idx = buildDerivedIndex([structural("package.json", "cfg/mixed")], mapOf(intent));
+    expect(idx.semanticAspects("cfg/mixed")).toEqual(["behavior"]);
+    expect(idx.structuralAspects("cfg/mixed")).toEqual([]);
+  });
 });

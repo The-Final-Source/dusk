@@ -52,9 +52,11 @@ export type DerivedIndex = {
   isSatisfied: (intentPath: string, satisfied: SatisfactionInput) => SatisfactionResult;
 };
 
+function triplesOf(intent: Intent) {
+  return intent.compose === "implies" ? (intent.consequent ?? []) : (intent.triples ?? []);
+}
 function tripleIdsOf(intent: Intent): string[] {
-  if (intent.compose === "implies") return (intent.consequent ?? []).map((t) => t.id);
-  return (intent.triples ?? []).map((t) => t.id);
+  return triplesOf(intent).map((t) => t.id);
 }
 
 const FOCAL_MARKERS = new Set(["intent", "intent-file", "intent-test", "intent-test-file"]);
@@ -105,18 +107,26 @@ export function buildDerivedIndex(records: DecorationRecord[], intents: Map<stri
     return tripleIdsOf(intent).filter((id) => !claimed.has(id));
   };
 
+  // Channel resolution (D.30): the AUTHOR's declared `triple.verify` is
+  // authoritative; absent, it falls back to decoration MODALITY (a structural
+  // record = a `<file>.intent` sidecar claim). So a comment-bearing config file
+  // an author marked `verify: structural` routes structurally even though its
+  // inline record was stamped `semantic` by the parser — the channel is a
+  // property of the claim, not the file format (D.29 wrongly tied them).
   const structuralRecords = records.filter((r) => r.verify === "structural");
+  const channelOf = (intentPath: string, triple: { id: string; verify?: "structural" | "semantic" }): "structural" | "semantic" => {
+    if (triple.verify) return triple.verify;
+    return claimedAspects(intentPath, structuralRecords).has(triple.id) ? "structural" : "semantic";
+  };
   const structuralAspects = (intentPath: string): string[] => {
     const intent = intents.get(intentPath);
     if (!intent) return [];
-    const claimed = claimedAspects(intentPath, structuralRecords);
-    return tripleIdsOf(intent).filter((id) => claimed.has(id));
+    return triplesOf(intent).filter((t) => channelOf(intentPath, t) === "structural").map((t) => t.id);
   };
   const semanticAspects = (intentPath: string): string[] => {
     const intent = intents.get(intentPath);
     if (!intent) return [];
-    const claimed = claimedAspects(intentPath, semanticRecords);
-    return tripleIdsOf(intent).filter((id) => claimed.has(id));
+    return triplesOf(intent).filter((t) => channelOf(intentPath, t) === "semantic").map((t) => t.id);
   };
 
   const testDiscovery = (intentPath: string): DecorationRecord[] =>
