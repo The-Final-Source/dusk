@@ -1,18 +1,29 @@
 ## ADDED Requirements
 
-### Requirement: The "application source" predicate is enumerated, separating required code from exempt scaffold
+### Requirement: The audit reasons on two orthogonal axes — coverage and provenance — never conflating them
 
-The audit's central classifier SHALL crisply separate *required* application source (pipeline-produced, trailer-required, decorated) from *exempt scaffold* (may be hand-authored), encoded as an explicit allowlist of exempt paths/globs — anything else under the source tree is *required*. **Required:** all runtime application source AND all test bodies under the configured pyramid suffixes (`unit-tests`/`integration-tests`/`e2e-tests`). **Exempt scaffold (minimal, enumerated):** the `dusk init` output; `package.json`/`tsconfig`/`vitest.config`/Drizzle config; generated migrations; and the Vitest infrastructure provisioning (the `globalSetup` that spins up Postgres + the e2e app-boot helper). Exempt code SHALL be decorated where it is genuinely code. (Plan Phase 6 Scope; design D4; **P6-T1**.)
+Since the `universal-decoration-coverage` prerequisite (RFC App. D.28) landed, "what must be decoration-covered" and "what must carry commit trailers" are **two different axes**, and the Phase-6 audit tooling SHALL keep them separate (design D4):
 
-#### Scenario: A non-allowlisted source file is classified as required
+- **Coverage axis (governed by `decoration.ignore`, enforced by the runtime).** Every file not matched by `decoration.ignore` is decoration-covered — comment-bearing source inline, comment-less files (`package.json`, `tsconfig.json`, configs) via their colocated `<file>.intent` sidecar. The only coverage-exempt files are the `decoration.ignore` globs. Configs/manifests are therefore **coverage-required** (they carry sidecars and count toward the 100%-coverage bar, P6-T8); they are NOT coverage-exempt. P6-T8 consumes this (static-analysis clean over the covered tree, sidecars included).
+- **Provenance axis (governed by the Phase-6 trailer auditor).** Which *commits* must carry the full v9 trailer set. **Trailer-required** (pipeline-produced): all runtime application source AND all test bodies under the pyramid suffixes (`unit-tests`/`integration-tests`/`e2e-tests`). **Trailer-exempt scaffold** (may be `dusk init`-/hand-authored, an explicit allowlist): the `dusk init` output; the stack-config files (`package.json`/`tsconfig`/`vitest.config`/Drizzle config); generated migrations; the Vitest infra provisioning (`globalSetup` + the e2e app-boot helper). Anything else under the source tree is trailer-required.
+- **The axes cross:** a file can be **trailer-exempt yet coverage-required** (e.g. `package.json` is scaffold for provenance but carries a `package.json.intent` sidecar for coverage). The auditor SHALL rule each file on **both** axes and never assume "scaffold ⇒ uncovered." (Plan Phase 6 Scope; design D4; **P6-T1**, **P6-T8**.)
 
-- **WHEN** the auditor encounters a `.ts` file under the application source tree that is not on the exempt allowlist
-- **THEN** it is classified as *required* application source and its commit MUST carry the full v9 trailer set
+#### Scenario: A non-allowlisted source file is trailer-required
 
-#### Scenario: The Vitest globalSetup is classified as exempt
+- **WHEN** the auditor encounters a `.ts` file under the application source tree not on the trailer-exempt allowlist
+- **THEN** it is classified as trailer-required and its commit MUST carry the full v9 trailer set
 
-- **WHEN** the auditor encounters the POC's `globalSetup` / app-boot helper
-- **THEN** it is classified as exempt scaffold and is not required to carry trailers
+#### Scenario: A config manifest is trailer-exempt yet coverage-required
+
+- **WHEN** the auditor evaluates `package.json` (on the trailer-exempt allowlist) that carries a `package.json.intent` sidecar
+- **THEN** its commit is not required to carry trailers (provenance axis)
+- **AND** it still counts as decoration-covered via its sidecar (coverage axis), not coverage-exempt
+
+#### Scenario: Only `decoration.ignore` globs are coverage-exempt
+
+- **WHEN** the auditor (or `dusk doctor`) evaluates the coverage axis
+- **THEN** only files matching `decoration.ignore` (e.g. `node_modules/**`, `.env*`, `**/*.lock`) are coverage-exempt
+- **AND** every other file — including configs and the infra harness — is decoration-covered (inline or sidecar)
 
 ### Requirement: The trailer auditor proves zero hand-written application code from the git record alone
 
