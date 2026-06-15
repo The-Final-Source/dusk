@@ -36,5 +36,5 @@
 
 ## 8. Integration + landing
 
-- [ ] 8.1 End-to-end fixture: a project with a comment-bearing file (inline), a `package.json` + `package.json.intent` (sidecar, full coverage), an ignored `node_modules` and `.env`. Assert: index sees all decoration sources; gate passes when covered, blocks on an introduced gap; doctor clean; structural records skipped by the semantic Verifier. Acceptance: the proposal's Verifiability/acceptance bullet end-to-end. Test plan: one integration test composing §1–§7.
-- [ ] 8.2 `pnpm build` + `pnpm test` + `pnpm typecheck` green across affected packages; `openspec validate universal-decoration-coverage --strict` passes; archive.
+- [x] 8.1 End-to-end fixture: a project with a comment-bearing file (inline), a `package.json` + `package.json.intent` (sidecar, full coverage), an ignored `node_modules` and `.env`. Assert: index sees all decoration sources; gate passes when covered, blocks on an introduced gap; doctor clean; structural records skipped by the semantic Verifier. Acceptance: the proposal's Verifiability/acceptance bullet end-to-end. Test plan: one integration test composing §1–§7.
+- [x] 8.2 `pnpm build` + `pnpm test` + `pnpm typecheck` green across affected packages; `openspec validate universal-decoration-coverage --strict` passes; archive.
