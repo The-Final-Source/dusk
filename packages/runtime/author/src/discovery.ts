@@ -38,6 +38,34 @@ function* walkIntentFiles(dir: string): Generator<string> {
   }
 }
 
+/**
+ * The Stage-2 foundation-gap signal (RFC §5; App. D.24/D.25). A deterministic
+ * census of the intent tree the Author reasons over: the full set of existing
+ * intent paths, plus whether the tree is empty. `empty_tree` is the unambiguous
+ * greenfield-first-intent case — any behavior intent authored into an empty tree
+ * presupposes a foundation (project/tech-stack setup, app bootstrap, persistence
+ * layer, module structure) that does not yet exist, so the Author should steer
+ * the user to author those foundation intents FIRST. For a non-empty tree the
+ * census lets the model judge a richer per-surface gap. This is the deterministic
+ * backstop behind the model's judgment — never the whole judgment.
+ */
+export type FoundationSignal = {
+  /** Every intent path currently in the tree (sorted); the model judges richer gaps from it. */
+  existing_intent_paths: string[];
+  /** True when the tree has NO intents at all (greenfield-first-intent). */
+  empty_tree: boolean;
+};
+
+export function detectFoundationGap(rootDir: string, intentsDir: string): FoundationSignal {
+  const root = join(rootDir, intentsDir);
+  if (!existsSync(root)) return { existing_intent_paths: [], empty_tree: true };
+  const paths: string[] = [];
+  for (const file of walkIntentFiles(root)) {
+    paths.push(relative(root, file).replace(/\/intent\.yaml$/, ""));
+  }
+  return { existing_intent_paths: paths.sort(), empty_tree: paths.length === 0 };
+}
+
 /** Grep the intent tree for keyword matches; returns up to `cap` candidates with excerpts. */
 export function discoverTensionCandidates(rootDir: string, intentsDir: string, request: string, cap = 8): TensionCandidate[] {
   const root = join(rootDir, intentsDir);

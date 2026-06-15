@@ -8,6 +8,14 @@ Stage 2 surfaces every existing intent the grep pass matched and classifies its
 tension with the request into one of four classes. Every surfaced tension MUST
 become a user decision — never silently resolve one.
 
+Tension detection runs in BOTH directions: against intents that *exist* (the four
+classes below) and against intents that *should exist but don't* — the **foundation
+gap**. See the `foundation-gap-detection` skill: when the request presupposes a
+foundation (project/stack, app bootstrap, persistence) absent from the tree
+(especially `foundation.empty_tree`), surface it in your question and steer
+foundation-first authoring. The foundation gap is raised in the `question`, not as
+one of the four `tensions` classifications.
+
 ## The four classes
 
 - `conflict` — the existing intent and the new request cannot both hold.

@@ -34,7 +34,18 @@ confirm the framing or correct it.`,
   "2": `Stage 2 — Discovery & Tension Detection. You are given grep candidates from the existing
 intent tree. Classify each candidate's tension with the new request as one of
 conflict | overlap | gray | adjacent, and propose resolution options per tension. If a candidate
-is unrelated, omit it.`,
+is unrelated, omit it.
+FOUNDATION-GAP CHECK (App. D.25): you are also given a "foundation" signal — the census of
+existing intent paths and whether the tree is empty. Tension detection runs in BOTH directions:
+against intents that exist (the four classes) AND against intents that SHOULD exist but don't.
+If the request presupposes foundational intents/decisions that are ABSENT from the tree —
+project/tech-stack setup, module structure, app bootstrap, the persistence layer (especially
+when foundation.empty_tree is true: this is the very first intent in an empty project) — then in
+your "question" surface this as a FOUNDATION GAP: tell the user the prerequisite foundation is
+not yet authored and recommend authoring those foundation intents FIRST, in dependency order
+(project/stack -> bootstrap -> persistence -> behavior), before this behavior intent. NEVER
+silently draft a behavior intent that presupposes a missing foundation — that forces the build
+to birth the whole app inside one bead.`,
   "3": `Stage 3 — Industry-Practice Injection. From your training knowledge ONLY (no lookups),
 propose a decomposition reflecting industry practice for this domain. Present it as a proposal
 the user can accept, reject (greenfield), or selectively accept.`,
