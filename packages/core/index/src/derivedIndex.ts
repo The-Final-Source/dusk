@@ -35,6 +35,15 @@ export type DerivedIndex = {
   focalSupport: (intentPath: string, aspectId: string) => FocalSupport;
   /** intent_path → triple ids with no focal claimant (structural). */
   aspectRollup: (intentPath: string) => string[];
+  /**
+   * intent_path → triple ids that have a STRUCTURAL focal claimant (a per-file
+   * `<file>.intent` sidecar `intent`/`intent-file` record). These triples are
+   * satisfied MECHANICALLY (anchor resolves + coverage holds), never by the
+   * semantic Verifier (design D6 / RFC App. D.29). Routes the verifier.
+   */
+  structuralAspects: (intentPath: string) => string[];
+  /** intent_path → triple ids that have a SEMANTIC focal claimant (LLM-judged). */
+  semanticAspects: (intentPath: string) => string[];
   /** test-pyramid intent_path → its @intent-test / @intent-test-file claimants. */
   testDiscovery: (intentPath: string) => DecorationRecord[];
   /** parent intent → test claimants grouped by configured pyramid layer. */
@@ -73,18 +82,41 @@ export function buildDerivedIndex(records: DecorationRecord[], intents: Map<stri
     };
   };
 
-  const aspectRollup = (intentPath: string): string[] => {
+  // Triple ids of `intentPath` claimed by a focal `intent`/`intent-file` record
+  // drawn from `pool`. Shared by aspectRollup (semantic pool) and the
+  // structural/semantic channel classifiers (D.29).
+  const claimedAspects = (intentPath: string, pool: DecorationRecord[]): Set<string> => {
     const intent = intents.get(intentPath);
-    if (!intent) return [];
-    const aspectIds = tripleIdsOf(intent);
+    const aspectIds = intent ? tripleIdsOf(intent) : [];
     const claimed = new Set<string>();
-    for (const record of semanticRecords) {
+    for (const record of pool) {
       if (record.intent_path !== intentPath) continue;
       if (record.marker !== "intent" && record.marker !== "intent-file") continue;
       if (record.aspect_ids === null) for (const id of aspectIds) claimed.add(id);
       else for (const id of record.aspect_ids) claimed.add(id);
     }
-    return aspectIds.filter((id) => !claimed.has(id));
+    return claimed;
+  };
+
+  const aspectRollup = (intentPath: string): string[] => {
+    const intent = intents.get(intentPath);
+    if (!intent) return [];
+    const claimed = claimedAspects(intentPath, semanticRecords);
+    return tripleIdsOf(intent).filter((id) => !claimed.has(id));
+  };
+
+  const structuralRecords = records.filter((r) => r.verify === "structural");
+  const structuralAspects = (intentPath: string): string[] => {
+    const intent = intents.get(intentPath);
+    if (!intent) return [];
+    const claimed = claimedAspects(intentPath, structuralRecords);
+    return tripleIdsOf(intent).filter((id) => claimed.has(id));
+  };
+  const semanticAspects = (intentPath: string): string[] => {
+    const intent = intents.get(intentPath);
+    if (!intent) return [];
+    const claimed = claimedAspects(intentPath, semanticRecords);
+    return tripleIdsOf(intent).filter((id) => claimed.has(id));
   };
 
   const testDiscovery = (intentPath: string): DecorationRecord[] =>
@@ -126,6 +158,8 @@ export function buildDerivedIndex(records: DecorationRecord[], intents: Map<stri
     reverse,
     focalSupport,
     aspectRollup,
+    structuralAspects,
+    semanticAspects,
     testDiscovery,
     testChildrenByLayer,
     isSatisfied,

@@ -114,4 +114,30 @@ describe("D.28 — structural records partitioned from the semantic path", () =>
     expect(idx.records.some((r) => r.verify === "structural")).toBe(true);
     expect(idx.semanticRecords.some((r) => r.verify === "structural")).toBe(false);
   });
+
+  // D.29 — the channel classifiers that route the Verifier.
+  test("structuralAspects reports the triple a structural claimant covers; semanticAspects does not", () => {
+    const idx = buildDerivedIndex([structural("package.json", "config/manifest")], mapOf(mk("config/manifest", ["a"])));
+    expect(idx.structuralAspects("config/manifest")).toEqual(["a"]);
+    expect(idx.semanticAspects("config/manifest")).toEqual([]);
+  });
+
+  test("a mixed intent classifies each triple to its own channel", () => {
+    // structural sidecar covers "cfg"; an inline semantic record covers "code".
+    const semanticCode: DecorationRecord = {
+      file: "src/x.ts",
+      line: 1,
+      scope: "declaration",
+      declaration_name: null,
+      marker: "intent",
+      intent_path: "mixed/i",
+      aspect_ids: ["code"],
+      support_triple: null,
+      ignore_clause: null,
+    };
+    const structuralCfg = { ...structural("package.json", "mixed/i"), aspect_ids: ["cfg"] };
+    const idx = buildDerivedIndex([structuralCfg, semanticCode], mapOf(mk("mixed/i", ["cfg", "code"])));
+    expect(idx.structuralAspects("mixed/i")).toEqual(["cfg"]);
+    expect(idx.semanticAspects("mixed/i")).toEqual(["code"]);
+  });
 });

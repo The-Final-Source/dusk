@@ -28,6 +28,8 @@ import {
   DEFAULT_VERIFIER_SYSTEM_PROMPT,
   claudeCodeAvailable,
   claudeCodeModelClient,
+  mergeStructuralSemantic,
+  structuralVerdict,
   verifyIntent,
 } from "@dusk/runtime-verifier";
 import type { VitestRunner } from "@dusk/runtime-test-runner";
@@ -362,6 +364,23 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
         systemPrompt: DEFAULT_VERIFIER_SYSTEM_PROMPT,
         onUsage: vctx.reportUsage,
       });
+    // Structural triples (per-file `<file>.intent` sidecars, `verify: "structural"`)
+    // are satisfied MECHANICALLY — anchor resolves + coverage holds — never by the
+    // semantic LLM (RFC App. D.29). The index partitions them out of the semantic
+    // evidence set, so the LLM path would fail them forever and loop a config
+    // intent until budget. Route by channel: all-structural → zero-LLM verdict
+    // (converges iteration 1); mixed → run both and merge per triple_id.
+    const structuralIds = ctx.index.structuralAspects(vctx.intentPath);
+    if (structuralIds.length > 0) {
+      const semanticIds = ctx.index.semanticAspects(vctx.intentPath);
+      const structural = structuralVerdict(vctx.intentPath, { index: ctx.index, intents: ctx.intents, readFile: ctx.readFile });
+      if (semanticIds.length === 0) return structural.success ? structural.value : structural.error;
+      if (!structural.success) return structural.error;
+      let semantic = await verifyOnce();
+      if (!semantic.success && semantic.error.kind === "verifier_model_call_failed") semantic = await verifyOnce();
+      if (!semantic.success) return semantic.error;
+      return mergeStructuralSemantic(structural.value, semantic.value, new Set(structuralIds), new Set(semanticIds));
+    }
     let result = await verifyOnce();
     // A non-JSON model response is recoverable noise (one retry, like transport)
     // — it must not kill a long pipeline run as "no verdict".
