@@ -32,9 +32,14 @@ Each sidecar claim SHALL anchor to a target location by **JSON Pointer** (RFC 69
 
 ### Requirement: The `DecorationRecord` shape carries the anchor and a verification class additively
 
-`DecorationRecord` SHALL gain `anchor: string | null` (the JSON Pointer; `null` for inline/directory records), a `region` scope member, and a `verify: "structural" | "semantic"` discriminator (default `semantic`; sidecar records `structural`). The additions SHALL be additive with defaults so existing parsers and records are unchanged. (Design D8.)
+`DecorationRecord` SHALL gain `anchor: string | null` (the JSON Pointer; `null` for inline/directory records), a `region` scope member, and a `verify: "structural" | "semantic"` discriminator (default `semantic`; sidecar records `structural`). The additions SHALL be additive with defaults so existing parsers and records are unchanged. The `region` scope member SHALL be **wired, not speculative**: the per-file sidecar parser emits `scope: "region"` for a per-key claim (a non-root JSON Pointer) and `scope: "file"` for a whole-file claim (root pointer `""`, marker `intent-file`). (Design D8.)
 
 #### Scenario: Existing inline records are unaffected
 
 - **WHEN** an inline `// @intent` record is produced after the schema change
 - **THEN** it has `anchor: null` and `verify: "semantic"` and behaves exactly as before
+
+#### Scenario: Sidecar claims carry the right scope
+
+- **WHEN** the sidecar parser emits a record for a per-key claim (non-root pointer) and for a whole-file claim (root pointer `""`)
+- **THEN** the per-key record has `scope: "region"` and the whole-file record has `scope: "file"`
