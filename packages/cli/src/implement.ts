@@ -182,12 +182,20 @@ function parseArgs(rest: string[]): { request?: string; resume?: string; scopeHi
 const ENGINEER_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep"];
 const IN_FLIGHT = new Set(["short_cycle", "long_cycle", "test_execution", "committing", "paused_livelock"]);
 
-const ENGINEER_FILE_INSTRUCTION =
+export const ENGINEER_FILE_INSTRUCTION =
   "\n\n## File-write mode\n\nApply the implementation by EDITING the files in the current working directory directly " +
   "(you have Read/Write/Edit/Glob/Grep tools). Honor the decoration rules: every exported declaration and every " +
   "top-level statement inside a decorated exported function must carry its `// @intent <path> [aspects]` decoration " +
-  "(intents live under .ia/intents/). Keep the change minimal and focused on the named intent. When you are done, " +
-  "reply with a 1-2 sentence summary of what you changed.";
+  "(intents live under .ia/intents/). Keep the change minimal and focused on the named intent.\n\n" +
+  "## Comment-less files (decoration coverage)\n\nDecoration coverage is universal: EVERY file you write that is not " +
+  "ignored must be linked to intents, or the gate will block. Files that CAN hold comments (`.ts`/`.tsx`) carry inline " +
+  "`// @intent` as above. Files that CANNOT hold comments — JSON especially (`package.json`, `tsconfig.json`, any " +
+  "`.json`) — must instead get a colocated SIDECAR named `<filename.ext>.intent` (e.g. write `package.json.intent` " +
+  "beside `package.json`). The sidecar is JSON: `{ \"schema_version\": 1, \"target\": \"<the file>\", \"claims\": " +
+  "[{ \"anchor\": \"<JSON Pointer, or \\\"\\\" for the whole file>\", \"marker\": \"intent\"|\"intent-file\", " +
+  "\"intent_path\": \"<intent>\" }], \"ignore\": [] }`. Use the whole-file anchor `\"\"` with marker `intent-file` " +
+  "unless distinct keys serve distinct intents. NEVER put a comment inside a JSON file; NEVER leave a written " +
+  "comment-less file without its sidecar. When you are done, reply with a 1-2 sentence summary of what you changed.";
 
 /**
  * Run a headless file-capable Claude Code agent and return its final text.

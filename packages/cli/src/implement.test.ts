@@ -4,7 +4,19 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { gateWorktreeEdits } from "./implement.js";
+import { ENGINEER_FILE_INSTRUCTION, gateWorktreeEdits } from "./implement.js";
+
+describe("P6 — the engineer is taught to cover comment-less files with sidecars (udc/D.28)", () => {
+  test("ENGINEER_FILE_INSTRUCTION teaches the <file>.intent sidecar for comment-less files", () => {
+    // Without this, the engineer writes package.json with no sidecar and the
+    // post-hoc gate's coverage tiling hard-blocks it (uncovered comment-less
+    // target), thrashing the greenfield build.
+    expect(ENGINEER_FILE_INSTRUCTION).toContain(".intent");
+    expect(ENGINEER_FILE_INSTRUCTION.toLowerCase()).toContain("sidecar");
+    expect(ENGINEER_FILE_INSTRUCTION).toContain("package.json");
+    expect(ENGINEER_FILE_INSTRUCTION).toContain("schema_version");
+  });
+});
 
 // The headless engineer's enforcement boundary (gateWorktreeEdits) is the
 // system's PRIMARY code-writing gate, yet it had ZERO direct coverage — only a
