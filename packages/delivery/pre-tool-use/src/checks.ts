@@ -1,4 +1,6 @@
-import type { Intent } from "@dusk/core-schema";
+import { basename } from "node:path";
+
+import { SidecarBodySchema, type Intent } from "@dusk/core-schema";
 import { parseDecorations, parseDotIntent, type DecorationRecord } from "@dusk/core-decoration";
 import { findIllegalNegation } from "@dusk/core-parser";
 
@@ -126,7 +128,11 @@ function recordGroups(records: DecorationRecord[]): DecorationRecord[][] {
 }
 
 export function runChecks(content: string, file: string, ctx: ProjectContext): { rejections: Rejection[]; warnings: GateWarning[] } {
-  if (file.endsWith(".intent")) return runDotIntentChecks(content, file, ctx);
+  if (file.endsWith(".intent")) {
+    // Dispatch by basename (design D2): exactly `.intent` → directory-scope;
+    // `<stem>.intent` → per-file sidecar.
+    return basename(file) === ".intent" ? runDotIntentChecks(content, file, ctx) : runFileSidecarChecks(content, file, ctx);
+  }
 
   const lines = content.split(/\r?\n/);
   const records = parseDecorations(content, file);
@@ -232,5 +238,60 @@ function runDotIntentChecks(content: string, file: string, ctx: ProjectContext):
       rejections.push({ kind: "unresolved_intent_path", file, line: record.line, message: `unresolved intent path "${record.intent_path}"`, details: { reference: record.intent_path } });
     }
   }
+  return { rejections, warnings };
+}
+
+/**
+ * Per-write single-file validity for a `<stem>.intent` sidecar (design D7). This
+ * is the LIVE-hook / phase-1 check: it does NOT resolve anchors against the
+ * target or run cross-file coverage tiling (the target may not be co-present in a
+ * two-step edit — that runs post-hoc in `gateWorktreeEdits`). It checks: the
+ * sidecar parses; its declared `target` equals its stem; per-claim intent
+ * paths/aspects resolve (reusing the existing checks); and ignore entries use the
+ * `@intent-ignore` because predicate vocabulary.
+ */
+function runFileSidecarChecks(content: string, file: string, ctx: ProjectContext): { rejections: Rejection[]; warnings: GateWarning[] } {
+  const rejections: Rejection[] = [];
+  const warnings: GateWarning[] = [];
+
+  let body;
+  try {
+    const parsed = SidecarBodySchema.safeParse(JSON.parse(content));
+    if (!parsed.success) {
+      rejections.push({ kind: "malformed_sidecar", file, line: 1, message: `invalid sidecar: ${parsed.error.issues[0]?.message ?? "shape mismatch"}` });
+      return { rejections, warnings };
+    }
+    body = parsed.data;
+  } catch (err) {
+    rejections.push({ kind: "malformed_sidecar", file, line: 1, message: `sidecar is not valid JSON: ${(err as Error).message}` });
+    return { rejections, warnings };
+  }
+
+  const stem = basename(file).slice(0, -".intent".length);
+  if (body.target !== stem) {
+    rejections.push({ kind: "sidecar_target_missing", file, line: 1, message: `sidecar declares target "${body.target}" but sits beside "${stem}"`, details: { declared: body.target, stem } });
+  }
+
+  for (const claim of body.claims) {
+    if (!ctx.graph.has(claim.intent_path)) {
+      rejections.push({ kind: "unresolved_intent_path", file, line: 1, message: `unresolved intent path "${claim.intent_path}"`, details: { reference: claim.intent_path } });
+      continue;
+    }
+    const intent = ctx.graph.get(claim.intent_path)!;
+    const tripleIds = new Set(tripleIdsOf(intent));
+    for (const aspect of claim.aspect_ids ?? []) {
+      if (!tripleIds.has(aspect)) {
+        rejections.push({ kind: "unresolved_aspect_id", file, line: 1, message: `aspect "${aspect}" does not resolve to a triple in "${claim.intent_path}"`, details: { intent_path: claim.intent_path, aspect } });
+      }
+    }
+  }
+
+  for (const ig of body.ignore) {
+    const predicate = ig.because[1];
+    if (!IGNORE_PREDICATES.has(predicate)) {
+      rejections.push({ kind: "invalid_ignore_predicate", file, line: 1, message: `invalid ignore predicate "${predicate}"`, details: { predicate } });
+    }
+  }
+
   return { rejections, warnings };
 }

@@ -5,7 +5,7 @@ import { createTempRepo, type TempRepo } from "@dusk/test-harness";
 
 import { loadProject, type ProjectContext } from "./loadProject.js";
 import { runChecks } from "./checks.js";
-import type { RejectionKind } from "./rejections.js";
+import { REJECTION_KINDS, type RejectionKind } from "./rejections.js";
 
 let repo: TempRepo;
 let ctx: ProjectContext;
@@ -64,6 +64,61 @@ describe("check 10 — matrix-predicate negation in a support triple (P1-T11)", 
   test("the affirmative form is accepted", () => {
     const content = `// @intent api/x [a]\nexport function f() {\n  // @intent-support api/x [a] ["the call", "delivers", "the event"]\n  const v = go();\n}\n`;
     expect(runChecks(content, FILE(), ctx).rejections).toEqual([]);
+  });
+});
+
+// D.28 §5.2 — per-write single-file sidecar validity (no cross-file tiling).
+describe("PreToolUse sidecar checks (D.28 — per-file `<stem>.intent`)", () => {
+  const SIDECAR = (): string => join(repo.dir, "package.json.intent");
+  const body = (target: string, claims: unknown[], ignore: unknown[] = []): string =>
+    JSON.stringify({ schema_version: 1, target, claims, ignore });
+
+  test("a valid sidecar produces no rejections", () => {
+    const content = body("package.json", [{ anchor: "", marker: "intent-file", intent_path: "api/x" }]);
+    expect(runChecks(content, SIDECAR(), ctx).rejections).toEqual([]);
+  });
+
+  test("non-JSON content → malformed_sidecar", () => {
+    expect(runChecks("@intent api/x\n", SIDECAR(), ctx).rejections.map((r) => r.kind)).toContain("malformed_sidecar");
+  });
+
+  test("an unknown marker → malformed_sidecar (Zod shape)", () => {
+    const content = body("package.json", [{ anchor: "", marker: "bogus", intent_path: "api/x" }]);
+    expect(runChecks(content, SIDECAR(), ctx).rejections.map((r) => r.kind)).toContain("malformed_sidecar");
+  });
+
+  test("target field not matching the stem → sidecar_target_missing", () => {
+    const content = body("other.json", [{ anchor: "", marker: "intent-file", intent_path: "api/x" }]);
+    expect(runChecks(content, SIDECAR(), ctx).rejections.map((r) => r.kind)).toContain("sidecar_target_missing");
+  });
+
+  test("an unresolved intent path / aspect reuses the existing checks", () => {
+    expect(runChecks(body("package.json", [{ anchor: "", marker: "intent-file", intent_path: "api/nope" }]), SIDECAR(), ctx).rejections.map((r) => r.kind)).toContain("unresolved_intent_path");
+    expect(runChecks(body("package.json", [{ anchor: "", marker: "intent-file", intent_path: "api/x", aspect_ids: ["zzz"] }]), SIDECAR(), ctx).rejections.map((r) => r.kind)).toContain("unresolved_aspect_id");
+  });
+
+  test("an invalid ignore predicate → invalid_ignore_predicate", () => {
+    const content = body("package.json", [{ anchor: "", marker: "intent-file", intent_path: "api/x" }], [{ anchor: "/x", because: ["t", "bogus-pred", "g"], reason: "x" }]);
+    expect(runChecks(content, SIDECAR(), ctx).rejections.map((r) => r.kind)).toContain("invalid_ignore_predicate");
+  });
+
+  test("the directory `.intent` is still directory-scope (not a sidecar)", () => {
+    const dotIntent = join(repo.dir, "src/.intent");
+    expect(runChecks("@intent api/x\n", dotIntent, ctx).rejections).toEqual([]);
+  });
+});
+
+// D.28 §5.1 — the rejection surface grows by exactly the 5 coverage kinds.
+describe("REJECTION_KINDS (D.28 — 17 mechanical + fail-safe)", () => {
+  const D28_KINDS = ["malformed_sidecar", "sidecar_target_missing", "unresolved_anchor", "overlapping_anchors", "uncovered_target_lines"] as const;
+
+  test("has 18 entries (17 mechanical + hook_internal_error)", () => {
+    expect(REJECTION_KINDS).toHaveLength(18);
+  });
+
+  test("includes all 5 D.28 coverage kinds, none colliding", () => {
+    for (const kind of D28_KINDS) expect(REJECTION_KINDS).toContain(kind);
+    expect(new Set(REJECTION_KINDS).size).toBe(REJECTION_KINDS.length);
   });
 });
 

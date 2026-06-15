@@ -41,18 +41,73 @@ describe("gateWorktreeEdits — the headless engineer's post-hoc gate", () => {
     expect(result.rejection).toContain("src/dirty.ts");
   });
 
-  test("an undecorated .intent write IS blocked (A5 — .intent is in the gated set, not just .ts)", () => {
+  test("an undecorated directory .intent write IS blocked (A5 — .intent is in the gated set, not just .ts)", () => {
     // Pre-fix, the porcelain filter scanned only .ts/.tsx, so a malformed .intent
     // the engineer wrote slipped past the post-hoc gate even though runGate gates it.
-    writeFileSync(join(dir, "src/scope.intent"), "@intent api/does-not-exist [a]\n");
+    // D.28 (D2): a file named exactly `.intent` is the directory-scope sidecar.
+    writeFileSync(join(dir, "src/.intent"), "@intent api/does-not-exist [a]\n");
     const result = gateWorktreeEdits(dir);
     expect(result.blocked).toBe(true);
     expect(result.rejection).toContain("unresolved_intent_path");
-    expect(result.rejection).toContain("scope.intent");
+    expect(result.rejection).toContain(".intent");
   });
 
   test("a .d.ts declaration write is NOT gated (generated, not decoratable)", () => {
     writeFileSync(join(dir, "src/types.d.ts"), "export declare const v: number;\n");
+    expect(gateWorktreeEdits(dir)).toEqual({ blocked: false });
+  });
+
+  // D.28 §5.3 — post-hoc comment-less coverage tiling (pair-state).
+  const intentX = "// @intent api/x [a]\n";
+  const sidecarFor = (target: string, claims: unknown[], ignore: unknown[] = []): string =>
+    JSON.stringify({ schema_version: 1, target, claims, ignore });
+
+  test("a comment-less package.json with a full-coverage sidecar passes", () => {
+    writeFileSync(join(dir, "src/keep.ts"), intentX);
+    writeFileSync(join(dir, "package.json"), '{\n  "name": "demo",\n  "version": "1.0.0"\n}\n');
+    writeFileSync(join(dir, "package.json.intent"), sidecarFor("package.json", [{ anchor: "", marker: "intent-file", intent_path: "api/x" }]));
+    expect(gateWorktreeEdits(dir)).toEqual({ blocked: false });
+  });
+
+  test("an uncovered non-trivial line hard-blocks, citing the TARGET file:line (board M4)", () => {
+    writeFileSync(join(dir, "package.json"), '{\n  "name": "demo",\n  "version": "1.0.0"\n}\n');
+    // Only /name claimed → "version" (line 3) is uncovered.
+    writeFileSync(join(dir, "package.json.intent"), sidecarFor("package.json", [{ anchor: "/name", marker: "intent", intent_path: "api/x" }]));
+    const result = gateWorktreeEdits(dir);
+    expect(result.blocked).toBe(true);
+    expect(result.rejection).toContain("uncovered_target_lines");
+    expect(result.rejection).toContain("package.json:3"); // the TARGET line, not the sidecar
+    expect(result.rejection).not.toContain("package.json.intent:");
+  });
+
+  test("a comment-less target with NO sidecar is fully uncovered and blocks", () => {
+    writeFileSync(join(dir, "tsconfig.json"), '{\n  "compilerOptions": {}\n}\n');
+    const result = gateWorktreeEdits(dir);
+    expect(result.blocked).toBe(true);
+    expect(result.rejection).toContain("uncovered_target_lines");
+    expect(result.rejection).toContain("tsconfig.json");
+  });
+
+  test("a dangling sidecar anchor blocks with unresolved_anchor", () => {
+    writeFileSync(join(dir, "package.json"), '{\n  "name": "demo"\n}\n');
+    writeFileSync(join(dir, "package.json.intent"), sidecarFor("package.json", [{ anchor: "/missing", marker: "intent", intent_path: "api/x" }]));
+    const result = gateWorktreeEdits(dir);
+    expect(result.blocked).toBe(true);
+    expect(result.rejection).toContain("unresolved_anchor");
+  });
+
+  test("an ignored comment-less file (decoration.ignore glob) is not coverage-checked", () => {
+    writeFileSync(join(dir, "dusk.config.yml"), "version: 1\ndecoration:\n  ignore:\n    - generated/**\n");
+    mkdirSync(join(dir, "generated"), { recursive: true });
+    writeFileSync(join(dir, "generated/schema.json"), '{\n  "x": 1\n}\n');
+    writeFileSync(join(dir, "src/keep.ts"), intentX);
+    expect(gateWorktreeEdits(dir)).toEqual({ blocked: false });
+  });
+
+  test("a built-in ignored file (node_modules) is not coverage-checked", () => {
+    mkdirSync(join(dir, "node_modules/dep"), { recursive: true });
+    writeFileSync(join(dir, "node_modules/dep/package.json"), '{\n  "name": "dep"\n}\n');
+    writeFileSync(join(dir, "src/keep.ts"), intentX);
     expect(gateWorktreeEdits(dir)).toEqual({ blocked: false });
   });
 

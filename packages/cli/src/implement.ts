@@ -1,11 +1,20 @@
 import { execFileSync, spawn as spawnChild } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, symlinkSync } from "node:fs";
-import { join, relative } from "node:path";
+import { basename, dirname, join, relative } from "node:path";
 
 import { duskError, verifierEvidenceMaxLines, type SpawnOutcome, type VerifierFactory } from "@dusk/core-schema";
+import {
+  computeSidecarCoverage,
+  createIgnoreMatcher,
+  loadIgnoreGlobs,
+  nonTrivialLines,
+  parseFileIntentSidecar,
+} from "@dusk/core-decoration";
 import { isGatedFile, runGate } from "@dusk/pre-tool-use";
 import type { GateResult } from "@dusk/runtime-short-cycle";
 import { loadProjectContext } from "@dusk/mcp-server";
+
+import { loadConfig } from "./project.js";
 import {
   getActiveRun,
   resumeFrozenBead,
@@ -72,8 +81,12 @@ export function gateWorktreeEdits(worktreeRoot: string): GateResult {
     return { blocked: false };
   }
   // -z entries are `XY <path>` terminated by NUL (status = 2 cols + a space).
-  const changed = raw.split("\0").filter((e) => e.length > 3).map((e) => e.slice(3)).filter(isGatedFile);
-  for (const rel of changed) {
+  const changedAll = raw.split("\0").filter((e) => e.length > 3).map((e) => e.slice(3));
+  const isIgnored = createIgnoreMatcher(loadIgnoreGlobs(loadConfig(worktreeRoot)));
+  const changed = changedAll.filter((rel) => !isIgnored(rel)); // the ignore SSoT — never gate/coverage-check an ignored file
+
+  // Phase 1 — per-file structural validity (gated files only), as today.
+  for (const rel of changed.filter(isGatedFile)) {
     const abs = join(worktreeRoot, rel);
     if (!existsSync(abs)) continue;
     const out = runGate({ tool: "Write", args: { file_path: abs, content: readFileSync(abs, "utf8") } });
@@ -81,6 +94,69 @@ export function gateWorktreeEdits(worktreeRoot: string): GateResult {
       return { blocked: true, rejection: `gate: ${out.structured_rejection.kind} at ${rel}:${out.structured_rejection.line} — ${out.reason}` };
     }
   }
+
+  // Phase 2 — whole-worktree coverage tiling over the settled pair-state, where
+  // both a target and its sidecar are present and write-order is irrelevant
+  // (design D7; the per-write hook cannot express this cross-file check).
+  return tileWorktreeCoverage(worktreeRoot, changed);
+}
+
+/** Is `rel` a per-file sidecar (`<stem>.intent`, not the directory `.intent`)? */
+const isSidecar = (rel: string): boolean => rel.endsWith(".intent") && basename(rel) !== ".intent";
+/** A comment-less, structured (JSON/JSONC) target that requires sidecar coverage. */
+const isCommentlessTarget = (rel: string): boolean => /\.jsonc?$/.test(rel);
+
+/**
+ * Phase 2 of the post-hoc gate: pair each non-ignored target with its sidecar
+ * and compute `uncovered = non-trivial-lines − covered − ignored` over the
+ * settled worktree. Findings name the TARGET's `file:line` (board M4), never the
+ * sidecar's. A changed comment-less target with no sidecar is fully uncovered.
+ */
+function tileWorktreeCoverage(worktreeRoot: string, changed: string[]): GateResult {
+  const block = (kind: string, rel: string, line: number, reason: string): GateResult => ({
+    blocked: true,
+    rejection: `gate: ${kind} at ${rel}:${line} — ${reason}`,
+  });
+  const handled = new Set<string>();
+
+  for (const sidecarRel of changed.filter(isSidecar)) {
+    const sidecarAbs = join(worktreeRoot, sidecarRel);
+    if (!existsSync(sidecarAbs)) continue; // deleted in the settled state
+    const targetRel = join(dirname(sidecarRel), basename(sidecarRel).slice(0, -".intent".length));
+    handled.add(targetRel);
+    const targetAbs = join(worktreeRoot, targetRel);
+    if (!existsSync(targetAbs)) {
+      return block("sidecar_target_missing", sidecarRel, 1, `target "${targetRel}" does not exist beside the sidecar`);
+    }
+    const targetSource = readFileSync(targetAbs, "utf8");
+    const parse = parseFileIntentSidecar(readFileSync(sidecarAbs, "utf8"), targetSource, sidecarRel, targetRel);
+    const malformed = parse.findings.find((f) => f.kind === "malformed_sidecar");
+    if (malformed) return block("malformed_sidecar", sidecarRel, 1, malformed.message);
+    const dangling = parse.findings.find((f) => f.kind === "unresolved_anchor");
+    if (dangling) return block("unresolved_anchor", sidecarRel, 1, `pointer "${dangling.anchor}" does not resolve against ${targetRel}`);
+
+    const cov = computeSidecarCoverage(targetSource, parse.claimSpans, parse.ignoreSpans);
+    if (cov.overlaps.length > 0) {
+      const { a, b } = cov.overlaps[0];
+      return block("overlapping_anchors", targetRel, 1, `claims "${a}" and "${b}" resolve to overlapping spans`);
+    }
+    if (cov.uncoveredLines.length > 0) {
+      return block("uncovered_target_lines", targetRel, cov.uncoveredLines[0], `${cov.uncoveredLines.length} non-trivial line(s) covered by no claim or @intent-ignore`);
+    }
+  }
+
+  // A changed comment-less target with NO sidecar is entirely uncovered.
+  for (const rel of changed) {
+    if (isSidecar(rel) || !isCommentlessTarget(rel) || handled.has(rel)) continue;
+    const abs = join(worktreeRoot, rel);
+    if (!existsSync(abs)) continue;
+    const required = nonTrivialLines(readFileSync(abs, "utf8"));
+    if (required.size > 0) {
+      const first = Math.min(...required);
+      return block("uncovered_target_lines", rel, first, `comment-less target has no ${basename(rel)}.intent sidecar; ${required.size} non-trivial line(s) uncovered`);
+    }
+  }
+
   return { blocked: false };
 }
 

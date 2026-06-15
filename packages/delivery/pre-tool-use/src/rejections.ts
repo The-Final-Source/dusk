@@ -1,5 +1,12 @@
-/** The 12 mechanical rejection kinds (RFC App. A.8) plus the fail-safe kind. */
+/**
+ * The 17 mechanical rejection kinds (12 from RFC App. A.8 + 5 from D.28
+ * universal-decoration-coverage) plus the fail-safe kind — 18 entries. The 5
+ * D.28 coverage kinds are gate-only and NOT part of the v1 10-check→12-kind
+ * matrix, so the v1 count of 12 still stands (App. A.8 carries a v1.x note
+ * pointing here).
+ */
 export const REJECTION_KINDS = [
+  // 12 from RFC App. A.8
   "missing_decorator",
   "missing_statement_decorator",
   "unresolved_intent_path",
@@ -12,6 +19,13 @@ export const REJECTION_KINDS = [
   "malformed_support_triple",
   "focal_and_support_for_same_intent",
   "non_test_path_on_intent_test",
+  // 5 from D.28 universal-decoration-coverage (comment-less sidecar coverage)
+  "malformed_sidecar",
+  "sidecar_target_missing",
+  "unresolved_anchor",
+  "overlapping_anchors",
+  "uncovered_target_lines",
+  // fail-safe
   "hook_internal_error",
 ] as const;
 export type RejectionKind = (typeof REJECTION_KINDS)[number];
