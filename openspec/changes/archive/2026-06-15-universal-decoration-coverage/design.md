@@ -89,25 +89,4 @@ Decided unanimously; the operator's whole-file instinct confirmed and sharpened.
 
 ## Review round — arch board (post-integration audit)
 
-> *Archive-time cleanup (board round 3): collapse this whole section to a one-line "Converged after 3 board rounds; rationale in D1–D9" when syncing to `openspec/specs/` — it is review provenance, not contract, and should not rot into the canonical spec.*
-
-A four-reviewer board (Lead Architect, Lead Backend Engineer, Lead AI Engineer, Fowler) audited this change against the live code and the RFC weave. Verdict: **APPROVE-WITH-CHANGES (4/4)** — architecture sound, over-engineering refusals held. Folded in here and in `tasks.md`/specs:
-
-- **M1 (AI Eng, top finding):** semantic exclusion re-scoped from the prompt to the **index boundary** — structural records partitioned out of `focalSupport`/`aspectRollup`/`isSatisfied`, with a non-contamination-of-*satisfaction* test (D6; tasks §7; verifier-procedure spec).
-- **M2 (Backend):** the ignore SSoT subsumes **all three** hardcoded skip sets (`context.ts`, `project.ts`, `doctorStaticAnalysis.ts`), not just the doctor's (D5; tasks §1.2/§4.1; decoration-coverage + static-analysis-doctor specs).
-- **M3 (AI Eng):** mechanical "satisfaction" clarified as the coverage pass (gate/doctor report), not an unbuilt per-record verdict object (D6; verifier-procedure spec).
-- **M4 (Fowler):** keystone test is **red-first** (instruction, not asserted fact) and the coverage finding must name the **target's** file:line — both now pinned with tests (tasks §1.1, §5.3; decoration-coverage + pretooluse-gate specs).
-- **M5 (Fowler):** the JSON structural-only ("non-trivial") predicate is defined explicitly (not "the spirit of `CLOSING_ONLY_RE`") and pinned by a fixture test (D4; tasks §5.3).
-- **S5 (Fowler):** anti-drift stated as a trade (positional-immune, key-sensitive → hard finding), not "strictly stronger" (D3).
-- **S6 (Backend):** the 5 new rejection kinds extend the gate's 12-kind surface → update the `REJECTION_KINDS` count comment and add the App. A.8 enumeration delta (tasks §5.1; RFC App. A.8 noted via D.28).
-- **S7 (Backend):** `gateWorktreeEdits` is a per-file→two-phase **restructure**, not an additive hook (D7; tasks §5.3).
-- **S8 (Fowler):** the reformat test asserts the span resolves to the **correct node**, not merely that the number changed (tasks §3.1; decoration-parser spec).
-- **S2 (AI Eng):** the binding-correctness blind spot recorded as an accepted trade-off (D6; RFC §4.5.4/D.28).
-
-**Round 2** re-audited the round-1 fixes (verdict: APPROVE / 3×APPROVE-WITH-CHANGES). Round 1 closed cleanly except where its own fixes exposed new surface; folded in:
-- **M1-extension (AI Eng):** the semantic-exclusion missed a **fourth** consumer — `antecedent.ts` (the `compose: implies` antecedent gate) reads raw `records` with its own `FOCAL_MARKERS` + `scope:"file"`/`"directory"` predicates. Added to the partition scope (D6; tasks §7; verifier-procedure spec) with a `compose: implies` non-contamination test.
-- **records-contract (AI Eng):** `DerivedIndex.records` pinned to the **full** merged set (structural records stay visible to reverse-index/inspect/doctor — keystone preserved); the semantic/structural split is internal to the four satisfaction-bearing functions; a "structural-record-stays-visible-after-partition" test added (D6; tasks §7).
-- **M3-JSONC (Backend):** the structural-only predicate now treats JSONC comment lines as trivial (else a commented JSONC target is permanently un-coverable), pinned by a JSONC fixture test (D4; decoration-coverage spec; tasks §5.3).
-- **M5-handoff leak (Fowler):** the handoff's surviving "reuse the spirit of `CLOSING_ONLY_RE`" line replaced with the explicit JSON predicate.
-- **S6 (Backend/AI Eng/Fowler):** the App. A.8 delta is now actually written — a v1.x forward-note in App. A.8 + §4.6 (the 5 coverage kinds are gate-only, NOT part of the v1 10-check→12-kind matrix, so the v1 count stays 12); tasks §5.1 pins the count-comment arithmetic (12→17 mechanical, 13→18 array entries).
-- **region wiring (Backend NIT):** per-key claims emit `scope:"region"`, whole-file `scope:"file"` — the member is exercised, not dead (D8).
+Converged after 3 board rounds; rationale in D1–D9.
