@@ -42,6 +42,9 @@ context: |
   Phase order: 1 Substrate → 2 Runtime+Read-Path Verification → 3 Implementation Pipeline →
   4 Intent Authoring → 5 Validation/Benchmark/Dogfood. (Phase 2's two halves, and Phase 4 alongside
   the back half of Phase 3, may be authored in parallel per the plan's sequencing note.)
+  Post-v1 (v1.x): 6 Greenfield POC — scaffolded ONLY after Phase 5 archives and v1 is landed; it
+  CONSUMES the finished v1 runtime (reshapes nothing) and adds no rows to the commitment→phase
+  coverage matrix.
 
   ## Tech stack
   - Language: TypeScript (strict, ES2022, ESM throughout). Package namespace: @dusk/*.
