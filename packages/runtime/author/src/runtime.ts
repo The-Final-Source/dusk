@@ -202,13 +202,19 @@ export function createAuthorRuntime(deps: AuthorRuntimeDeps): AuthorRuntime {
         next = applyGeneration(next, practice.value);
         const content = practice.value.practiceProposal ? `${practice.value.practiceProposal}\n\n${practice.value.question}` : practice.value.question;
         next = appendAuthorTurn(next, content, 3);
-        return ok({ state: next, stage: 3, next_question: practice.value.question });
+        // Return the full Stage-3 content (proposal + question) — not the bare
+        // question — so the client sees the proposal it must choose against. The
+        // proposal is already generated, parsed, and persisted; dropping it here
+        // left the A/B/C prompt with nothing to refer to.
+        return ok({ state: next, stage: 3, next_question: content });
       }
 
       const content =
         outcome.stage === 3 && gen.value.practiceProposal ? `${gen.value.practiceProposal}\n\n${gen.value.question}` : gen.value.question;
       next = appendAuthorTurn(next, content, outcome.stage);
-      question = gen.value.question;
+      // Surface the full stored content to the client (the Stage-3 proposal +
+      // question), not the bare question — same value that was just persisted.
+      question = content;
     } else {
       question = renderQuestion(outcome.question, next);
       next = appendAuthorTurn(next, question, outcome.stage);
