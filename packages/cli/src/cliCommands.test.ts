@@ -69,3 +69,16 @@ describe("7.5 — every new command supports --help", () => {
     expect(out).toContain(`dusk ${command}`);
   });
 });
+
+describe("P6-T1 §1.1 — dusk implement --help documents the working flags", () => {
+  test("the --scope and --base-ref flags appear in the implement help flag list", () => {
+    const out = execFileSync("node", [CLI, "implement", "--help"], { cwd: repo.dir }).toString();
+    expect(out).toContain("dusk implement");
+    // Both flags are parsed by runImplementCli (implement.ts) but were previously
+    // omitted from the help flag list — the existing dusk-cli-substrate "prints a
+    // flag list" requirement mandates they appear.
+    expect(out).toContain("--scope");
+    expect(out).toContain("--base-ref");
+    expect(out).toContain("--resume");
+  });
+});
