@@ -22,7 +22,13 @@ This change delivers **exactly Phase 6 of the v9 implementation plan** (`docs/rf
 
 ### Modified Capabilities
 
-None — Phase 6 consumes the v1 runtime and changes no v1 spec-level behavior. Two implementation-level corrections happen as tasks, **not** spec deltas: (1) surfacing the existing `dusk implement --scope <intent,..>` and `--base-ref <ref>` flags in `dusk implement --help` — these flags work but are omitted from the help text, which the existing `dusk-cli-substrate` requirement *already* mandates ("`dusk implement --help` … prints … a flag list"), so this is a bug fix against an existing requirement, not a new one; and (2) any tightly-scoped robustness fix the greenfield load genuinely surfaces — handled as a spec-delta'd capability change against the affected v1 capability *only if* behavior was mis-specified (the design's D11 policy), distinct from this change's deliverable scope.
+The greenfield/external-repo load surfaced three tightly-scoped robustness fixes that change v1 spec-level behavior — handled as D11 support work with living-spec deltas (the design's §6.5 / D11 policy), distinct from this change's deliverable scope:
+
+- `author-five-stage-flow`: **ADDED** — Stage-2 gains a *foundation-gap* detector. The runtime supplies the Author a deterministic `foundation` signal (intent census + `empty_tree`); when a behavior intent presupposes absent foundation (project/stack, bootstrap, persistence), the Author steers foundation-first authoring rather than silently drafting it. A dialog responsibility, no pipeline special-case. (RFC App. D.24/D.25.)
+- `worktree-orchestration`: **MODIFIED** — worktree creation uses the session snapshot's resolved merge-base SHA and **requires** an explicit `baseRef` (fail-loud), with no hardcoded `origin/main` default (absent in a standalone repo). (RFC App. D.27.)
+- `session-snapshot-index`: **MODIFIED** — the default base ref resolves through `origin/main → main → HEAD`; an explicit `--base-ref` stays strict. (RFC App. D.27.)
+
+One additional implementation-level correction happens as a task, **not** a spec delta: surfacing the existing `dusk implement --scope`/`--base-ref` flags in `dusk implement --help` — a bug fix against the existing `dusk-cli-substrate` requirement ("`dusk implement --help` … prints … a flag list"), not a new requirement. (The Engineer salvage-on-overrun fix, App. D.26, is implementation robustness against the existing `short-cycle` iteration contract — it changes no requirement, so no delta.)
 
 ## Impact
 
