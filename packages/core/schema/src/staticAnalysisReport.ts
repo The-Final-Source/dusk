@@ -12,6 +12,9 @@ export const STATIC_FINDING_CLASSES = [
   "s_not_subset_d",
   "undecorated_callee",
   "conflicts_co_decoration",
+  // D.28 — comment-less coverage on the mechanical channel (off the write path).
+  "uncovered_target_lines",
+  "unresolved_anchor",
 ] as const;
 export const StaticFindingClassSchema = z.enum(STATIC_FINDING_CLASSES);
 export type StaticFindingClass = z.infer<typeof StaticFindingClassSchema>;

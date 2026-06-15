@@ -66,3 +66,39 @@ describe("dusk doctor --static-analysis produces the structured report", () => {
     expect(Object.keys(result.report!).sort()).toEqual(["density_baseline", "findings", "generated_at", "mode", "schema_version"]);
   });
 });
+
+// D.28 §6 — comment-less coverage on the mechanical channel.
+describe("dusk doctor --static-analysis reports comment-less coverage", () => {
+  const sidecar = (target: string, claims: unknown[]): string => JSON.stringify({ schema_version: 1, target, claims });
+
+  it("flags an uncovered comment-less line off the write path, at the target file:line", () => {
+    writeFileSync(join(root, "package.json"), '{\n  "name": "demo",\n  "version": "1.0.0"\n}\n', "utf8");
+    writeFileSync(join(root, "package.json.intent"), sidecar("package.json", [{ anchor: "/name", marker: "intent", intent_path: "demo/alpha" }]), "utf8");
+    const result = runStaticAnalysis(root, { now: () => 1_750_000_000_000 });
+    const uncovered = result.report!.findings.find((f) => f.class === "uncovered_target_lines");
+    expect(uncovered).toMatchObject({ file: "package.json", line: 3 });
+  });
+
+  it("a fully-covered comment-less file yields no coverage finding", () => {
+    writeFileSync(join(root, "package.json"), '{\n  "name": "demo"\n}\n', "utf8");
+    writeFileSync(join(root, "package.json.intent"), sidecar("package.json", [{ anchor: "", marker: "intent-file", intent_path: "demo/alpha" }]), "utf8");
+    const result = runStaticAnalysis(root, { now: () => 1_750_000_000_000 });
+    expect(result.report!.findings.some((f) => f.class === "uncovered_target_lines")).toBe(false);
+  });
+
+  it("flags a dangling anchor as unresolved_anchor", () => {
+    writeFileSync(join(root, "package.json"), '{\n  "name": "demo"\n}\n', "utf8");
+    writeFileSync(join(root, "package.json.intent"), sidecar("package.json", [{ anchor: "/missing", marker: "intent", intent_path: "demo/alpha" }]), "utf8");
+    const result = runStaticAnalysis(root, { now: () => 1_750_000_000_000 });
+    expect(result.report!.findings.some((f) => f.class === "unresolved_anchor")).toBe(true);
+  });
+
+  it("skips a file matched by a decoration.ignore glob", () => {
+    writeFileSync(join(root, "dusk.config.yml"), "version: 1\ndecoration:\n  ignore:\n    - vendored/**\n", "utf8");
+    mkdirSync(join(root, "vendored"), { recursive: true });
+    writeFileSync(join(root, "vendored/manifest.json"), '{\n  "name": "x",\n  "v": 2\n}\n', "utf8");
+    writeFileSync(join(root, "vendored/manifest.json.intent"), sidecar("manifest.json", [{ anchor: "/name", marker: "intent", intent_path: "demo/alpha" }]), "utf8");
+    const result = runStaticAnalysis(root, { now: () => 1_750_000_000_000 });
+    expect(result.report!.findings.some((f) => f.class === "uncovered_target_lines")).toBe(false);
+  });
+});
