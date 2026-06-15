@@ -113,7 +113,18 @@ const ENGINEER_FILE_INSTRUCTION =
   "(intents live under .ia/intents/). Keep the change minimal and focused on the named intent. When you are done, " +
   "reply with a 1-2 sentence summary of what you changed.";
 
-/** Run a headless file-capable Claude Code agent and return its final text. */
+/**
+ * Run a headless file-capable Claude Code agent and return its final text.
+ *
+ * The engineer is NOT turn-capped: it does as much real file work in one spawn
+ * as it needs (capping turns would only force the next — memory-less — iteration
+ * to cold-re-derive the worktree). The wall clock is a hang backstop, and on it
+ * we DO NOT kill the run: the partial draft is already on disk in the worktree,
+ * so we resolve with a salvage marker and let the short cycle re-enter and
+ * continue from the existing files. (Greenfield robustness: a budget overrun is
+ * a "continue", never a discard-and-die — and never a transport-classified
+ * cold-retry of the identical too-large task.)
+ */
 function runHeadlessAgent(
   prompt: string,
   cwd: string,
@@ -121,21 +132,33 @@ function runHeadlessAgent(
   timeoutMs: number,
 ): Promise<{ text: string; costUsd: number; promptTokens: number; completionTokens: number }> {
   return new Promise((resolve, reject) => {
+    let settled = false;
     const args = ["--print", "--output-format", "json", "--model", model, "--allowed-tools", ENGINEER_TOOLS.join(","), "--permission-mode", "acceptEdits"];
     const child = spawnChild("claude", args, { cwd, stdio: ["pipe", "pipe", "pipe"] });
     let out = "";
     let errText = "";
     const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
       child.kill("SIGKILL");
-      reject(new Error("claude CLI timed out"));
+      resolve({
+        text: "(engineer wall-clock budget reached; the partial draft is preserved in the worktree — continue from the existing files)",
+        costUsd: 0,
+        promptTokens: 0,
+        completionTokens: 0,
+      });
     }, timeoutMs);
     child.stdout.on("data", (d) => (out += d));
     child.stderr.on("data", (d) => (errText += d));
     child.on("error", (e) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
       reject(e);
     });
     child.on("close", (code) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
       if (code !== 0) return reject(new Error(`claude CLI exited ${code}: ${errText.slice(0, 500)} ${out.slice(0, 500)}`));
       try {
