@@ -210,6 +210,47 @@ export default defineConfig({
 
 Same config for `packages/shared/vitest.config.ts`.
 
+## Parallel execution & integration-test budgets
+
+`turbo test` runs every package's suite concurrently, and each Vitest forks a
+worker pool. Many `@dusk/*` packages are integration/E2E-heavy: their tests
+spawn real **managed** out-of-process dependencies — the filesystem, real
+`git` worktrees, and the app's own CLI binary's wire contract (exit codes,
+stdout, the JSON envelope). Per the classical (non-mockist) school these are
+kept **real** — mocking them would couple tests to implementation and erase the
+behavior under test (you cannot assert a process exit code or on-disk worktree
+reaping against a mock). To keep that real I/O from flaking under parallel load:
+
+- **Bound parallelism to the hardware.** The root `test` script sets
+  `VITEST_MAX_FORKS=2 VITEST_MAX_THREADS=2` (forwarded via turbo
+  `passThroughEnv`) and `turbo test --concurrency=4`, so the box runs roughly
+  one worker per core instead of oversubscribing. Oversubscription **starves**
+  workers — the symptoms are hook timeouts and, tellingly,
+  `[vitest-worker]: Timeout calling "onTaskUpdate"` (the worker can't answer the
+  main thread's RPC even though every test passed).
+- **Budget out-of-process setup like out-of-process tests.** A package whose
+  tests or `beforeEach`/`afterEach` hooks spawn subprocesses sets **both**
+  `testTimeout` and `hookTimeout` to `60_000`. The default `hookTimeout` is 10s,
+  and `git init`/clone in `beforeEach` flakes at that budget under load — a
+  raised `testTimeout` does NOT cover hooks. Pure-unit packages keep the
+  defaults (5s/10s).
+- **Never reach for a mock to fix a flaky integration test.** Bound the
+  environment and budget the timeouts; keep managed dependencies real. A
+  deterministic test under a generous-but-bounded budget still catches a genuine
+  hang while removing false timeouts.
+
+```typescript
+// An integration/E2E-heavy package's vitest.config.ts
+export default defineConfig({
+  test: {
+    environment: "node",
+    include: ["src/**/*.test.ts"],
+    testTimeout: 60_000,
+    hookTimeout: 60_000, // beforeEach git/subprocess setup is out-of-process
+  },
+});
+```
+
 ## How to Debug
 
 - **"Cannot find module" in tests?** Tests import source `.ts` files (Vitest transforms them), not compiled `.js`. But local imports still need `.js` extensions because the project uses ESM.
