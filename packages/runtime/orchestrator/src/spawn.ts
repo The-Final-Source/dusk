@@ -8,6 +8,7 @@ import {
   type SpawnOutcome,
   duskError,
   isDuskError,
+  isModelCallFailure,
 } from "@dusk/core-schema";
 import { materializeMemory, type MemoryScope } from "@dusk/runtime-memory";
 import { appendTraceRotating } from "@dusk/runtime-observability";
@@ -141,20 +142,35 @@ export async function spawnSubAgent(params: SpawnParams, deps: SpawnDeps): Promi
   let completionTokens = 0;
   let costUsd = 0;
 
+  // A model-call/CLI failure (a content/limit-shaped `error_max_turns`, or a
+  // two-death `TransportLegFailure`) is thrown by the wrapped client; it MUST be
+  // SURFACED as a returned failure the short cycle + recovery ladder handle —
+  // never an uncaught fatal crash (RFC App. D.33). The catch is NARROW: only a
+  // classified model-call failure is converted; any other throw (a programming
+  // bug — TypeError, assertion, …) propagates loud, never swallowed into a
+  // benign "model call failed" (the honesty bar — no silent false-recovery).
   if (role === "verifier") {
     let usage: VerifierUsage | undefined;
-    verdict = await deps.verifierFactory!({
-      intentPath: params.intentPath ?? "",
-      aspectId: params.aspectId,
-      sessionId,
-      beadId: params.beadId,
-      iterationNumber: params.iterationNumber,
-      assembledPrompt,
-      input,
-      reportUsage: (u) => {
-        usage = u;
-      },
-    });
+    try {
+      verdict = await deps.verifierFactory!({
+        intentPath: params.intentPath ?? "",
+        aspectId: params.aspectId,
+        sessionId,
+        beadId: params.beadId,
+        iterationNumber: params.iterationNumber,
+        assembledPrompt,
+        input,
+        reportUsage: (u) => {
+          usage = u;
+        },
+      });
+    } catch (e) {
+      if (!isModelCallFailure(e)) throw e;
+      verdict = duskError("verifier_model_call_failed", `the verifier's model call failed: ${String(e)}`, {
+        recoverable: true,
+        ...(params.beadId ? { bead_id: params.beadId } : {}),
+      });
+    }
     if (usage) {
       model = usage.model;
       promptTokens = usage.promptTokens;
@@ -162,7 +178,19 @@ export async function spawnSubAgent(params: SpawnParams, deps: SpawnDeps): Promi
       costUsd = usage.costUsd;
     }
   } else {
-    const result = await deps.taskRunner({ subagentType: subagentType(role), prompt: assembledPrompt, tools: toolScope.tools });
+    let result: TaskResult;
+    try {
+      result = await deps.taskRunner({ subagentType: subagentType(role), prompt: assembledPrompt, tools: toolScope.tools });
+    } catch (e) {
+      if (!isModelCallFailure(e)) throw e;
+      return {
+        success: false,
+        error: duskError("task_tool_call_failed", `the ${role} sub-agent's model call failed: ${String(e)}`, {
+          recoverable: true,
+          ...(params.beadId ? { bead_id: params.beadId } : {}),
+        }),
+      };
+    }
     output = result.output;
     model = result.model ?? model;
     promptTokens = result.promptTokens ?? 0;
