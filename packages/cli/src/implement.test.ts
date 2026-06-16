@@ -1,10 +1,62 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { ENGINEER_FILE_INSTRUCTION, gateWorktreeEdits } from "./implement.js";
+import { DuskConfigSchema, IntentSchema, type Intent } from "@dusk/core-schema";
+import { parseDecorations } from "@dusk/core-decoration";
+import { buildDerivedIndex } from "@dusk/core-index";
+
+import { ENGINEER_FILE_INSTRUCTION, chooseVerifierRoute, gateWorktreeEdits } from "./implement.js";
+
+// D.32 / D1 — the verifier routes test intents to the Stage-1 pre-pass by the
+// AUTHORED suffix, never by the decoration marker. These pin the route decision
+// in isolation (zero-model): the genuine "assert on the route taken".
+describe("chooseVerifierRoute — route by authored suffix, not the marker (D.32/D1)", () => {
+  const config = DuskConfigSchema.parse({});
+  const mkIntent = (id: string, triples: { id: string; verify?: "structural" | "semantic" }[]): Intent =>
+    IntentSchema.parse({
+      id,
+      description: "d",
+      obligation: "must",
+      triples: triples.map((t) => ({ id: t.id, subject: "s", predicate: "p", object: "o", ...(t.verify ? { verify: t.verify } : {}) })),
+    });
+
+  test("a test-suffix intent whose ONLY claimant is @intent (empty testDiscovery) still routes to the pre-pass", () => {
+    // The exact silent-accept scenario: the Engineer stamped the focal, non-test
+    // `@intent` marker on a test file, so testDiscovery is empty. The OLD
+    // marker-based router fell through to ordinary verification here; the NEW
+    // suffix-based router sends it to the pre-pass regardless.
+    const intentPath = "app/notifications/unit-tests";
+    const records = parseDecorations(`// @intent ${intentPath} [a]\nexport const t = 1;\n`, "x.test.ts");
+    const index = buildDerivedIndex(records, new Map([[intentPath, mkIntent(intentPath, [{ id: "a" }])]]));
+
+    expect(index.testDiscovery(intentPath)).toHaveLength(0); // marker-based router would fall through (the bug)
+    expect(chooseVerifierRoute(intentPath, index, config)).toBe("prepass"); // suffix-based router does not
+  });
+
+  test("a test-suffix intent correctly decorated with @intent-test-file also routes to the pre-pass", () => {
+    const intentPath = "app/notifications/unit-tests";
+    const records = parseDecorations(`// @intent-test-file ${intentPath}\nexport const t = 1;\n`, "x.test.ts");
+    const index = buildDerivedIndex(records, new Map([[intentPath, mkIntent(intentPath, [{ id: "a" }])]]));
+
+    expect(index.testDiscovery(intentPath)).toHaveLength(1);
+    expect(chooseVerifierRoute(intentPath, index, config)).toBe("prepass");
+  });
+
+  test("a non-test intent routes by the structural/semantic channel (orthogonal axis, D6)", () => {
+    const semantic = mkIntent("app/notifications/send", [{ id: "a" }]);
+    const structural = mkIntent("app/notifications/cfg", [{ id: "a", verify: "structural" }]);
+    const mixed = mkIntent("app/notifications/mix", [{ id: "a", verify: "structural" }, { id: "b" }]);
+    const index = buildDerivedIndex([], new Map([[semantic.id, semantic], [structural.id, structural], [mixed.id, mixed]]));
+
+    expect(chooseVerifierRoute("app/notifications/send", index, config)).toBe("semantic");
+    expect(chooseVerifierRoute("app/notifications/cfg", index, config)).toBe("structural");
+    expect(chooseVerifierRoute("app/notifications/mix", index, config)).toBe("mixed");
+  });
+});
 
 describe("P6 — the engineer is taught to cover comment-less files with sidecars (udc/D.28)", () => {
   test("ENGINEER_FILE_INSTRUCTION teaches the <file>.intent sidecar for comment-less files", () => {
@@ -15,6 +67,26 @@ describe("P6 — the engineer is taught to cover comment-less files with sidecar
     expect(ENGINEER_FILE_INSTRUCTION.toLowerCase()).toContain("sidecar");
     expect(ENGINEER_FILE_INSTRUCTION).toContain("package.json");
     expect(ENGINEER_FILE_INSTRUCTION).toContain("schema_version");
+  });
+});
+
+// D.32 / design D5 — the Engineer is taught the test markers (liveness). A
+// presence check: the instruction + a skill name the markers, with a worked
+// example. (Mechanical guards, not this, guarantee correctness.)
+describe("D.32 — the engineer is taught the test markers (D5)", () => {
+  test("ENGINEER_FILE_INSTRUCTION names @intent-test/@intent-test-file and the never-@intent rule", () => {
+    expect(ENGINEER_FILE_INSTRUCTION).toContain("@intent-test-file");
+    expect(ENGINEER_FILE_INSTRUCTION).toContain("@intent-test");
+    expect(ENGINEER_FILE_INSTRUCTION.toLowerCase()).toContain("test-pyramid");
+    expect(ENGINEER_FILE_INSTRUCTION).toContain("non_test_marker_on_test_intent");
+  });
+
+  test("the dusk/engineer/test-file-decoration skill teaches the markers with a worked example", () => {
+    const skill = readFileSync(fileURLToPath(new URL("../assets/skills/dusk/engineer/test-file-decoration.md", import.meta.url)), "utf8");
+    expect(skill).toContain("@intent-test-file");
+    expect(skill).toContain("@intent-test");
+    expect(skill).toMatch(/##\s*Worked example/i); // ≥1 worked example
+    expect(skill).toContain("```ts"); // an actual code example
   });
 });
 

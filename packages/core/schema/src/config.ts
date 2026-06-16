@@ -67,6 +67,19 @@ export function testPyramidSuffixes(config: DuskConfig): string[] {
   return config.test_pyramid?.suffixes ?? [...DEFAULT_TEST_PYRAMID_SUFFIXES];
 }
 
+/**
+ * The single source of truth for test-identity (RFC App. D.32, design D1/D7):
+ * an intent is a test intent iff its authored path ends in a configured
+ * `test_pyramid.suffixes` value. Consumed by the CLI verifier (routing), the
+ * orchestrator, and `dusk_inspect` so test-identity is decided ONE way — by the
+ * authored suffix — never by the fallible decoration marker. `endsWith("/"+s)`
+ * preserves the orchestrator's last-segment match for nested intent paths and
+ * matches `dusk_inspect`'s former regex shape (a leading slash is required).
+ */
+export function isTestIntentPath(intentPath: string, config: DuskConfig): boolean {
+  return testPyramidSuffixes(config).some((suffix) => intentPath.endsWith(`/${suffix}`));
+}
+
 export const DEFAULT_TRACE_RING_BYTES = 64 * 1024 * 1024;
 
 export type MirrorConfig = { sink: "otlp" | "posthog"; endpoint: string };

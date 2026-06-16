@@ -11,7 +11,7 @@ import {
   type RuntimeResult,
   type SpawnOutcome,
 } from "@dusk/core-schema";
-import { testPyramidSuffixes, traceRingBytes } from "@dusk/core-schema";
+import { isTestIntentPath, testPyramidSuffixes, traceRingBytes } from "@dusk/core-schema";
 import { appendTraceRotating } from "@dusk/runtime-observability";
 import { decompose } from "@dusk/runtime-decomposer";
 import { loadForResume, deleteCheckpoint, type Clock as CheckpointClock } from "@dusk/runtime-implement-checkpoint";
@@ -31,6 +31,23 @@ import { getOrBuildSnapshot, type SessionSnapshot } from "./snapshot.js";
 import { spawnSubAgent, type Clock, type TaskRunner, type TraceSink } from "./spawn.js";
 import type { VerifierFactory } from "@dusk/core-schema";
 import { assembleSummary, type CommitSummary, type ImplementSummary } from "./summary.js";
+
+/** RFC App. D.32 / design D5 — the per-bead "this is a test bead" signal. */
+export const TEST_BEAD_SIGNAL =
+  "This is a TEST bead: its file body is the evidence the Stage-1 pre-pass judges. Claim the test file with a TEST marker " +
+  "(@intent-test-file <path> for file scope, or @intent-test <path> [covers-…] for declaration scope), never @intent.";
+
+/**
+ * Assemble the Engineer's per-bead task string (RFC §6.4). When the primary
+ * intent is a test intent (authored suffix, D.32/D5), append the test-bead
+ * signal so the Engineer knows to decorate the body with a test marker — without
+ * it the routed pre-pass forever sees an empty body (a rate-improver; the
+ * mechanical guards still guarantee correctness). Pure + exported for tests.
+ */
+export function assembleEngineerTask(primaryIntent: string, config: DuskConfig, feedback?: string | null): string {
+  const base = `Implement ${primaryIntent}${feedback ? ` — ${feedback}` : ""}`;
+  return isTestIntentPath(primaryIntent, config) ? `${base}\n\n${TEST_BEAD_SIGNAL}` : base;
+}
 
 /**
  * The 9-step `dusk_implement` state machine (RFC §6.1–§6.9; 13.1 / 11.5). Wires
@@ -163,8 +180,7 @@ export async function runImplement(req: RunImplementRequest, deps: RunImplementD
       const node = dag.nodes.find((n) => n.bead_id === beadId)!;
       const worktreePath = worktreeForBead.get(beadId)!;
       const primaryIntent = node.intent_paths[0];
-      const suffixes = testPyramidSuffixes(deps.config);
-      const testIntents = node.intent_paths.filter((p) => suffixes.includes(p.split("/").at(-1) ?? ""));
+      const testIntents = node.intent_paths.filter((p) => isTestIntentPath(p, deps.config));
       intentsTouched.push(...node.intent_paths);
 
       const beadResult = await processBead({ beadId, worktreePath, primaryIntent, testIntents, node, snapshot, run, deps, spawn });
@@ -241,7 +257,7 @@ async function processBead(input: ProcessBeadInput): Promise<RuntimeResult<Proce
       perEntryMax: deps.perEntryMax,
       lifetimeMax: deps.lifetimeMax,
       lifetimeStart: lifetimeIter,
-      engineerInput: (fb) => `Implement ${input.primaryIntent}${fb ? ` — ${fb}` : ""}`,
+      engineerInput: (fb) => assembleEngineerTask(input.primaryIntent, deps.config, fb),
       verifierInput: `Evaluate the focal claims of ${input.primaryIntent} [${triples.join(", ")}].`,
       gate: deps.gate,
     });
@@ -397,8 +413,7 @@ export async function resumeFrozenBead(beadId: string, deps: RunImplementDeps): 
 
   try {
     const node = { intent_paths: record.intent_paths, predicted_files: [] as string[] };
-    const suffixes = testPyramidSuffixes(deps.config);
-    const testIntents = record.intent_paths.filter((p) => suffixes.includes(p.split("/").at(-1) ?? ""));
+    const testIntents = record.intent_paths.filter((p) => isTestIntentPath(p, deps.config));
     upsertBead(run, { id: beadId, status: "short_cycle", current_step: "Step 4 — resumed from freeze", started_at: new Date(deps.clock.now()).toISOString(), branch: record.branch });
 
     const result = await processBead({

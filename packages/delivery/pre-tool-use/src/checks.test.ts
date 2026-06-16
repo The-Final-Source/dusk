@@ -39,6 +39,7 @@ const CASES: Array<[RejectionKind, string]> = [
   ["missing_support_triple", `// @intent api/x [a]\nexport function f() {\n  // @intent-support api/x [a]\n  const v = go();\n}\n`],
   ["focal_and_support_for_same_intent", `// @intent api/x [a]\n// @intent-support api/x [a] ["s", "p", "o"]\nexport function f() {}\n`],
   ["non_test_path_on_intent_test", `// @intent-test api/x [a]\ntest("x", () => {});\n`],
+  ["non_test_marker_on_test_intent", `// @intent api/x/unit-tests [covers]\nexport const v = 1;\n`],
 ];
 
 describe("PreToolUse checks (P1-T10 — rejection surface)", () => {
@@ -50,6 +51,39 @@ describe("PreToolUse checks (P1-T10 — rejection surface)", () => {
   test("a fully, correctly decorated write produces no rejections (P1-T9 baseline)", () => {
     const content = `// @intent api/x [a]\nexport function f() {\n  // @intent api/x [a]\n  const v = go();\n}\n`;
     expect(runChecks(content, FILE(), ctx).rejections).toEqual([]);
+  });
+});
+
+// D.32 / design D4 — the reverse of Check 9, scoped exactly to the focal claim
+// of the test-suffix intent itself.
+describe("reverse of Check 9 — a focal non-test marker may not claim a test-suffix intent", () => {
+  const kinds = (content: string): string[] => runChecks(content, FILE(), ctx).rejections.map((r) => r.kind);
+
+  test("@intent claiming a test-suffix intent is rejected with a fix-it message", () => {
+    const result = runChecks(`// @intent api/x/unit-tests [covers]\nexport const v = 1;\n`, FILE(), ctx);
+    const rej = result.rejections.find((r) => r.kind === "non_test_marker_on_test_intent");
+    expect(rej).toBeDefined();
+    expect(rej!.message).toContain("api/x/unit-tests");
+    expect(rej!.message).toContain("@intent-test-file");
+  });
+
+  test("@intent-file claiming a test-suffix intent is rejected too", () => {
+    expect(kinds(`// @intent-file api/x/unit-tests\nexport const v = 1;\n`)).toContain("non_test_marker_on_test_intent");
+  });
+
+  test("@intent-support claiming a test-suffix intent is NOT rejected (support, not focal)", () => {
+    const content = `// @intent api/x [a]\nexport function f() {\n  // @intent-support api/x/unit-tests [covers] ["s", "p", "o"]\n  const v = go();\n}\n`;
+    expect(kinds(content)).not.toContain("non_test_marker_on_test_intent");
+  });
+
+  test("@intent claiming a NON-test intent (in any file) is NOT rejected", () => {
+    expect(kinds(`// @intent api/x [a]\nexport const v = 1;\n`)).not.toContain("non_test_marker_on_test_intent");
+  });
+
+  test("the correct @intent-test-file on a test-suffix intent passes both directions of Check 9", () => {
+    const ks = kinds(`// @intent-test-file api/x/unit-tests\ntest("x", () => {});\n`);
+    expect(ks).not.toContain("non_test_marker_on_test_intent");
+    expect(ks).not.toContain("non_test_path_on_intent_test");
   });
 });
 
@@ -108,17 +142,22 @@ describe("PreToolUse sidecar checks (D.28 — per-file `<stem>.intent`)", () => 
   });
 });
 
-// D.28 §5.1 — the rejection surface grows by exactly the 5 coverage kinds.
-describe("REJECTION_KINDS (D.28 — 17 mechanical + fail-safe)", () => {
+// D.28 §5.1 + D.32 — the rejection surface grows by the 5 coverage kinds and the
+// 1 test-pyramid-routing reverse-of-Check-9 kind.
+describe("REJECTION_KINDS (D.28 + D.32 — 18 mechanical + fail-safe)", () => {
   const D28_KINDS = ["malformed_sidecar", "sidecar_target_missing", "unresolved_anchor", "overlapping_anchors", "uncovered_target_lines"] as const;
 
-  test("has 18 entries (17 mechanical + hook_internal_error)", () => {
-    expect(REJECTION_KINDS).toHaveLength(18);
+  test("has 19 entries (18 mechanical + hook_internal_error)", () => {
+    expect(REJECTION_KINDS).toHaveLength(19);
   });
 
   test("includes all 5 D.28 coverage kinds, none colliding", () => {
     for (const kind of D28_KINDS) expect(REJECTION_KINDS).toContain(kind);
     expect(new Set(REJECTION_KINDS).size).toBe(REJECTION_KINDS.length);
+  });
+
+  test("includes the D.32 reverse-of-Check-9 kind", () => {
+    expect(REJECTION_KINDS).toContain("non_test_marker_on_test_intent");
   });
 });
 

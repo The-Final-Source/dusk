@@ -2,14 +2,13 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { parse as parseYaml } from "yaml";
-import { DuskConfigSchema, intentsDir, testPyramidSuffixes, type DuskConfig } from "@dusk/core-schema";
+import { DuskConfigSchema, intentsDir, type DuskConfig } from "@dusk/core-schema";
 import { buildIntentGraph, loadIntentTree, type IntentGraph } from "@dusk/core-graph";
 
 export type ProjectContext = {
   root: string;
   config: DuskConfig;
   graph: IntentGraph;
-  suffixes: string[];
   supersededBy: Map<string, string>;
 };
 
@@ -53,5 +52,5 @@ export function loadProject(fromPath: string): ProjectContext | null {
       if (edge.kind === "supersedes") supersededBy.set(edge.target, id);
     }
   }
-  return { root, config, graph, suffixes: testPyramidSuffixes(config), supersededBy };
+  return { root, config, graph, supersededBy };
 }
