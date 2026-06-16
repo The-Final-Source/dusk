@@ -2216,7 +2216,8 @@ type Rejection =
   // decorate-or-decompose violations are NOT raised by the PreToolUse gate (v1) — see Ch. 4.6 + Ch. 8.9.
   // The mandate is enforced via Engineer proactivity + Verifier surfacing unsatisfied aspects.
   | { kind: "focal_and_support_for_same_intent"; intent_path: string; file: string; line: number }                   // v9
-  | { kind: "non_test_path_on_intent_test"; intent_path: string; file: string; line: number };                       // v9
+  | { kind: "non_test_path_on_intent_test"; intent_path: string; file: string; line: number }                        // v9
+  | { kind: "non_test_marker_on_test_intent"; intent_path: string; file: string; line: number };                     // v1.x (D.32 — reverse of Check 9)
 ```
 
 ### A.9 Role definition frontmatter (updated for v9)
