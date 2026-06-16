@@ -2,6 +2,8 @@ import { appendFileSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import {
+  duskError,
+  err,
   ok,
   type BoundSpawn,
   type SpawnParams,
@@ -125,6 +127,26 @@ describe("6.1 — per-entry vs lifetime budgets (relationship, P3-T25)", () => {
     }
     expect(entry2.value.lifetimeIters).toBe(6); // exhausted at lifetime=6
     expect(entry2.value.perEntryIters).toBe(2); // NOT at per-entry=4
+  });
+});
+
+describe("D.33 — a surfaced model-call failure on the bead-orchestrator tick is not silently dropped", () => {
+  test("a bead-orchestrator tick that returns {success:false} aborts the short cycle (no silent continue)", async () => {
+    // Engineer + Verifier succeed (verdict converges), but the bead-orchestrator
+    // tick — a taskRunner model-call spawn — surfaces a model-call failure. The
+    // loop MUST propagate it, not continue as if the tick succeeded.
+    const spawn: BoundSpawn = async (params) => {
+      if (params.role === "bead-orchestrator") {
+        return err(duskError("task_tool_call_failed", "the bead-orchestrator sub-agent's model call failed: error_max_turns", { recoverable: true, bead_id: "bd_20260610000000001" }));
+      }
+      const trace = { schema_version: 1, trace_id: "t", bead_id: "bd_20260610000000001", role: params.role, invocation_site: "short-cycle", model: "stub", prompt_tokens: 0, completion_tokens: 0, latency_ms: 0, cost_usd: 0 } as SubAgentTrace;
+      if (params.role === "verifier") return ok({ trace, assembledPrompt: "p", verdict: pass() });
+      return ok({ trace, assembledPrompt: "p", output: "drafted" });
+    };
+    const result = await runShortCycle(baseDeps({ spawn, verifierSpawns: () => 0 }));
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.kind).toBe("task_tool_call_failed");
   });
 });
 
