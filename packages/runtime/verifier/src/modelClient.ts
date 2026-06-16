@@ -87,7 +87,25 @@ export type ClaudeCodeClientOptions = {
   now?: () => number;
 };
 
-const DISABLED_TOOLS = ["Bash", "Edit", "Write", "Read", "Glob", "Grep", "Task", "WebFetch", "WebSearch"];
+/**
+ * If a non-zero CLI exit nonetheless carried a well-formed result envelope with
+ * an error subtype (`{"type":"result","subtype":"error_*",…}`), return that
+ * subtype — the signal that this is a DETERMINISTIC content/limit failure (the
+ * plumbing succeeded, the model ran), NOT transport plumbing noise (RFC App.
+ * D.33). Returns null for a genuine plumbing failure (no parseable envelope).
+ * Parses the FULL stdout (not the truncated diagnostic message).
+ */
+export function modelExitSubtype(stdout: string): string | null {
+  try {
+    const parsed = JSON.parse(stdout) as { type?: unknown; subtype?: unknown };
+    if (parsed?.type === "result" && typeof parsed.subtype === "string" && parsed.subtype.startsWith("error_")) {
+      return parsed.subtype;
+    }
+  } catch {
+    // Not a JSON envelope — a genuine plumbing failure; leave untagged (transport).
+  }
+  return null;
+}
 
 function runClaude(cli: string, args: string[], input: string, timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -106,10 +124,18 @@ function runClaude(cli: string, args: string[], input: string, timeoutMs: number
     });
     child.on("close", (code) => {
       clearTimeout(timer);
-      if (code === 0) resolve(out);
+      if (code === 0) return resolve(out);
       // The CLI reports many failures as JSON on STDOUT with a non-zero exit —
       // include both streams so transport errors are diagnosable.
-      else reject(new Error(`claude CLI exited ${code}: ${err.slice(0, 500)} ${out.slice(0, 500)}`));
+      const error = new Error(`claude CLI exited ${code}: ${err.slice(0, 500)} ${out.slice(0, 500)}`);
+      // A non-zero exit that produced a well-formed result envelope with an error
+      // subtype (e.g. `error_max_turns`) is a DETERMINISTIC content/limit failure
+      // — tag it so `isTransportError` classifies it non-transport (no pointless
+      // cold-retry of an identical deterministic call) and the spawn seam surfaces
+      // it as a returned failure instead of crashing the run (RFC App. D.33).
+      const subtype = modelExitSubtype(out);
+      if (subtype) (error as Error & { duskModelExit?: string }).duskModelExit = subtype;
+      reject(error);
     });
     // A child that exits before draining stdin raises EPIPE on the write side;
     // unhandled, that crashes the WHOLE process (not just this call). Swallow
@@ -135,12 +161,19 @@ export function claudeCodeModelClient(opts: ClaudeCodeClientOptions = {}): Model
   return {
     async complete({ system, user }) {
       const start = now();
-      // --max-turns 3: a stray tool ATTEMPT (denied below) must not hard-fail
-      // the call with error_max_turns — the model recovers and answers in text.
+      // No tools: `--tools ""` removes the entire tool surface from the request (a
+      // zero-tool ALLOWLIST), so `tool_use` is structurally impossible — unlike the
+      // former `--disallowed-tools` DENYLIST, which still registered the tools (the
+      // model could attempt them, burning turns) and was incomplete vs the CLI's
+      // real tool set. `--max-turns 3` is kept purely as a blast-radius backstop;
+      // if the cap is ever hit (e.g. via an MCP tool `--tools ""` doesn't suppress)
+      // the resulting `error_max_turns` is now classified non-transport and surfaced
+      // as a returned failure, NEVER a fatal cold-retried crash (RFC App. D.33).
+      // Tool suppression here is defense-in-depth, never the correctness guarantee.
       const args = ["--print", "--output-format", "json", "--model", model, "--max-turns", "3"];
       const noTools = "You have NO tools available in this context. Never attempt a tool call; reply directly with the requested output only.";
       args.push("--system-prompt", system ? `${system}\n\n${noTools}` : noTools);
-      args.push("--disallowed-tools", ...DISABLED_TOOLS); // variadic — keep last
+      args.push("--tools", ""); // zero-tool allowlist — keep last
       const raw = await runClaude(cli, args, user, timeoutMs);
       const parsed = JSON.parse(raw) as { result?: unknown; total_cost_usd?: number; usage?: { input_tokens?: number; output_tokens?: number } };
       const usage = parsed.usage ?? {};
