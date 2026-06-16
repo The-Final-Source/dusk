@@ -143,6 +143,9 @@ export async function verifyIntent(intent: Intent, deps: VerifyDeps): Promise<Ru
       polarity: triple.polarity,
       evidence: {
         ...(focal[0] ? { focal_claim: { file: focal[0].file, lines: focal[0].lines, quote: focal[0].quote } } : {}),
+        // ALL focal claimants (v1.x) so the audit's citation scorer can match a
+        // defect on any claimant line, not just the first.
+        ...(focal.length > 0 ? { focal_claims: focal.map((f) => ({ file: f.file, lines: f.lines, quote: f.quote })) } : {}),
         support_claims: failedSupports,
         ...(passCount > 0 ? { support_pass_count: passCount } : {}),
       },

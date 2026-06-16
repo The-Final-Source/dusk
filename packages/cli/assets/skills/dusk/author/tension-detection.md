@@ -8,6 +8,14 @@ Stage 2 surfaces every existing intent the grep pass matched and classifies its
 tension with the request into one of four classes. Every surfaced tension MUST
 become a user decision — never silently resolve one.
 
+Tension detection runs in BOTH directions: against intents that *exist* (the four
+classes below) and against an intent the request *depends on but that doesn't
+exist yet* — the **`prerequisite`** class (the fifth). See the
+`prerequisite-tension` skill: surface a `prerequisite` tension (target = the
+missing intent's proposed path) and recommend authoring the dependency first. This
+is general — any unmet dependency — with the greenfield foundation (an empty
+`intent_census`) as the most common instance, not a special mode.
+
 ## The four classes
 
 - `conflict` — the existing intent and the new request cannot both hold.

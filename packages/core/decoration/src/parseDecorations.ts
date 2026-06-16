@@ -78,7 +78,7 @@ export function parseDecorations(source: string, file: string): DecorationRecord
     const rest = parseRest(marker, matched[2]);
     if (!rest) continue;
     const { scope, declaration_name } = resolveScope(marker, lines, i);
-    records.push({ file, line: i + 1, scope, declaration_name, marker, ...rest });
+    records.push({ file, line: i + 1, scope, declaration_name, marker, ...rest, anchor: null, verify: "semantic" });
   }
   return records;
 }

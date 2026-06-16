@@ -1,7 +1,7 @@
 import { appendFileSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { duskError, err, ok, type FixtureClass, type RuntimeResult } from "@dusk/core-schema";
+import { VERDICTS_FILENAME, duskError, err, ok, type FixtureClass, type RuntimeResult } from "@dusk/core-schema";
 import { z } from "zod";
 
 import type { AuditVariant, Clock, FixtureVerifierCall } from "./auditRunner.js";
@@ -66,8 +66,10 @@ function expectedCaught(fixture: SeededFixture, decision: "accept" | "reject"): 
   }
 }
 
+/** The verdicts file under a run's outDir. The filename is the SSoT constant
+ *  from core-schema, so this outDir-relative form can't drift from the layout. */
 export function verdictsPath(outDir: string): string {
-  return join(outDir, "verdicts.jsonl");
+  return join(outDir, VERDICTS_FILENAME);
 }
 
 /** Run the sweep: one complete pass per model, sequentially; records appended to verdicts.jsonl. */

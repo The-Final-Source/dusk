@@ -38,6 +38,33 @@ function* walkIntentFiles(dir: string): Generator<string> {
   }
 }
 
+/**
+ * The Stage-2 intent-tree census (RFC §5; App. D.25) — a general, deterministic
+ * list of every intent path in the tree plus whether the tree is empty. It is
+ * NOT a bootstrap-specific signal: it is just "what intents exist", which the
+ * Author uses to detect tensions in BOTH directions — against intents that exist
+ * (conflict/overlap/gray/adjacent) and against an intent the request depends on
+ * that does NOT exist (a `prerequisite` tension). The greenfield foundation (an
+ * empty census) is simply the most common `prerequisite` case, carrying no
+ * special state into the flow.
+ */
+export type IntentCensus = {
+  /** Every intent path currently in the tree (sorted). */
+  intent_paths: string[];
+  /** True when the tree has NO intents at all. */
+  is_empty: boolean;
+};
+
+export function intentTreeCensus(rootDir: string, intentsDir: string): IntentCensus {
+  const root = join(rootDir, intentsDir);
+  if (!existsSync(root)) return { intent_paths: [], is_empty: true };
+  const paths: string[] = [];
+  for (const file of walkIntentFiles(root)) {
+    paths.push(relative(root, file).replace(/\/intent\.yaml$/, ""));
+  }
+  return { intent_paths: paths.sort(), is_empty: paths.length === 0 };
+}
+
 /** Grep the intent tree for keyword matches; returns up to `cap` candidates with excerpts. */
 export function discoverTensionCandidates(rootDir: string, intentsDir: string, request: string, cap = 8): TensionCandidate[] {
   const root = join(rootDir, intentsDir);

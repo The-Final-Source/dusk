@@ -16,11 +16,12 @@ import {
   type TaskRunner,
   type RuntimeEnv,
   type ImplementSummary,
+  type GateResult,
 } from "@dusk/runtime-orchestrator";
 import { runCancel, setCancelFlag, type CancelTargets } from "@dusk/runtime-cancel";
 import { resolveLivelock } from "@dusk/runtime-livelock-detection";
 import { runTestRunner, type VitestRunner } from "@dusk/runtime-test-runner";
-import type { AuthorStage, CancelResult, DialogInit, LivelockResolutionVerb } from "@dusk/core-schema";
+import type { AuthorStage, CancelResult, DialogInit, LivelockResolutionVerb, SpawnOutcome } from "@dusk/core-schema";
 import type { AuthorRuntime } from "@dusk/runtime-author";
 
 /**
@@ -53,6 +54,16 @@ export type WriteSurfaceDeps = {
   cancelTargets?: () => CancelTargets;
   /** Phase 4: the Author runtime `modify_triple` opens its scoped dialog through. */
   authorRuntime?: AuthorRuntime;
+  /**
+   * The headless engineer's mechanical gate (post-hoc `gateWorktreeEdits` over
+   * the worktree diff). A LIVE MCP `dusk_implement` that runs a real
+   * file-writing engineer MUST supply this — without it the short cycle runs
+   * UNGATED (the CLI always wires it). The MCP write surface is not yet
+   * constructed with a file-writing engineer in any live entrypoint
+   * (createDuskMcpServer is given `write` deps only in tests), so this is
+   * forwarded-and-required-by-contract rather than a live path today.
+   */
+  gate?: (engineer: SpawnOutcome) => GateResult;
 };
 
 /** `dusk_implement({request? | resume_token?, scope_hint?})` → Step-9 summary or DuskError. */
@@ -70,6 +81,9 @@ export async function duskImplement(deps: WriteSurfaceDeps, req: RunImplementReq
     lifetimeMax: deps.lifetimeMax,
     vitestRunner: deps.vitestRunner,
     baseRef: deps.baseRef,
+    // Forward the engineer gate — a live file-writing MCP wiring must supply it
+    // (see WriteSurfaceDeps.gate); omitting it runs the cycle ungated.
+    gate: deps.gate,
   });
 }
 

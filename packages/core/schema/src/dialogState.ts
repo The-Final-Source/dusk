@@ -38,8 +38,18 @@ export const TranscriptEntrySchema = z
   .strict();
 export type TranscriptEntry = z.infer<typeof TranscriptEntrySchema>;
 
-/** Tension classification vocabulary for Stage 2 discovery (RFC §5 Stage 2; design Q1). */
-export const TENSION_CLASSIFICATIONS = ["conflict", "overlap", "gray", "adjacent"] as const;
+/**
+ * Tension classification vocabulary for Stage 2 discovery (RFC §5 Stage 2;
+ * design Q1; App. D.25). Tensions are surfaced in BOTH directions: against
+ * intents that EXIST (conflict/overlap/gray/adjacent) and against an intent the
+ * request depends on but that does NOT exist yet (`prerequisite`). The latter is
+ * fully general — the greenfield foundation (project/stack, bootstrap,
+ * persistence not yet authored) is the canonical instance, not a special case;
+ * it carries no bootstrap state into the flow. A `prerequisite` tension is a
+ * normal non-empty surfaced finding, so the existing "zero tensions → advance"
+ * path naturally keeps it visible for a user decision.
+ */
+export const TENSION_CLASSIFICATIONS = ["conflict", "overlap", "gray", "adjacent", "prerequisite"] as const;
 export const TensionClassificationSchema = z.enum(TENSION_CLASSIFICATIONS);
 export type TensionClassification = z.infer<typeof TensionClassificationSchema>;
 

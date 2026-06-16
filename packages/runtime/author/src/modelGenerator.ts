@@ -32,9 +32,20 @@ const STAGE_INSTRUCTIONS: Record<string, string> = {
 what behavior is wanted, in which domain, with what boundaries. End by asking the user to
 confirm the framing or correct it.`,
   "2": `Stage 2 — Discovery & Tension Detection. You are given grep candidates from the existing
-intent tree. Classify each candidate's tension with the new request as one of
-conflict | overlap | gray | adjacent, and propose resolution options per tension. If a candidate
-is unrelated, omit it.`,
+intent tree and an "intent_census" (every intent path currently in the tree, and whether it is
+empty). Tension detection runs in BOTH directions:
+(a) against intents that EXIST — classify each candidate's tension with the request as
+    conflict | overlap | gray | adjacent (omit unrelated candidates); and
+(b) against an intent the request DEPENDS ON but that does NOT exist in the census — surface a
+    "prerequisite" tension: target = the missing intent's proposed path, excerpt = what the
+    request presupposes, resolution_options = e.g. "author <prerequisite> first, then return" /
+    "proceed (author the prerequisite separately)".
+A prerequisite tension is general — it applies to ANY unmet dependency. The most common instance
+is a greenfield project whose foundation is not yet authored (an empty or near-empty census):
+project/tech-stack setup, module structure, app bootstrap, the persistence layer. Do NOT silently
+draft a behavior intent that depends on intents absent from the census; surface the prerequisite
+so the user can author the dependency first. Emit at least one "prerequisite" tension when the
+request plainly depends on something the census lacks.`,
   "3": `Stage 3 — Industry-Practice Injection. From your training knowledge ONLY (no lookups),
 propose a decomposition reflecting industry practice for this domain. Present it as a proposal
 the user can accept, reject (greenfield), or selectively accept.`,
@@ -49,7 +60,7 @@ the user can accept, reject (greenfield), or selectively accept.`,
 function jsonContract(stage: string): string {
   const base = `Respond with EXACTLY one JSON object (no markdown fences) of the shape:
 {"question": "<the next question to ask the user>"`;
-  if (stage === "2") return `${base}, "tensions": [{"target": "<intent path>", "classification": "conflict|overlap|gray|adjacent", "excerpt": "<why>", "resolution_options": ["..."]}]}`;
+  if (stage === "2") return `${base}, "tensions": [{"target": "<intent path or proposed path of a missing prerequisite>", "classification": "conflict|overlap|gray|adjacent|prerequisite", "excerpt": "<why>", "resolution_options": ["..."]}]}`;
   if (stage === "3") return `${base}, "practiceProposal": "<the full practice proposal text>"}`;
   if (stage === "4") return `${base}, "draftPatch": {<the drafted intent>}, "drafts": [{<additional drafted intents>}]}`;
   return `${base}}`;
@@ -102,14 +113,13 @@ export function makeModelAuthorGenerator(deps: ModelGeneratorDeps): AuthorGenera
       ids: { dialogId: ctx.state.dialog_id },
     });
 
-    // The model occasionally answers (esp. Stage-1 framing) in prose instead of
-    // the required JSON object — a transient instruction-following miss, not
-    // content evidence. Retry once before surfacing the error, mirroring the
-    // verifier's "a non-JSON model response is recoverable noise" one-retry in
-    // the implement pipeline. (Transport blips are retried a level down.)
+    // The model occasionally emits prose around (or instead of) the JSON envelope
+    // — a recoverable formatting flake, not a logic error. Retry the spawn+parse
+    // ONCE before failing (mirrors the implement Verifier's one-retry on a
+    // non-JSON response; the real-model parse-flake the greenfield dialog hit).
     let parsed: Record<string, unknown> | null = null;
-    let lastOutput = "";
-    for (let attempt = 0; attempt < 2 && parsed === null; attempt += 1) {
+    let outputHead = "";
+    for (let attempt = 0; attempt < 2; attempt += 1) {
       const spawned = await deps.spawn({
         role: "author",
         sessionId: deps.sessionId,
@@ -118,14 +128,15 @@ export function makeModelAuthorGenerator(deps: ModelGeneratorDeps): AuthorGenera
         invocationSite: "author",
       });
       if (!spawned.success) return spawned.error;
-      lastOutput = spawned.value.output ?? "";
-      const candidate = extractJson(lastOutput);
-      if (candidate && typeof candidate.question === "string") parsed = candidate;
+      outputHead = (spawned.value.output ?? "").slice(0, 200);
+      parsed = extractJson(spawned.value.output ?? "");
+      if (parsed && typeof parsed.question === "string") break;
+      parsed = null;
     }
     if (!parsed || typeof parsed.question !== "string") {
-      return duskError("internal_error", "the Author model returned no parseable generation JSON", {
+      return duskError("internal_error", "the Author model returned no parseable generation JSON after one retry", {
         recoverable: true,
-        details: { stage: ctx.stage, output_head: lastOutput.slice(0, 200) },
+        details: { stage: ctx.stage, output_head: outputHead },
       });
     }
 

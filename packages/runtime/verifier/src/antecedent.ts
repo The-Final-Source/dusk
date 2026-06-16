@@ -27,19 +27,22 @@ const onUnit = (r: DecorationRecord, unit: UnitUnderEvaluation): boolean =>
 
 /** Evaluate one antecedent predicate (before polarity) against the index. */
 function predicateHolds(triple: AntecedentTriple, unit: UnitUnderEvaluation, index: DerivedIndex): boolean {
+  // Read the semantic-only set (design D6, board M1-extension): a structural
+  // `intent-file`/`scope:"file"` config claim must not make a semantic antecedent
+  // hold (or invert under `polarity: negative`).
   const { path, aspect } = parseObject(triple.object);
   switch (triple.predicate) {
     case "is decorated with":
-      return index.records.some(
+      return index.semanticRecords.some(
         (r) =>
           onUnit(r, unit) &&
           r.intent_path === path &&
           (aspect === undefined || r.aspect_ids === null || r.aspect_ids.includes(aspect)),
       );
     case "claims any aspect of":
-      return index.records.some((r) => onUnit(r, unit) && r.intent_path === path);
+      return index.semanticRecords.some((r) => onUnit(r, unit) && r.intent_path === path);
     case "is enclosed by a decoration of":
-      return index.records.some((r) => {
+      return index.semanticRecords.some((r) => {
         if (r.intent_path !== path) return false;
         if (r.scope === "file") return r.file === unit.file;
         if (r.scope === "directory") {
@@ -70,7 +73,7 @@ export function evaluateAntecedent(intent: Intent, unit: UnitUnderEvaluation, in
  * declarations → also ambiguous (nothing to bind the antecedent subject to).
  */
 export function resolveUnit(intentPath: string, index: DerivedIndex): RuntimeResult<UnitUnderEvaluation> {
-  const declarations = index.records.filter(
+  const declarations = index.semanticRecords.filter(
     (r) => r.intent_path === intentPath && FOCAL_MARKERS.has(r.marker) && r.scope === "declaration",
   );
   const distinct = new Map<string, UnitUnderEvaluation>();

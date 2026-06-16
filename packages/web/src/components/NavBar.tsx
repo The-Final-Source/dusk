@@ -43,6 +43,12 @@ export function NavBar() {
           >
             Coverage
           </Link>
+          <Link
+            to="/registry/metrics"
+            className={`no-underline font-medium ${isActive("/registry/metrics") ? "text-gray-900" : "text-gray-500"}`}
+          >
+            Metrics
+          </Link>
           {isAuthenticated && (
             <>
               <Link

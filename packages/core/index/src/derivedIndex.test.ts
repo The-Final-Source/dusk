@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 
 import { IntentSchema, type Intent } from "@dusk/core-schema";
-import { parseDecorations } from "@dusk/core-decoration";
+import { parseDecorations, type DecorationRecord } from "@dusk/core-decoration";
 
 import { buildDerivedIndex } from "./derivedIndex.js";
 
@@ -77,5 +77,41 @@ describe("configurable test-pyramid suffixes (P1-T17)", () => {
     const byLayer = index.testChildrenByLayer("api/x", ["unit-tests", "contract-tests"]);
     expect(Object.keys(byLayer)).toEqual(["contract-tests"]);
     expect(byLayer["contract-tests"]).toHaveLength(1);
+  });
+});
+
+// universal-decoration-coverage §7 / D6 — structural (comment-less) records are
+// partitioned out of the semantic path at the index boundary, but stay visible
+// to the non-semantic consumers (the keystone).
+describe("D.28 — structural records partitioned from the semantic path", () => {
+  const structural = (file: string, intentPath: string): DecorationRecord => ({
+    file,
+    line: 1,
+    scope: "file",
+    declaration_name: null,
+    marker: "intent-file",
+    intent_path: intentPath,
+    aspect_ids: null,
+    support_triple: null,
+    ignore_clause: null,
+    anchor: "",
+    verify: "structural",
+  });
+
+  test("a structural intent-file claim does NOT flip a semantic aspect to satisfied", () => {
+    const intent = mk("config/manifest", ["a"]);
+    const withStructural = buildDerivedIndex([structural("package.json", "config/manifest")], mapOf(intent));
+    const baseline = buildDerivedIndex([], mapOf(intent));
+    // The aspect is still unclaimed — identical to having no record at all.
+    expect(withStructural.aspectRollup("config/manifest")).toEqual(["a"]);
+    expect(withStructural.aspectRollup("config/manifest")).toEqual(baseline.aspectRollup("config/manifest"));
+    expect(withStructural.focalSupport("config/manifest", "a").focal).toHaveLength(0);
+  });
+
+  test("the structural record stays visible to reverse()/records but not semanticRecords (keystone preserved)", () => {
+    const idx = buildDerivedIndex([structural("package.json", "config/manifest")], mapOf(mk("config/manifest", ["a"])));
+    expect(idx.reverse("package.json")).toContain("config/manifest"); // dusk_inspect / reverse-index
+    expect(idx.records.some((r) => r.verify === "structural")).toBe(true);
+    expect(idx.semanticRecords.some((r) => r.verify === "structural")).toBe(false);
   });
 });

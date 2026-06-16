@@ -1,10 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 
 import {
   SubAgentTraceSchema,
   duskError,
   testPyramidSuffixes,
+  tracePath,
   verifierEvidenceMaxLines,
   type Intent,
   type RuntimeResult,
@@ -176,7 +176,7 @@ export function getIntentQuery(ctx: DuskContext, path: string): RuntimeResult<{ 
 }
 
 export function listTracesQuery(ctx: DuskContext, opts: { limit?: number } = {}): RuntimeResult<{ traces: SubAgentTrace[] }> {
-  const path = join(ctx.rootDir, ".ia/observability/traces.jsonl");
+  const path = tracePath(ctx.rootDir);
   if (!existsSync(path)) return { success: true, value: { traces: [] } };
   const traces: SubAgentTrace[] = [];
   for (const line of readFileSync(path, "utf8").split("\n")) {

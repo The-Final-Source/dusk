@@ -56,4 +56,13 @@ describe("parseDecorations (P1-T8)", () => {
     expect(records.find((r) => r.marker === "intent-file")?.scope).toBe("file");
     expect(records.find((r) => r.marker === "intent-test-file")?.scope).toBe("file");
   });
+
+  // D.28 additive fields — existing inline records are unaffected (default
+  // `anchor: null`, `verify: "semantic"`).
+  test("inline records default anchor:null and verify:semantic", () => {
+    for (const r of records) {
+      expect(r.anchor ?? null).toBeNull();
+      expect(r.verify ?? "semantic").toBe("semantic");
+    }
+  });
 });

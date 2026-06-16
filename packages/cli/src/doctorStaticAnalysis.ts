@@ -1,7 +1,14 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
 
-import { parseDecorations } from "@dusk/core-decoration";
+import {
+  computeSidecarCoverage,
+  createIgnoreMatcher,
+  loadIgnoreGlobs,
+  parseFileIntentSidecar,
+  scanDecorations,
+  type IgnoreMatcher,
+} from "@dusk/core-decoration";
 import { loadIntentTree } from "@dusk/core-graph";
 import {
   analyzeStaticDecoration,
@@ -9,7 +16,7 @@ import {
   conflictsCoDecoration,
   type StaticAnalysisMode,
 } from "@dusk/core-index";
-import { DuskConfigSchema, StaticAnalysisReportSchema, intentsDir, type StaticAnalysisReport, type StaticFinding } from "@dusk/core-schema";
+import { DuskConfigSchema, StaticAnalysisReportSchema, intentsDir, staticAnalysisReportPath, type StaticAnalysisReport, type StaticFinding } from "@dusk/core-schema";
 import { parse as parseYaml } from "yaml";
 
 /**
@@ -20,16 +27,20 @@ import { parse as parseYaml } from "yaml";
  * structured report. Zero-model.
  */
 
+// TypeScript-only file map for the S ⊆ D call-graph density (config has no call
+// graph — leave it TS-scoped, design D6). The former hardcoded `SKIP_DIRS` is
+// gone: pruning now consults the single `decoration.ignore` SSoT (board M2).
 const SOURCE_EXT = new Set([".ts", ".tsx"]);
-const SKIP_DIRS = new Set(["node_modules", ".git", ".ia", "dist", ".turbo", ".next", "build", "coverage"]);
 
-function collectSources(rootDir: string, scope?: string): Record<string, string> {
+function collectSources(rootDir: string, isIgnored: IgnoreMatcher, scope?: string): Record<string, string> {
   const files: Record<string, string> = {};
   const start = scope ? join(rootDir, scope) : rootDir;
   if (!existsSync(start)) return files;
   const walk = (dir: string): void => {
     for (const entry of readdirSync(dir)) {
       const full = join(dir, entry);
+      const rel = relative(rootDir, full);
+      if (isIgnored(rel)) continue;
       let stat;
       try {
         stat = statSync(full);
@@ -37,16 +48,64 @@ function collectSources(rootDir: string, scope?: string): Record<string, string>
         continue;
       }
       if (stat.isDirectory()) {
-        if (!SKIP_DIRS.has(entry)) walk(full);
+        walk(full);
         continue;
       }
       const dot = entry.lastIndexOf(".");
       if (dot === -1 || !SOURCE_EXT.has(entry.slice(dot)) || entry.endsWith(".d.ts")) continue;
-      files[relative(rootDir, full)] = readFileSync(full, "utf8");
+      files[rel] = readFileSync(full, "utf8");
     }
   };
   walk(start);
   return files;
+}
+
+/**
+ * Off-write-path comment-less coverage (D.28 §6). For every non-ignored target
+ * with a per-file sidecar, re-resolve each anchor against the LIVE file and
+ * report uncovered non-trivial lines (`uncovered_target_lines`) and dangling /
+ * malformed anchors (`unresolved_anchor`) on the mechanical channel — at the
+ * TARGET's `file:line`, never blended into semantic adherence.
+ */
+function collectSidecarCoverage(rootDir: string, isIgnored: IgnoreMatcher, scope?: string): StaticFinding[] {
+  const out: StaticFinding[] = [];
+  const start = scope ? join(rootDir, scope) : rootDir;
+  if (!existsSync(start)) return out;
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      const rel = relative(rootDir, full);
+      if (isIgnored(rel)) continue;
+      let stat;
+      try {
+        stat = statSync(full);
+      } catch {
+        continue;
+      }
+      if (stat.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (!entry.endsWith(".intent") || entry === ".intent") continue; // per-file sidecars only
+      const targetRel = relative(rootDir, join(dir, entry.slice(0, -".intent".length)));
+      const targetAbs = join(rootDir, targetRel);
+      if (!existsSync(targetAbs)) {
+        out.push({ class: "unresolved_anchor", file: targetRel, line: 1, intents_involved: [], suggestion: `sidecar ${rel} targets missing file ${targetRel}`, severity: "error" });
+        continue;
+      }
+      const targetSource = readFileSync(targetAbs, "utf8");
+      const parse = parseFileIntentSidecar(readFileSync(full, "utf8"), targetSource, rel, targetRel);
+      for (const f of parse.findings) {
+        out.push({ class: "unresolved_anchor", file: targetRel, line: 1, intents_involved: [], suggestion: f.message, severity: "error" });
+      }
+      const cov = computeSidecarCoverage(targetSource, parse.claimSpans, parse.ignoreSpans);
+      if (cov.uncoveredLines.length > 0) {
+        out.push({ class: "uncovered_target_lines", file: targetRel, line: cov.uncoveredLines[0], intents_involved: [], suggestion: `${cov.uncoveredLines.length} non-trivial line(s) covered by no claim or @intent-ignore`, severity: "error" });
+      }
+    }
+  };
+  walk(start);
+  return out;
 }
 
 export type StaticAnalysisCliResult = { ok: boolean; text: string; report?: StaticAnalysisReport };
@@ -66,14 +125,19 @@ export function runStaticAnalysis(
     }
   }
 
-  const files = collectSources(rootDir, opts.scope);
+  const ignoreGlobs = loadIgnoreGlobs(config);
+  const isIgnored = createIgnoreMatcher(ignoreGlobs);
+  const files = collectSources(rootDir, isIgnored, opts.scope);
   const tree = loadIntentTree(join(rootDir, intentsDir(config)));
-  const records = Object.entries(files).flatMap(([file, source]) => parseDecorations(source, file));
+  // Index records come from the shared scanner so directory `.intent` and per-file
+  // sidecar records are visible to doctor too (keystone), not only the TS files.
+  const records = scanDecorations(rootDir, { ignore: ignoreGlobs });
   const index = buildDerivedIndex(records, tree.intents);
 
   const { findings, density_baseline } = analyzeStaticDecoration({ files, index, mode });
   const conflicts = conflictsCoDecoration(index);
-  const allFindings: StaticFinding[] = [...findings, ...conflicts];
+  const sidecarCoverage = collectSidecarCoverage(rootDir, isIgnored, opts.scope);
+  const allFindings: StaticFinding[] = [...findings, ...conflicts, ...sidecarCoverage];
 
   const report = StaticAnalysisReportSchema.parse({
     schema_version: 1,
@@ -83,9 +147,9 @@ export function runStaticAnalysis(
     density_baseline,
   });
 
-  const outDir = join(rootDir, ".ia/observability");
-  mkdirSync(outDir, { recursive: true });
-  writeFileSync(join(outDir, "static-analysis-report.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  const reportPath = staticAnalysisReportPath(rootDir);
+  mkdirSync(dirname(reportPath), { recursive: true });
+  writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
 
   const counts = new Map<string, number>();
   for (const f of allFindings) counts.set(f.class, (counts.get(f.class) ?? 0) + 1);
@@ -99,7 +163,7 @@ export function runStaticAnalysis(
       ? ["  findings: none"]
       : [...counts.entries()].map(([cls, n]) => `  ${cls}: ${n}`)),
     ...allFindings.slice(0, 50).map((f) => `    ${f.file}:${f.line}  [${f.class}] ${f.suggestion}`),
-    `  report: .ia/observability/static-analysis-report.json`,
+    `  report: ${relative(rootDir, staticAnalysisReportPath(rootDir))}`,
   ];
   return { ok: true, text: `${lines.join("\n")}\n`, report };
 }

@@ -1,0 +1,25 @@
+schema_version: 2
+id: api/metrics/artifact-resolution
+description: "The artifact resolver abstracts all file-system access for the
+  metrics router: it constructs the artifact path from a package name and
+  artifact type, reads the file, and returns a presence envelope without
+  throwing on absence. It never writes to disk."
+obligation: must
+compose: all
+triples:
+  - id: absent-returns-envelope
+    subject: the artifact resolver
+    predicate: return
+    object: "{ present: false } when the artifact file is absent, without throwing"
+  - id: construct-path
+    subject: the artifact resolver
+    predicate: construct
+    object: the artifact file path from the package name and artifact type at call time
+  - id: no-disk-writes
+    subject: the artifact resolver
+    predicate: write
+    object: any file to disk
+    polarity: negative
+relates_to:
+  - kind: parent
+    target: api/metrics

@@ -98,6 +98,22 @@ describe("5.1 / P2-T6 — no verifier call fires when the antecedent is false", 
   });
 });
 
+// universal-decoration-coverage §7 / D6 (board M1-extension) — a structural
+// config claim must not satisfy a `compose: implies` antecedent.
+describe("D.28 — structural records do not contaminate the antecedent gate", () => {
+  const intent = impliesIntent([{ id: "enclosed", subject: "the endpoint", predicate: "is enclosed by a decoration of", object: "api/service-layer" }]);
+
+  test("'is enclosed by a decoration of' is NOT satisfied by a structural scope:file claim", () => {
+    const structuralEnclosure = indexOf([rec({ file: "a.ts", scope: "file", declaration_name: null, marker: "intent-file", intent_path: "api/service-layer", anchor: "", verify: "structural" })]);
+    expect(evaluateAntecedent(intent, CREATE, structuralEnclosure).held).toBe(false);
+  });
+
+  test("but the SAME claim as a semantic record DOES satisfy it (proves the partition is the cause)", () => {
+    const semanticEnclosure = indexOf([rec({ file: "a.ts", scope: "file", declaration_name: null, marker: "intent-file", intent_path: "api/service-layer" })]);
+    expect(evaluateAntecedent(intent, CREATE, semanticEnclosure).held).toBe(true);
+  });
+});
+
 describe("5.2 / P2-T7b — ambiguous antecedent is a structural error, never an LLM fallback", () => {
   test("subject binding to multiple units returns verifier_evidence_too_large", () => {
     const index = indexOf([

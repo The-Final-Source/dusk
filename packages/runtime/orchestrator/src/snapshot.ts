@@ -27,9 +27,22 @@ export type SessionSnapshot = {
 
 export const DEFAULT_BASE_REF = "origin/main";
 
-/** Resolve a ref to a commit SHA via real git. */
+/**
+ * Ordered fallbacks for the DEFAULT base ref. A dusk-monorepo checkout resolves
+ * `origin/main`; a fresh STANDALONE repo (the greenfield POC) has no remote, so
+ * the merge-base is the local trunk / current tip. An EXPLICIT `--base-ref` is
+ * never subject to this fallback (it resolves strictly or fails).
+ */
+export const DEFAULT_BASE_REF_FALLBACKS: string[] = ["origin/main", "main", "HEAD"];
+
+/**
+ * Resolve a ref to a commit SHA via real git. stderr is captured (not inherited)
+ * so a probe that misses during the default-base-ref fallback doesn't leak a
+ * spurious `fatal: ambiguous argument 'origin/main'` line into a clean run log;
+ * a genuine failure still surfaces via the thrown error's message.
+ */
 export function resolveCommit(repoDir: string, ref: string): string {
-  return execFileSync("git", ["rev-parse", ref], { cwd: repoDir, encoding: "utf8" }).trim();
+  return execFileSync("git", ["rev-parse", ref], { cwd: repoDir, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 }
 
 /**
@@ -48,6 +61,11 @@ export function serializeIndex(index: DerivedIndex): string {
       scope: r.scope,
       declaration_name: r.declaration_name,
       support_triple: r.support_triple,
+      // D.28 additive fields: without these, two structurally-different indices
+      // (same lines, different anchors/verify) would hash identically and
+      // `index_snapshot_id` would lose determinism w.r.t. them.
+      anchor: r.anchor ?? null,
+      verify: r.verify ?? "semantic",
     }))
     .sort((a, b) =>
       a.file !== b.file
@@ -56,7 +74,9 @@ export function serializeIndex(index: DerivedIndex): string {
           ? a.line - b.line
           : a.marker !== b.marker
             ? a.marker.localeCompare(b.marker)
-            : a.intent_path.localeCompare(b.intent_path),
+            : a.intent_path !== b.intent_path
+              ? a.intent_path.localeCompare(b.intent_path)
+              : (a.anchor ?? "").localeCompare(b.anchor ?? ""),
     );
   const intents = [...index.intents.keys()].sort().map((id) => {
     const intent = index.intents.get(id)!;
@@ -88,9 +108,30 @@ export type BuildSnapshotDeps = {
 
 /** Build a fresh session snapshot from the merge-base. */
 export function buildSessionSnapshot(deps: BuildSnapshotDeps): SessionSnapshot {
-  const baseRef = deps.baseRef ?? DEFAULT_BASE_REF;
   const resolve = deps.resolveCommit ?? resolveCommit;
-  const mergeBaseCommit = resolve(deps.repoDir, baseRef);
+  let baseRef: string;
+  let mergeBaseCommit: string;
+  if (deps.baseRef) {
+    // Explicit base ref — strict (resolves or throws honestly).
+    baseRef = deps.baseRef;
+    mergeBaseCommit = resolve(deps.repoDir, baseRef);
+  } else {
+    // Default — try fallbacks in order so a standalone repo (no remote) works.
+    const resolved = DEFAULT_BASE_REF_FALLBACKS.map((ref) => {
+      try {
+        return { ref, sha: resolve(deps.repoDir, ref) };
+      } catch {
+        return null;
+      }
+    }).find((x): x is { ref: string; sha: string } => x !== null);
+    if (!resolved) {
+      throw new Error(
+        `cannot resolve a base ref for the session snapshot (tried ${DEFAULT_BASE_REF_FALLBACKS.join(", ")}) — is this a git repo with at least one commit?`,
+      );
+    }
+    baseRef = resolved.ref;
+    mergeBaseCommit = resolved.sha;
+  }
   const index = deps.buildIndex();
   return { id: computeSnapshotId(mergeBaseCommit, index), mergeBaseCommit, baseRef, index };
 }

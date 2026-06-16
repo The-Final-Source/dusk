@@ -209,7 +209,13 @@ export function transition(state: DialogState, response: ClassifiedResponse, opt
         const impl = implDraft(next, suffixes);
         if (impl?.id) {
           const children = layers.filter((l) => suffixes.includes(l)).map((layer) => pyramidChild(impl, layer));
-          const drafts = next.intents_drafted.map((d) => (d === impl ? { ...d, pyramid_picked: layers } : d));
+          // Drop ALL existing pyramid children of impl before appending the fresh
+          // pick, so a RE-PICK to fewer layers removes de-selected children AND a
+          // retained layer doesn't produce a duplicate `<impl.id>/<layer>` draft.
+          const implId = impl.id;
+          const drafts = next.intents_drafted
+            .filter((d) => !(isPyramidChild(d.id, suffixes) && d.id!.startsWith(`${implId}/`)))
+            .map((d) => (d === impl ? { ...d, pyramid_picked: layers } : d));
           next = { ...next, intents_drafted: [...drafts, ...children] };
         }
         const pending = reciprocalPending(next, suffixes);

@@ -46,7 +46,16 @@ export type SupportClaimVerdict = z.infer<typeof SupportClaimVerdictSchema>;
 
 export const TripleEvidenceSchema = z
   .object({
+    /** The primary focal claimant (first decoration of the aspect) — unchanged shape. */
     focal_claim: FocalClaimSchema.optional(),
+    /**
+     * ALL focal claimants of the aspect (additive, v1.x). When an aspect is
+     * decorated on more than one line, `focal_claim` is only the first; the
+     * audit's citation-precision scorer (RFC §7.5.1) needs every claimant so a
+     * defect on a later claimant is still citable. Present when the verifier
+     * had ≥1 focal claimant; `focal_claim === focal_claims[0]`.
+     */
+    focal_claims: z.array(FocalClaimSchema).optional(),
     support_claims: z.array(SupportClaimVerdictSchema).default([]),
     /** Count of passing supports summarized rather than enumerated (default verbosity). */
     support_pass_count: z.number().int().optional(),

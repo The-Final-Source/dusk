@@ -1,10 +1,14 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { DogfoodReportSchema, duskError, err, ok, type DogfoodReport, type RuntimeResult } from "@dusk/core-schema";
+import { DogfoodReportSchema, dogfoodDir, duskError, err, ok, type DogfoodReport, type RuntimeResult } from "@dusk/core-schema";
 import { z } from "zod";
 
 import type { Clock } from "./auditRunner.js";
+
+// `dogfoodDir` is the SSoT layout from `@dusk/core-schema` so the api metrics
+// reader resolves the same `dogfood-report.json` this window writer produces.
+export { dogfoodDir };
 
 /**
  * Dogfood window data + the go/no-go evaluation — Phase 5 design D8 (P5-T11).
@@ -40,10 +44,6 @@ export const DogfoodEventSchema = z.discriminatedUnion("kind", [
 ]);
 export type DogfoodEvent = z.infer<typeof DogfoodEventSchema>;
 
-export function dogfoodDir(root: string): string {
-  return join(root, ".ia/observability/dogfood");
-}
-
 /** Append one window event to the dated JSONL stream. */
 export function appendDogfoodEvent(root: string, event: DogfoodEvent): void {
   const validated = DogfoodEventSchema.parse(event);
@@ -72,7 +72,7 @@ export function evaluateDogfood(opts: { root: string; clock: Clock }): RuntimeRe
   const started = events.find((e) => e.kind === "window_started");
   if (!started || started.kind !== "window_started") {
     return err(
-      duskError("config_invalid", "no dogfood window has been started (no window_started event in .ia/observability/dogfood/)", {
+      duskError("config_invalid", `no dogfood window has been started (no window_started event in ${dogfoodDir(opts.root)})`, {
         recoverable: true,
         recovery_hint: "append a window_started event when the first decorated commit lands",
       }),

@@ -29,11 +29,12 @@ export function makeScriptedAuthorGenerator(script: ScriptedAuthorResponse[]): A
       });
     }
     cursor += 1;
-    const { question, draftPatch, drafts, tensions, practiceProposal } = next;
+    const { question, draftPatch, drafts, removedDraftIds, tensions, practiceProposal } = next;
     return {
       question,
       ...(draftPatch !== undefined ? { draftPatch } : {}),
       ...(drafts !== undefined ? { drafts } : {}),
+      ...(removedDraftIds !== undefined ? { removedDraftIds } : {}),
       ...(tensions !== undefined ? { tensions } : {}),
       ...(practiceProposal !== undefined ? { practiceProposal } : {}),
     };

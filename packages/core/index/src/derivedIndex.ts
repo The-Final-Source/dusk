@@ -15,7 +15,16 @@ export type SatisfactionResult = {
 };
 
 export type DerivedIndex = {
+  /** The FULL merged record set — structural records stay visible (keystone): reverse-index, inspect, doctor. */
   records: DecorationRecord[];
+  /**
+   * The semantic-only subset (`verify !== "structural"`) — the internal partition
+   * the satisfaction-bearing consumers read so a comment-less/config claim can
+   * never flip a semantic verdict, aspect, or `compose: implies` antecedent
+   * (design D6, board M1). Used by `focalSupport`/`aspectRollup` here and by
+   * `antecedent.ts`; NOT exposed as the public record set.
+   */
+  semanticRecords: DecorationRecord[];
   intents: Map<string, Intent>;
   graph: IntentGraph;
   /** intent_path → all claimants. */
@@ -47,11 +56,17 @@ const matchesAspect = (record: DecorationRecord, aspectId: string): boolean =>
 export function buildDerivedIndex(records: DecorationRecord[], intents: Map<string, Intent>): DerivedIndex {
   const graph = buildIntentGraph(intents);
 
+  // The semantic/structural partition (design D6). `records` stays FULL for the
+  // non-semantic consumers (forward/reverse/inspect/doctor); the satisfaction-
+  // bearing functions read `semanticRecords` so a structural config claim cannot
+  // flip a semantic aspect or antecedent.
+  const semanticRecords = records.filter((r) => r.verify !== "structural");
+
   const forward = (intentPath: string): DecorationRecord[] => records.filter((r) => r.intent_path === intentPath);
   const reverse = (file: string): string[] => [...new Set(records.filter((r) => r.file === file).map((r) => r.intent_path))];
 
   const focalSupport = (intentPath: string, aspectId: string): FocalSupport => {
-    const scoped = records.filter((r) => r.intent_path === intentPath && matchesAspect(r, aspectId));
+    const scoped = semanticRecords.filter((r) => r.intent_path === intentPath && matchesAspect(r, aspectId));
     return {
       focal: scoped.filter((r) => FOCAL_MARKERS.has(r.marker)),
       support: scoped.filter((r) => r.marker === "intent-support"),
@@ -63,7 +78,7 @@ export function buildDerivedIndex(records: DecorationRecord[], intents: Map<stri
     if (!intent) return [];
     const aspectIds = tripleIdsOf(intent);
     const claimed = new Set<string>();
-    for (const record of records) {
+    for (const record of semanticRecords) {
       if (record.intent_path !== intentPath) continue;
       if (record.marker !== "intent" && record.marker !== "intent-file") continue;
       if (record.aspect_ids === null) for (const id of aspectIds) claimed.add(id);
@@ -104,6 +119,7 @@ export function buildDerivedIndex(records: DecorationRecord[], intents: Map<stri
 
   return {
     records,
+    semanticRecords,
     intents,
     graph,
     forward,

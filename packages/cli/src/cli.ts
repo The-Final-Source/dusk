@@ -43,7 +43,7 @@ const HELP_TEXT: Record<string, string> = {
   skills:
     "dusk skills\n  Enumerate installed role-bound skills grouped by role, matching the layout\n  under .claude/skills/dusk/<role>/.\n  Flags: (none)\n  Example: dusk skills\n",
   implement:
-    "dusk implement <request>\n  Run the 9-step implementation pipeline (mirror of the dusk_implement MCP tool;\n  primarily for debugging). Runs the Verifier on the ambient Claude Code model.\n  Flags: --resume <bead-id|resume-token>   resume a paused or L3-frozen run\n  Example: dusk implement \"add cursor decoding for paginated lists\"\n  Example: dusk implement --resume rt_20260610120000001\n",
+    "dusk implement <request>\n  Run the 9-step implementation pipeline (mirror of the dusk_implement MCP tool;\n  primarily for debugging). Runs the Verifier on the ambient Claude Code model.\n  Flags: --scope <intent,..>               restrict decomposition to these intent paths (comma-separated)\n         --base-ref <ref>                  diff/branch the run against this git ref instead of HEAD\n         --resume <bead-id|resume-token>   resume a paused or L3-frozen run\n  Example: dusk implement \"add cursor decoding for paginated lists\"\n  Example: dusk implement \"add the list endpoint\" --scope notifications/list,notifications/list/unit-tests\n  Example: dusk implement \"wire logging\" --base-ref main\n  Example: dusk implement --resume rt_20260610120000001\n",
 };
 
 const DOCTOR_HELP =

@@ -1,0 +1,7 @@
+version: 1
+
+intents:
+  dir: .ia/intents
+
+test_pyramid:
+  suffixes: [unit-tests, integration-tests, e2e-tests]

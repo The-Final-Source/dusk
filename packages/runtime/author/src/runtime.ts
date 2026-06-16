@@ -27,7 +27,7 @@ import {
   writeDialogState,
   type Clock,
 } from "./dialogStore.js";
-import { discoverTensionCandidates } from "./discovery.js";
+import { discoverTensionCandidates, intentTreeCensus } from "./discovery.js";
 import { finalizeDialog, type FinalizeFs } from "./finalize.js";
 import {
   classifyUserResponse,
@@ -144,6 +144,19 @@ export function createAuthorRuntime(deps: AuthorRuntimeDeps): AuthorRuntime {
     return { ...state, intents_drafted: drafts };
   };
 
+  /**
+   * Remove drafts by id and cascade to their pyramid children (`<id>/<layer>`).
+   * An explicit, recorded set-mutation — a Stage-4 revision that DROPS a draft.
+   */
+  const removeDrafts = (state: DialogState, removedIds: string[]): DialogState => {
+    if (removedIds.length === 0) return state;
+    const removed = new Set(removedIds);
+    const drafts = state.intents_drafted.filter(
+      (d) => d.id === undefined || (!removed.has(d.id) && !removedIds.some((rid) => d.id!.startsWith(`${rid}/`))),
+    );
+    return { ...state, intents_drafted: drafts };
+  };
+
   const applyGeneration = (state: DialogState, gen: AuthorGeneration): DialogState => {
     let next = state;
     if (gen.tensions !== undefined) {
@@ -154,6 +167,9 @@ export function createAuthorRuntime(deps: AuthorRuntimeDeps): AuthorRuntime {
     }
     if (gen.draftPatch) next = mergeDraft(next, gen.draftPatch);
     for (const draft of gen.drafts ?? []) next = mergeDraft(next, draft);
+    // Removals apply AFTER additive merges so a turn that both adds and drops is
+    // unambiguous (the drop wins for any id in both sets).
+    if (gen.removedDraftIds && gen.removedDraftIds.length > 0) next = removeDrafts(next, gen.removedDraftIds);
     return next;
   };
 
@@ -181,7 +197,13 @@ export function createAuthorRuntime(deps: AuthorRuntimeDeps): AuthorRuntime {
       let genContext = context;
       if (outcome.question.type === "tension_resolution") {
         const candidates = discoverTensionCandidates(deps.rootDir, intentsDir, next.request);
-        genContext = { ...genContext, candidates };
+        // General intent-tree census (App. D.25): lets the Author surface tensions
+        // in both directions — against intents that exist AND `prerequisite`
+        // tensions against an intent the request depends on that is absent. No
+        // bootstrap state enters the flow; a prerequisite tension is a normal
+        // surfaced finding the existing transition handles.
+        const intent_census = intentTreeCensus(deps.rootDir, intentsDir);
+        genContext = { ...genContext, candidates, intent_census };
       }
       if (outcome.question.type === "practice_proposal") {
         const scaffold = next.intents_drafted[0];

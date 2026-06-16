@@ -16,8 +16,12 @@ import { stucknessFiredAt } from "./stuckness.js";
 
 /**
  * Step-4 short cycle (RFC §6.4; 6.1/6.2/6.5/6.6/6.7/6.8). Per iteration:
- *   Engineer draft → PreToolUse gate → (on pass) fresh Verifier (memory: none,
+ *   Engineer draft → mechanical gate → (on pass) fresh Verifier (memory: none,
  *   IDENTICAL payload every iter) → focal-verdict check.
+ * The "mechanical gate" is the injected `gate` dep — for the headless engineer
+ * that is the POST-HOC in-process `gateWorktreeEdits` over the worktree diff (NOT
+ * the interactive Claude Code PreToolUse hook, which the headless engineer does
+ * not pass through); tests inject a scripted gate.
  * Diagnosis writes are forced when the stuckness detector fires (≥ iter 3) or, as
  * a fallback, at iter 5. Iter-15 surfaces an early escalation whose payload is the
  * bead-memory diagnosis. `support_quality: low_confidence` is advisory — it never
@@ -47,7 +51,13 @@ export type ShortCycleDeps = {
   engineerInput: (feedback: string | null) => string;
   /** CONSTANT Verifier input — identical across iterations (no-leak invariant). */
   verifierInput: string;
-  /** Gate the Engineer draft (real PreToolUse hook in prod; scripted in tests). */
+  /**
+   * Gate the Engineer draft. In prod this is the post-hoc in-process
+   * `gateWorktreeEdits` over the worktree diff (the headless engineer's REAL
+   * boundary — it does not pass through the interactive PreToolUse hook); tests
+   * inject a scripted gate. When absent the cycle is UNGATED (structural/test
+   * runs only — the live CLI always injects it).
+   */
   gate?: (engineer: SpawnOutcome) => GateResult;
   /** Override the diagnosis writer (default writes bead memory for engineer + bead-orchestrator). */
   writeDiagnosis?: (text: string) => void;
@@ -140,7 +150,7 @@ export async function runShortCycle(deps: ShortCycleDeps): Promise<RuntimeResult
     // 2. Gate. A blocked draft re-drafts WITHOUT spawning the Verifier (6.2).
     const gate = deps.gate ? deps.gate(engineer.value) : { blocked: false };
     if (gate.blocked) {
-      feedback = gate.rejection ?? "the PreToolUse gate rejected the draft";
+      feedback = gate.rejection ?? "the mechanical gate rejected the draft";
       if (lifetimeIter >= deps.lifetimeMax) return ok({ kind: "budget_exhausted", perEntryIters: perEntryIter, lifetimeIters: lifetimeIter, diagnosisHistory });
       if (perEntryIter >= deps.perEntryMax) return ok({ kind: "per_entry_exhausted", perEntryIters: perEntryIter, lifetimeIters: lifetimeIter, diagnosisWrites });
       continue;

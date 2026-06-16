@@ -1,5 +1,12 @@
-/** The 12 mechanical rejection kinds (RFC App. A.8) plus the fail-safe kind. */
+/**
+ * The 17 mechanical rejection kinds (12 from RFC App. A.8 + 5 from D.28
+ * universal-decoration-coverage) plus the fail-safe kind — 18 entries. The 5
+ * D.28 coverage kinds are gate-only and NOT part of the v1 10-check→12-kind
+ * matrix, so the v1 count of 12 still stands (App. A.8 carries a v1.x note
+ * pointing here).
+ */
 export const REJECTION_KINDS = [
+  // 12 from RFC App. A.8
   "missing_decorator",
   "missing_statement_decorator",
   "unresolved_intent_path",
@@ -12,6 +19,13 @@ export const REJECTION_KINDS = [
   "malformed_support_triple",
   "focal_and_support_for_same_intent",
   "non_test_path_on_intent_test",
+  // 5 from D.28 universal-decoration-coverage (comment-less sidecar coverage)
+  "malformed_sidecar",
+  "sidecar_target_missing",
+  "unresolved_anchor",
+  "overlapping_anchors",
+  "uncovered_target_lines",
+  // fail-safe
   "hook_internal_error",
 ] as const;
 export type RejectionKind = (typeof REJECTION_KINDS)[number];
@@ -27,8 +41,16 @@ export type Rejection = {
 
 export type GateWarning = { kind: string; file: string; line: number; message: string };
 
+/**
+ * The tools the gate's matcher routes to it. `MultiEdit` matches the
+ * `Write|Edit|MultiEdit` matcher (it carries `edits[]` like Edit). `tool` is
+ * INFORMATIONAL only — `runGate` keys off `file_path`/`content`/`edits`, never
+ * the tool name.
+ */
+export type ToolName = "Write" | "Edit" | "MultiEdit";
+
 export type HookInput = {
-  tool: "Write" | "Edit";
+  tool?: ToolName;
   args: {
     file_path: string;
     content?: string;
@@ -39,20 +61,44 @@ export type HookInput = {
 };
 
 /**
- * Claude Code's ACTUAL PreToolUse stdin payload. The keys it sends are
- * `tool_name` / `tool_input` — NOT `tool` / `args`. The legacy `tool` / `args`
- * aliases are accepted too (older callers / in-proc tests) so the gate tolerates
- * either. `normalizeHookInput` maps this to the internal HookInput at the stdin
- * boundary; runGate only ever sees the normalized shape.
+ * Normalize a raw PreToolUse payload into the internal `HookInput`. Claude Code
+ * sends `{ hook_event_name, tool_name, tool_input: { file_path, content?, edits? } }`;
+ * programmatic/test callers use the internal `{ tool, args }` shape. We accept
+ * BOTH (the `??` order prefers the internal shape, so existing callers are
+ * unchanged). If neither carries a `file_path`, the result has `file_path:
+ * undefined`; `isGatedFile` then returns false and `runGate` approves — safe
+ * because a real Write/Edit/MultiEdit ALWAYS carries `file_path`, so a missing
+ * one is not a gated code write. Genuinely broken input (unparseable JSON, a
+ * thrown error) fails SAFE to a block via the `cli.ts` catch — never a crash.
+ *
+ * This adapter is why the live hook works at all: before it, `cli.ts` fed the
+ * raw `{ tool_name, tool_input }` payload straight to `runGate`, which read
+ * `input.args.file_path` on an `undefined` `args` → TypeError → fail-safe block
+ * on EVERY real write (the gate fired into a crash).
  */
-export type RawHookInput = {
-  tool_name?: string;
-  tool?: string;
-  tool_input?: HookInput["args"];
-  args?: HookInput["args"];
-  session_id?: string;
-  transcript_path?: string;
-};
+export function normalizeHookInput(raw: unknown): HookInput {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const tool = (r.tool ?? r.tool_name) as ToolName | undefined;
+  const ti = (r.args ?? r.tool_input ?? {}) as HookInput["args"];
+  return {
+    tool,
+    args: { file_path: ti.file_path, content: ti.content, edits: ti.edits },
+    session_id: r.session_id as string | undefined,
+    transcript_path: r.transcript_path as string | undefined,
+  };
+}
+
+/**
+ * The single definition of which files the gate enforces over — `.ts`/`.tsx`
+ * (excluding generated `.d.ts` declarations) and `.intent` files. The SSoT so
+ * the CLI gate (`runGate`) and the headless-engineer post-hoc gate (the
+ * `implement` git-status scan) can never disagree on WHICH files to check.
+ */
+export function isGatedFile(filePath: string): boolean {
+  if (!filePath) return false;
+  if (filePath.endsWith(".intent")) return true;
+  return /\.(ts|tsx)$/.test(filePath) && !filePath.endsWith(".d.ts");
+}
 
 export type HookOutput =
   | { decision: "approve"; warnings?: GateWarning[] }

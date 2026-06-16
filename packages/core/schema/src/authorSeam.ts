@@ -26,7 +26,19 @@ export type AuthorGeneration = {
   draftPatch?: DraftIntent;
   /** Stage-4: additional drafts emitted in the same turn (e.g. a conditional intent). */
   drafts?: DraftIntent[];
-  /** Stage-2: the classified tensions surfaced by the discovery pass. */
+  /**
+   * Stage-4: ids to REMOVE from `intents_drafted[]` (an explicit, recorded
+   * set-mutation — a revision that drops a previously drafted intent). Removing
+   * an id also cascade-removes its pyramid children (`<id>/<layer>`). Without
+   * this, a revision could only ADD/UPDATE, so a dropped draft survived to
+   * finalize (the dogfood "removed intents still got written" friction).
+   */
+  removedDraftIds?: string[];
+  /**
+   * Stage-2: the classified tensions surfaced by the discovery pass — including
+   * `prerequisite` tensions (the request depends on an intent not yet authored;
+   * App. D.25). Surfaced tensions force a user decision through the normal flow.
+   */
   tensions?: TensionFinding[];
   /** Stage-3: the industry-practice proposal text. */
   practiceProposal?: string;
@@ -46,6 +58,8 @@ export type ScriptedAuthorResponse = {
   question: string;
   draftPatch?: DraftIntent;
   drafts?: DraftIntent[];
+  /** Stage-4: ids to remove from the drafted set (cascades to pyramid children). */
+  removedDraftIds?: string[];
   tensions?: TensionFinding[];
   practiceProposal?: string;
 };

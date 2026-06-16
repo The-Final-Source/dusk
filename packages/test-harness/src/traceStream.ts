@@ -1,10 +1,14 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { SubAgentTraceSchema, type SubAgentRole, type SubAgentTrace } from "@dusk/core-schema";
+import { SubAgentTraceSchema, relativeTracePath, type SubAgentRole, type SubAgentTrace } from "@dusk/core-schema";
 
-/** Default observability trace path relative to a project root. */
-export const TRACES_RELATIVE_PATH = ".ia/observability/traces.jsonl";
+/**
+ * Default observability trace path relative to a project root — the structural
+ * relative form from the `@dusk/core-schema` layout SSoT, so this in-test reader
+ * can never drift from the path the ring-buffer writer produces.
+ */
+export const TRACES_RELATIVE_PATH = relativeTracePath();
 
 /**
  * Tail-read the trace stream into typed `SubAgentTrace[]` for in-test assertions.

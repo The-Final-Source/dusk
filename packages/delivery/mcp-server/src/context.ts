@@ -1,8 +1,8 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { parse as parseYaml } from "yaml";
-import { parseDecorations, type DecorationRecord } from "@dusk/core-decoration";
+import { loadIgnoreGlobs, scanDecorations } from "@dusk/core-decoration";
 import { buildDerivedIndex, type DerivedIndex } from "@dusk/core-index";
 import { loadIntentTree } from "@dusk/core-graph";
 import { DuskConfigSchema, intentsDir, type DuskConfig, type Intent, type Verdict } from "@dusk/core-schema";
@@ -24,40 +24,11 @@ export type DuskContext = {
   verdictStore: Map<string, Verdict>;
 };
 
-const SOURCE_EXT = new Set([".ts", ".tsx", ".js", ".jsx", ".mts", ".cts"]);
-const SKIP_DIRS = new Set(["node_modules", ".git", ".ia", "dist", ".turbo", ".next", "build"]);
-
-/** Walk the repo and collect decoration records from source files (skipping build dirs). */
-export function scanDecorations(rootDir: string): DecorationRecord[] {
-  const records: DecorationRecord[] = [];
-  const walk = (dir: string): void => {
-    let entries: string[];
-    try {
-      entries = readdirSync(dir);
-    } catch {
-      return;
-    }
-    for (const entry of entries) {
-      const full = join(dir, entry);
-      let stat;
-      try {
-        stat = statSync(full);
-      } catch {
-        continue;
-      }
-      if (stat.isDirectory()) {
-        if (!SKIP_DIRS.has(entry)) walk(full);
-        continue;
-      }
-      const dot = entry.lastIndexOf(".");
-      if (dot === -1 || !SOURCE_EXT.has(entry.slice(dot))) continue;
-      const rel = relative(rootDir, full);
-      records.push(...parseDecorations(readFileSync(full, "utf8"), rel));
-    }
-  };
-  walk(rootDir);
-  return records;
-}
+// The decoration walker is now the single shared `.intent`-aware scanner in
+// `@dusk/core-decoration` (keystone, design D1) — re-exported so existing callers
+// are unchanged. It dispatches inline / directory `.intent` / per-file sidecar and
+// consults the `decoration.ignore` SSoT (no private `SKIP_DIRS`/`SOURCE_EXT`).
+export { scanDecorations } from "@dusk/core-decoration";
 
 export type BuildContextParams = {
   rootDir: string;
@@ -95,7 +66,7 @@ export function loadProjectContext(rootDir: string, opts: Partial<Pick<DuskConte
     }
   }
   const tree = loadIntentTree(join(rootDir, intentsDir(config)));
-  const records = scanDecorations(rootDir);
+  const records = scanDecorations(rootDir, { ignore: loadIgnoreGlobs(config) });
   const index = buildDerivedIndex(records, tree.intents);
   const readFile = (file: string): string => {
     const full = join(rootDir, file);

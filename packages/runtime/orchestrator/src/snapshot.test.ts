@@ -44,6 +44,29 @@ const buildBaseIndex = () => buildDerivedIndex([record("src/base.ts", "api/x")],
 const roleFile = (slug: string, memory: string, body: string): string =>
   ["---", "dusk_role_version: 2", `name: dusk-${slug}`, "description: test", "tools: [Read]", `memory: ${memory}`, "skills: []", "model: claude-sonnet-4-6", "---", "", body, ""].join("\n");
 
+describe("Phase 6 §1.3 — default base ref falls back for a standalone repo with no remote", () => {
+  let repo: TempRepo;
+  beforeEach(() => {
+    repo = createTempRepo({ git: false });
+  });
+  afterEach(() => repo.cleanup());
+
+  test("buildSessionSnapshot resolves the merge-base via a fallback when origin/main is absent", () => {
+    const git = (...args: string[]) => execFileSync("git", args, { cwd: repo.dir, encoding: "utf8" });
+    git("init");
+    git("config", "user.email", "t@t.t");
+    git("config", "user.name", "T");
+    writeFileSync(join(repo.dir, "f.txt"), "x");
+    git("add", "-A");
+    git("commit", "-m", "init");
+    // A fresh standalone repo has no `origin/main` remote-tracking ref; the
+    // default base ref must fall back (main → HEAD) instead of crashing.
+    const snapshot = buildSessionSnapshot({ repoDir: repo.dir, buildIndex: buildBaseIndex });
+    expect(snapshot.mergeBaseCommit).toMatch(/^[0-9a-f]{7,40}$/);
+    expect(["origin/main", "main", "HEAD"]).toContain(snapshot.baseRef);
+  });
+});
+
 describe("2.1 — snapshot id stamped on every trace; --rebuild-index produces a new id", () => {
   let repo: TempRepo;
   beforeEach(() => {
