@@ -112,4 +112,11 @@ describe("10.3 — livelock-vs-budget precedence (P3-T28)", () => {
     expect(resolveTickPrecedence({ livelockReport: null, budgetExhausted: true }).kind).toBe("budget_exhaustion");
     expect(resolveTickPrecedence({ livelockReport: null, budgetExhausted: false }).kind).toBe("continue");
   });
+
+  // RFC App. D.34 (D7) — precedence `livelock > no_verdict > budget`.
+  test("no_verdict beats budget, but livelock beats no_verdict", () => {
+    expect(resolveTickPrecedence({ livelockReport: report, noVerdictExhausted: true, budgetExhausted: true }).kind).toBe("livelock");
+    expect(resolveTickPrecedence({ livelockReport: null, noVerdictExhausted: true, budgetExhausted: true }).kind).toBe("no_verdict");
+    expect(resolveTickPrecedence({ livelockReport: null, noVerdictExhausted: false, budgetExhausted: true }).kind).toBe("budget_exhaustion");
+  });
 });
