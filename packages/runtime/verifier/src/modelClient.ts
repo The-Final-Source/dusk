@@ -107,6 +107,26 @@ export function modelExitSubtype(stdout: string): string | null {
   return null;
 }
 
+type ClaudeEnvelope = { result?: unknown; total_cost_usd?: number; usage?: { input_tokens?: number; output_tokens?: number } };
+
+/**
+ * Guard the success-path `--output-format json` parse (RFC App. D.34, gap #7). A
+ * malformed envelope is transport PLUMBING noise (the bytes never parsed into the
+ * CLI's own result shape), NOT content. Re-thrown as a `SyntaxError` so
+ * `isTransportError` classifies it transport (`modelCallError.ts`) and the spawn
+ * seam surfaces it as a returned failure — NEVER an uncaught crash. (This makes
+ * the always-mitigated-at-the-seam behavior explicit + legible at the source.)
+ */
+export function parseClaudeEnvelope(raw: string): ClaudeEnvelope {
+  try {
+    return JSON.parse(raw) as ClaudeEnvelope;
+  } catch (e) {
+    throw new SyntaxError(
+      `claude CLI returned an unparseable --output-format json envelope (${raw.length} bytes): ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+}
+
 function runClaude(cli: string, args: string[], input: string, timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(cli, args, { stdio: ["pipe", "pipe", "pipe"] });
@@ -175,7 +195,7 @@ export function claudeCodeModelClient(opts: ClaudeCodeClientOptions = {}): Model
       args.push("--system-prompt", system ? `${system}\n\n${noTools}` : noTools);
       args.push("--tools", ""); // zero-tool allowlist — keep last
       const raw = await runClaude(cli, args, user, timeoutMs);
-      const parsed = JSON.parse(raw) as { result?: unknown; total_cost_usd?: number; usage?: { input_tokens?: number; output_tokens?: number } };
+      const parsed = parseClaudeEnvelope(raw);
       const usage = parsed.usage ?? {};
       return {
         text: typeof parsed.result === "string" ? parsed.result : JSON.stringify(parsed.result ?? {}),
