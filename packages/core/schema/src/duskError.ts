@@ -29,6 +29,13 @@ export const DUSK_ERROR_KINDS = [
   // Verifier (Phase 2)
   "verifier_evidence_too_large",
   "verifier_model_call_failed",
+  // Boundary-outcome handling (RFC App. D.34) — a boundary returned empty /
+  // unparseable / incomplete / deterministic-limit / tool-infrastructure output:
+  // the infrastructure recovery axis, NEVER a content fail, a silent green, or a
+  // crash. The specific `NoVerdictReason` rides in `details.no_verdict_reason`
+  // (one kind, not N kinds — decision ②). SUPERSEDES `test_runner_command_failed`
+  // for the Stage-2 boundary.
+  "infrastructure_no_verdict",
   // Test-pyramid routing (RFC App. D.32) — a routed test intent whose body
   // cannot be located (no @intent-test/@intent-test-file claimant). A
   // verdict-channel kind, distinct from the gate kind
@@ -79,4 +86,26 @@ export function duskError(kind: DuskErrorKind, message: string, opts: DuskErrorO
 
 export function isDuskError(value: unknown): value is DuskError {
   return DuskErrorSchema.safeParse(value).success;
+}
+
+/**
+ * Construct an `infrastructure_no_verdict` DuskError on the recovery axis (RFC
+ * App. D.34; R6/R10). The `NoVerdictReason` rides in `details.no_verdict_reason`
+ * (one kind, not N kinds). Always `recoverable: true` — a `no_verdict` is NEVER a
+ * terminal content fail; the finite infra counter (in the orchestrator) decides
+ * when the axis is exhausted. The single constructor the three former
+ * downgrade sites (short-cycle / Stage-1 pre-pass / long-cycle) call, so the
+ * classification lives in one place (R2).
+ */
+export function noVerdictError(
+  reason: string,
+  message: string,
+  opts: Omit<DuskErrorOptions, "recoverable"> = {},
+): DuskError {
+  const { details, ...rest } = opts;
+  return duskError("infrastructure_no_verdict", message, {
+    recoverable: true,
+    details: { ...(details ?? {}), no_verdict_reason: reason },
+    ...rest,
+  });
 }

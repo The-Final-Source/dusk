@@ -33,3 +33,6 @@ export * from "./pocReport.js";
 export * from "./staticAnalysisReport.js";
 export * from "./iaPaths.js";
 export * from "./modelCallError.js";
+export * from "./boundaryOutcome.js";
+export * from "./testRunResult.js";
+export * from "./transportRetry.js";
