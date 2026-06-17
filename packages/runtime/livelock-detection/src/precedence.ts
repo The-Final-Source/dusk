@@ -10,14 +10,27 @@ import type { TestVerifierLivelockReport } from "@dusk/core-schema";
 
 export type TickOutcome =
   | { kind: "livelock"; report: TestVerifierLivelockReport }
+  | { kind: "no_verdict" }
   | { kind: "budget_exhaustion" }
   | { kind: "continue" };
 
+/**
+ * Precedence `livelock > no_verdict > budget` (RFC App. D.34, design D7). The
+ * `no_verdict` arm fires when the finite infrastructure-recovery counter is
+ * exhausted (the counter itself lives in the orchestrator's per-bead closure —
+ * this module stays a pure detector). It sits BETWEEN livelock and budget: a
+ * genuine livelock still wins (its payload is strictly richer), but infrastructure
+ * exhaustion preempts a plain budget-exhaustion error. `no_verdict` iterations are
+ * excluded from the livelock reject-observations at their push site, so infra
+ * noise never trips the consecutive-reject detector here.
+ */
 export function resolveTickPrecedence(input: {
   livelockReport: TestVerifierLivelockReport | null;
+  noVerdictExhausted?: boolean;
   budgetExhausted: boolean;
 }): TickOutcome {
   if (input.livelockReport) return { kind: "livelock", report: input.livelockReport };
+  if (input.noVerdictExhausted) return { kind: "no_verdict" };
   if (input.budgetExhausted) return { kind: "budget_exhaustion" };
   return { kind: "continue" };
 }

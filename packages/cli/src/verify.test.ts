@@ -67,11 +67,16 @@ describe("7.1 — dusk verify on the worked example (real model)", () => {
     expect(after).toBe(before);
   }, 300_000);
 
-  test("with an injected model, renders verdicts and leaves the working tree unchanged (deterministic)", async () => {
+  // App. D.34 / R8: an empty/degraded model response (`{triples:[]}`) is an
+  // infrastructure `no_verdict`, NOT a silently-fabricated verdict (the former
+  // `?? false` would have rendered a reject from silence). `dusk verify` surfaces
+  // it legibly and — the load-bearing invariant — never mutates the working tree.
+  test("with a degraded injected model, surfaces a legible no_verdict and leaves the working tree unchanged (deterministic)", async () => {
     const before = execFileSync("git", ["status", "--porcelain"], { cwd: repo.dir }).toString();
     const result = await runVerify(repo.dir, WORKED_EXAMPLE_FILE, { modelClient: fakeModel });
-    expect(result.ok).toBe(true);
+    expect(result.ok).toBe(false); // no verdict from silence — honest, not a fabricated verdict
+    expect(result.text.length).toBeGreaterThan(0); // legible, never a silent stall
     const after = execFileSync("git", ["status", "--porcelain"], { cwd: repo.dir }).toString();
-    expect(after).toBe(before);
+    expect(after).toBe(before); // read-only — tree unchanged regardless of outcome
   });
 });

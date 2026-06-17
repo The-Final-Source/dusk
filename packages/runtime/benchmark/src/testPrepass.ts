@@ -1,5 +1,5 @@
 import type { DerivedIndex } from "@dusk/core-index";
-import { duskError, type Intent, type RuntimeResult, type Verdict, type VerifierFactory } from "@dusk/core-schema";
+import { duskError, noVerdictError, type Intent, type RuntimeResult, type Verdict, type VerifierFactory } from "@dusk/core-schema";
 import type { ModelClient } from "@dusk/runtime-verifier";
 
 /**
@@ -78,20 +78,31 @@ export async function realTestPrepassVerdict(intentPath: string, deps: TestPrepa
 
   const completion = await deps.modelClient.complete({ system: TEST_PREPASS_SYSTEM_PROMPT, user, temperature: 0 });
   const parsed = parseAnswer(completion.text);
-  if (!parsed) {
-    return { success: false, error: duskError("verifier_model_call_failed", "test pre-pass response was not parseable JSON", { recoverable: true }) };
+  // Positive completeness check (RFC App. D.34, R8) — the SAME boundary as the
+  // semantic procedure (`procedure.ts`), on the live Stage-1 test-intent pre-pass
+  // the looping test bead routed through. A degraded/empty answer that does not
+  // positively cover EVERY claimed triple is an infrastructure `no_verdict`
+  // (incomplete) — NEVER a fabricated `genuinely_verifies: false → focal fail`
+  // (the former `?? false`), which would re-draft correct test code on infra noise.
+  if (!parsed || (triples.length > 0 && parsed.triples.length === 0)) {
+    return { success: false, error: noVerdictError("empty", "test pre-pass response did not positively cover any claimed triple") };
+  }
+  const missing = triples.find((t) => !parsed.triples.find((a) => a.triple_id === t.id));
+  if (missing) {
+    return { success: false, error: noVerdictError("incomplete", `test pre-pass response did not cover triple ${missing.id}`) };
   }
 
   const perTriple = triples.map((t) => {
-    const answer = parsed.triples.find((a) => a.triple_id === t.id);
-    const verifies = answer?.genuinely_verifies ?? false;
+    // Completeness is guaranteed above — every claimed triple is present.
+    const answer = parsed.triples.find((a) => a.triple_id === t.id)!;
+    const verifies = answer.genuinely_verifies;
     return {
       triple_id: t.id,
       focal_verdict: (verifies ? "pass" : "fail") as "pass" | "fail",
       support_quality: "ok" as const,
       polarity: t.polarity,
       evidence: { support_claims: [] },
-      rationale: answer?.rationale ?? "no judgment returned for this triple",
+      rationale: answer.rationale,
     };
   });
   const decision = perTriple.some((t) => t.focal_verdict === "fail") ? "reject" : "accept";

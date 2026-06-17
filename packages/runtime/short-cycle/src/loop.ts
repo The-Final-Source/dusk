@@ -1,11 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 
 import {
-  duskError,
-  err,
   isDuskError,
   ok,
   type BoundSpawn,
+  type NoVerdictReason,
   type RuntimeResult,
   type SpawnOutcome,
   type Verdict,
@@ -68,6 +67,10 @@ export type ShortCycleOutcome =
   | { kind: "converged"; verdict: Verdict; perEntryIters: number; lifetimeIters: number; lowConfidenceSupports: LowConfidenceSupport[]; diagnosisWrites: number }
   | { kind: "per_entry_exhausted"; perEntryIters: number; lifetimeIters: number; diagnosisWrites: number }
   | { kind: "escalated_iter15"; diagnosis: string; perEntryIters: number; lifetimeIters: number }
+  // App. D.34 (gap #2 / R6/R10): the Verifier returned no usable verdict
+  // (empty/degraded) — INFRASTRUCTURE, routed to the finite no_verdict recovery
+  // axis. NEVER a content reject, NEVER a terminal recoverable:false downgrade.
+  | { kind: "no_verdict"; reason: NoVerdictReason; perEntryIters: number; lifetimeIters: number }
   | { kind: "budget_exhausted"; perEntryIters: number; lifetimeIters: number; diagnosisHistory: string[] };
 
 function defaultWriteDiagnosis(rootDir: string, beadId: string, text: string): void {
@@ -169,7 +172,16 @@ export async function runShortCycle(deps: ShortCycleDeps): Promise<RuntimeResult
     if (!verifierSpawn.success) return verifierSpawn;
     const verdict = verifierSpawn.value.verdict;
     if (!verdict || isDuskError(verdict)) {
-      return err(duskError("verifier_model_call_failed", "the Verifier returned no verdict in the short cycle", { recoverable: false, bead_id: deps.beadId, step: 4 }));
+      // App. D.34 (gap #2 / R6/R10): an empty/degraded verdict is INFRASTRUCTURE,
+      // not a content reject. Surface it on the no_verdict recovery axis — NEVER
+      // the former terminal `recoverable:false` downgrade, which both aborted the
+      // run and (on the confirmed live trigger) let a degraded verdict loop
+      // re-drafting correct code.
+      const reason: NoVerdictReason =
+        verdict && isDuskError(verdict) && typeof verdict.details?.no_verdict_reason === "string"
+          ? (verdict.details.no_verdict_reason as NoVerdictReason)
+          : "empty";
+      return ok({ kind: "no_verdict", reason, perEntryIters: perEntryIter, lifetimeIters: lifetimeIter });
     }
 
     // 4. Failing-triple set + low-confidence supports.

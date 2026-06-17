@@ -1,43 +1,43 @@
-import { execFileSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 
 /**
- * Real Vitest subprocess invocation (RFC §3.4, §6.6; design D8, Q1; 9.2). Runs
- * `pnpm vitest run <scoped-files> --reporter=json` from the WORKSPACE ROOT (Q1:
- * the workspace config is the source of truth) and parses the JSON reporter into
- * per-test results. The runner is injectable so the parser can be exercised
- * offline with the scripted reporter stub.
+ * Project test-command invocation (RFC §3.4, §6.6, App. D.34; design D6). The
+ * core captures ONLY `{stdout, exitCode, timedOut}` — it never parses a tool's
+ * vocabulary (no reading vitest's `success`/`numFailedTests`, no inferring a
+ * verdict from an exit code). `spawnSync` (not `execFileSync`) is used so a
+ * non-zero exit is DATA, never a throw (gap #3 — the former `execFileSync` threw
+ * and crashed the unguarded orchestrator try/finally). Interpretation of the
+ * capture is the Dusk-result-schema floor (`readDuskTestResult`, in `core-schema`)
+ * — which reads ONLY Dusk's OWN result schema, emitted by a project-side
+ * adapter/reporter (a Phase-VI/project task). The runner is injectable so tests
+ * exercise the path offline.
  */
 
-export type TestResult = { file: string; title: string; status: "passed" | "failed"; duration: number };
+/** Raw capture from the project's test command — the ONLY thing the core reads from the tool (R5). */
+export type TestCommandCapture = { stdout: string; exitCode: number | null; timedOut: boolean };
 
-export type VitestRunner = (files: string[], cwd: string) => string;
+/** The injected test-command runner. Returns a capture; NEVER throws (a non-zero exit is data). */
+export type VitestRunner = (files: string[], cwd: string) => TestCommandCapture;
 
-/** Build the exact Vitest argv (the assertion target for "excluded from invocation"). */
+/**
+ * The default test-command argv. The argv is config-/project-supplied and OPAQUE
+ * to the core (R4) — the project-side adapter configures the reporter that emits
+ * Dusk's own result schema; this default is only a placeholder for offline runs.
+ */
 export const buildVitestArgv = (files: string[]): string[] => ["vitest", "run", ...files, "--reporter=json"];
 
-const defaultRunner: VitestRunner = (files, cwd) =>
-  execFileSync("pnpm", buildVitestArgv(files), { cwd, encoding: "utf8" });
-
-/** Parse the `--reporter=json` payload into flat per-test results. */
-export function parseVitestJson(stdout: string): TestResult[] {
-  const json = JSON.parse(stdout) as {
-    testResults?: Array<{ name: string; assertionResults: Array<{ title: string; status: string; duration?: number }> }>;
-  };
-  const out: TestResult[] = [];
-  for (const file of json.testResults ?? []) {
-    for (const a of file.assertionResults) {
-      out.push({ file: file.name, title: a.title, status: a.status === "passed" ? "passed" : "failed", duration: a.duration ?? 0 });
-    }
-  }
-  return out;
-}
+const defaultRunner: VitestRunner = (files, cwd) => {
+  const r = spawnSync("pnpm", buildVitestArgv(files), { cwd, encoding: "utf8" });
+  const timedOut =
+    (r.error as NodeJS.ErrnoException | undefined)?.code === "ETIMEDOUT" || r.signal === "SIGKILL" || r.signal === "SIGTERM";
+  return { stdout: r.stdout ?? "", exitCode: r.status, timedOut };
+};
 
 export type RunVitestInput = { files: string[]; cwd: string; runner?: VitestRunner };
 
-/** Invoke Vitest (or the injected runner) over the scoped files and parse results. */
-export function runVitest(input: RunVitestInput): { invokedFiles: string[]; results: TestResult[] } {
-  if (input.files.length === 0) return { invokedFiles: [], results: [] };
+/** Invoke the test command (or injected runner) over the scoped files and capture raw output — never throws. */
+export function runVitest(input: RunVitestInput): { invokedFiles: string[]; capture: TestCommandCapture } {
+  if (input.files.length === 0) return { invokedFiles: [], capture: { stdout: "", exitCode: null, timedOut: false } };
   const runner = input.runner ?? defaultRunner;
-  const stdout = runner(input.files, input.cwd);
-  return { invokedFiles: input.files, results: parseVitestJson(stdout) };
+  return { invokedFiles: input.files, capture: runner(input.files, input.cwd) };
 }

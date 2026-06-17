@@ -80,3 +80,28 @@ export function makeVitestJsonReport(specs: VitestSpec[]): VitestJsonReport {
 
 /** Build the JSON string (what the subprocess would emit on stdout). */
 export const makeVitestJsonReportString = (specs: VitestSpec[]): string => JSON.stringify(makeVitestJsonReport(specs));
+
+/**
+ * Scripted PROJECT-SIDE ADAPTER capture (RFC App. D.34, decision ①) — emits
+ * Dusk's OWN result schema (`DuskTestRunResult`) inside a `TestCommandCapture`,
+ * the shape the Test Runner core now reads (it no longer parses a tool's
+ * vocabulary). Mirrors what a real project-side vitest reporter / pytest plugin
+ * would write. Use this for an injected `vitestRunner` double that should yield a
+ * CONTENT verdict; use the raw `makeVitestJsonReportString` (NOT Dusk's schema) to
+ * exercise the `no_verdict` (schema-absent) path. The return is structurally a
+ * `@dusk/runtime-test-runner` `TestCommandCapture` (no type import — structural).
+ */
+export function makeDuskTestCapture(
+  specs: VitestSpec[],
+  opts: { completed?: boolean; timedOut?: boolean } = {},
+): { stdout: string; exitCode: number | null; timedOut: boolean } {
+  const cases = specs.map((s) => ({
+    name: s.title,
+    outcome: (s.status === "passed" ? "passed" : "failed") as "passed" | "failed" | "not_run",
+    duration_ms: s.duration ?? 1,
+  }));
+  const passed = cases.filter((c) => c.outcome === "passed").length;
+  const failed = cases.filter((c) => c.outcome === "failed").length;
+  const result = { schema_version: 1 as const, passed, failed, not_run: 0, completed: opts.completed ?? true, cases };
+  return { stdout: JSON.stringify(result), exitCode: failed > 0 ? 1 : 0, timedOut: opts.timedOut ?? false };
+}

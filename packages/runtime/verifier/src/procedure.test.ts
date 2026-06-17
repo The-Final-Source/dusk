@@ -47,6 +47,31 @@ function fixture(polarity: "positive" | "negative", supports: number) {
   return { intent, index: buildDerivedIndex(records, new Map([["svc/q", intent]])) };
 }
 
+// App. D.34 / R8 — require positive success evidence; never infer a verdict from
+// silence. The confirmed live trigger: a degraded response silently coerced into a
+// definite verdict (the former `?? false` / `?? "vague"`).
+describe("verifyIntent — positive completeness (no verdict from silence)", () => {
+  test("a degraded {triples:[]} under a non-empty triple set ⇒ no_verdict, never a false-converge", async () => {
+    const { intent, index } = fixture("positive", 0);
+    const model = fakeModel({ triples: [] });
+    const result = await verifyIntent(intent, { index, readFile, maxLines: 200, modelClient: model });
+    expect(result.success).toBe(false);
+    if (result.success) throw new Error("expected no_verdict");
+    expect(result.error.kind).toBe("infrastructure_no_verdict");
+    expect(result.error.recoverable).toBe(true);
+  });
+
+  test("a response missing a scoped support entry ⇒ no_verdict (incomplete), not a fabricated 'vague'", async () => {
+    const { intent, index } = fixture("positive", 1);
+    // covers the triple but omits the support id "a-s1"
+    const model = fakeModel({ triples: [{ triple_id: "a", affirmative_holds: true, rationale: "", supports: [] }] });
+    const result = await verifyIntent(intent, { index, readFile, maxLines: 200, modelClient: model });
+    expect(result.success).toBe(false);
+    if (result.success) throw new Error("expected no_verdict");
+    expect(result.error.kind).toBe("infrastructure_no_verdict");
+  });
+});
+
 describe("verifyIntent — runtime polarity inversion (structural)", () => {
   test("negative polarity inverts a model 'affirmative holds' into a focal fail", async () => {
     const { intent, index } = fixture("negative", 0);

@@ -150,6 +150,25 @@ describe("D.33 — a surfaced model-call failure on the bead-orchestrator tick i
   });
 });
 
+describe("D.34 — an empty/degraded Verifier surfaces a no_verdict outcome, never a futile re-draft loop (R6)", () => {
+  test("a DuskError verdict on the verifier spawn → ShortCycleOutcome 'no_verdict' (not a content reject, not a recoverable:false downgrade)", async () => {
+    const spawn: BoundSpawn = async (params) => {
+      const trace = { schema_version: 1, trace_id: "t", bead_id: "bd_20260610000000001", role: params.role, invocation_site: "short-cycle", model: "stub", prompt_tokens: 0, completion_tokens: 0, latency_ms: 0, cost_usd: 0 } as SubAgentTrace;
+      if (params.role === "verifier") {
+        return ok({ trace, assembledPrompt: "p", verdict: duskError("infrastructure_no_verdict", "degraded/empty verifier", { recoverable: true, details: { no_verdict_reason: "empty" } }) });
+      }
+      return ok({ trace, assembledPrompt: "p", output: "drafted" });
+    };
+    const result = await runShortCycle(baseDeps({ spawn, verifierSpawns: () => 0 }));
+    expect(result.success).toBe(true); // NOT a returned failure — the run is not aborted
+    if (!result.success) return;
+    expect(result.value.kind).toBe("no_verdict"); // the recovery axis, not "converged" and not a content reject
+    if (result.value.kind !== "no_verdict") return;
+    expect(result.value.reason).toBe("empty");
+    expect(result.value.perEntryIters).toBe(1); // surfaced immediately — NOT a 21-iter loop on correct code
+  });
+});
+
 describe("6.2 — gate-fail loopback does not spawn a Verifier (P3-T24)", () => {
   test("a blocked draft re-drafts; the Verifier double's spawn count does not advance for that iter", async () => {
     // iter 1 blocked, iter 2 passes the gate and converges.

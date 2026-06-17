@@ -9,7 +9,7 @@ import {
   createMockGitWorktree,
   fixedClock,
   makeScriptedVerdictFactory,
-  makeVitestJsonReportString,
+  makeDuskTestCapture,
   readTraces,
   type MockGitWorktree,
 } from "@dusk/test-harness";
@@ -88,7 +88,7 @@ describe("P5-T12 — an unreachable OTLP sink does not block or fail the run", (
       config: DuskConfigSchema.parse({ observability: { mirrors: [{ sink: "otlp", endpoint: "http://127.0.0.1:1/v1/logs" }] } }),
       perEntryMax: 20,
       lifetimeMax: 40,
-      vitestRunner: (files) => makeVitestJsonReportString(files.map((f) => ({ file: f, title: "t", status: "passed" as const, duration: 1 }))),
+      vitestRunner: (files) => makeDuskTestCapture(files.map((f) => ({ file: f, title: "t", status: "passed" as const, duration: 1 }))),
     };
 
     const result = await runImplement({ request: "add the api/widget shape", scopeHint: ["api/widget"] }, deps);

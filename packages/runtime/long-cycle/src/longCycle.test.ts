@@ -1,6 +1,6 @@
 import { buildDerivedIndex, type DerivedIndex } from "@dusk/core-index";
 import type { DecorationRecord } from "@dusk/core-decoration";
-import { ok, type BoundSpawn, type Intent, type SubAgentTrace, type Verdict } from "@dusk/core-schema";
+import { duskError, ok, type BoundSpawn, type Intent, type SubAgentTrace, type Verdict } from "@dusk/core-schema";
 import { describe, expect, test } from "vitest";
 
 import { runLongCycle } from "./longCycle.js";
@@ -118,6 +118,29 @@ describe("8.3 — N=2 confirmation pass on first reject (P3-T14/T15)", () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.value.kind).toBe("clean"); // dismissed, did NOT re-enter Step 4
+  });
+
+  // RFC App. D.34 / D8 — a no_verdict confirmation is NEITHER a confirming reject
+  // NOR a flaky-dismiss; it routes the bead to the infrastructure axis.
+  test("[reject, no_verdict, no_verdict] → no_verdict outcome, NOT a flaky dismissal and NOT confirmed_reject", async () => {
+    const seq: ("reject" | "noverdict")[] = ["reject", "noverdict", "noverdict"];
+    let i = 0;
+    let ctr = 0;
+    const spawn: BoundSpawn = async (params) => {
+      ctr += 1;
+      const trace = { schema_version: 1, trace_id: `tr_${ctr}`, role: params.role, invocation_site: params.invocationSite ?? "implement", model: "stub", prompt_tokens: 0, completion_tokens: 0, latency_ms: 0, cost_usd: 0 } as SubAgentTrace;
+      if (params.role !== "verifier") return ok({ trace, assembledPrompt: params.input, output: "ok" });
+      const kind = seq[i++];
+      const verdict =
+        kind === "reject"
+          ? reject("api/u0")
+          : duskError("infrastructure_no_verdict", "degraded long-cycle verifier", { recoverable: true, details: { no_verdict_reason: "empty" } });
+      return ok({ trace, assembledPrompt: params.input, verdict });
+    };
+    const result = await runLongCycle(base({ spawn, confirmationTraceIds: () => [], verifierCount: () => 0 }, tuples(3)));
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.value.kind).toBe("no_verdict"); // never "clean" (flaky-dismiss) and never "confirmed_reject"
   });
 
   test("a later reject after a dismissed pass does NOT fire a second confirmation pass", async () => {

@@ -14,7 +14,7 @@ import {
   fixedClock,
   makeScriptedAuthorGenerator,
   makeScriptedVerdictFactory,
-  makeVitestJsonReportString,
+  makeDuskTestCapture,
   manualClock,
   type MockGitWorktree,
 } from "@dusk/test-harness";
@@ -119,7 +119,7 @@ const implementDeps = (sessionId: string, over: Partial<RunImplementDeps> = {}):
   config: DuskConfigSchema.parse({}),
   perEntryMax: 20,
   lifetimeMax: 40,
-  vitestRunner: (files) => makeVitestJsonReportString(files.map((f) => ({ file: f, title: "t", status: "passed" as const, duration: 1 }))),
+  vitestRunner: (files) => makeDuskTestCapture(files.map((f) => ({ file: f, title: "t", status: "passed" as const, duration: 1 }))),
   ...over,
 });
 

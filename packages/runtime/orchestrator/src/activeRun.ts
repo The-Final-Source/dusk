@@ -20,6 +20,9 @@ export const BEAD_STATUSES = [
   "merging",
   "paused_livelock",
   "paused_recovery_ladder",
+  // RFC App. D.34 — the finite infrastructure-recovery axis exhausted: a
+  // legible, resumable pause (NOT a content fail, a silent green, or a crash).
+  "paused_infrastructure",
   "cancelled",
   "done",
 ] as const;

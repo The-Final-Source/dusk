@@ -1,4 +1,4 @@
-import { execFileSync, spawn as spawnChild } from "node:child_process";
+import { execFileSync, spawnSync, spawn as spawnChild } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, symlinkSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 
@@ -33,7 +33,8 @@ import {
   structuralVerdict,
   verifyIntent,
 } from "@dusk/runtime-verifier";
-import type { VitestRunner } from "@dusk/runtime-test-runner";
+import type { TestOutputInterpreter, VitestRunner } from "@dusk/runtime-test-runner";
+import { z } from "zod";
 import { realTestPrepassVerdict, withTransportRetry } from "@dusk/runtime-benchmark";
 import type { ModelClient } from "@dusk/runtime-verifier";
 
@@ -50,6 +51,13 @@ import type { ModelClient } from "@dusk/runtime-verifier";
  *  - Stage-2 Vitest runs inside the worktree package (node_modules linked from
  *    the main checkout — worktrees are bare source checkouts).
  */
+
+// RFC App. D.34 (R2): a retryable infrastructure boundary, by the canonical
+// classifier kinds — NOT a re-derived ad-hoc string. An empty/degraded verdict
+// (`infrastructure_no_verdict`) or a legacy unparseable-response failure is
+// retried once at the factory, then surfaced on the no_verdict axis.
+const retryableBoundary = (e: { kind: string }): boolean =>
+  e.kind === "infrastructure_no_verdict" || e.kind === "verifier_model_call_failed";
 
 const sanityNumber = (config: Record<string, unknown>, key: string, fallback: number): number => {
   const sanity = (config.sanity ?? {}) as Record<string, unknown>;
@@ -183,7 +191,7 @@ function parseArgs(rest: string[]): { request?: string; resume?: string; scopeHi
 }
 
 const ENGINEER_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep"];
-const IN_FLIGHT = new Set(["short_cycle", "long_cycle", "test_execution", "committing", "paused_livelock"]);
+const IN_FLIGHT = new Set(["short_cycle", "long_cycle", "test_execution", "committing", "paused_livelock", "paused_infrastructure"]);
 
 export const ENGINEER_FILE_INSTRUCTION =
   "\n\n## File-write mode\n\nApply the implementation by EDITING the files in the current working directory directly " +
@@ -323,6 +331,46 @@ export function buildImplementDeps(root: string, opts: { clock?: { now: () => nu
   };
   const baseCtx = loadProjectContext(root, { modelClient, systemPrompt: DEFAULT_VERIFIER_SYSTEM_PROMPT });
 
+  // The agentic bridge for Stage-2 raw output that did NOT yield Dusk's own result
+  // schema (RFC App. D.34, decision ①). It may push ONLY toward `fail` or
+  // `no_verdict` — NEVER `pass` (enforced MECHANICALLY by the response enum: a
+  // "pass", any other value, or an unparseable response resolves to `no_verdict`).
+  // The asymmetry guarantees no silent green; a pass requires Dusk's own schema.
+  const InterpretSchema = z.object({ outcome: z.enum(["fail", "no_verdict"]), rationale: z.string().optional() });
+  const interpretTestOutput: TestOutputInterpreter = async (input) => {
+    const user = [
+      "A project's test command ran, but Dusk could not read its own structured result schema from the output.",
+      "Decide ONLY whether a genuine test FAILURE is present. Answer with JSON only, exactly one of:",
+      '{"outcome":"fail","rationale":"<one sentence citing the failing test/assertion>"} — at least one test genuinely failed (an assertion error, a failed/✗ test, a non-zero failure summary); OR',
+      '{"outcome":"no_verdict"} — you cannot determine a genuine failure (empty / garbage / crash / OOM / setup-only output).',
+      "You may NEVER report a pass — a pass requires the structured result schema that is absent here.",
+      `Exit code: ${input.exitCode ?? "null"}`,
+      "Output (truncated):",
+      input.stdout.slice(0, 4000),
+    ].join("\n");
+    let text: string;
+    try {
+      const completion = await modelClient.complete({ system: "You are a Dusk Stage-2 output interpreter. Answer with JSON only; never report a pass.", user, temperature: 0 });
+      text = completion.text;
+    } catch {
+      return { kind: "no_verdict", reason: "tool_infrastructure" }; // a degraded bridge call is infra, never a fabricated verdict
+    }
+    const match = text.match(/\{[\s\S]*\}/);
+    let json: unknown = null;
+    if (match) {
+      try {
+        json = JSON.parse(match[0]);
+      } catch {
+        json = null;
+      }
+    }
+    const parsed = InterpretSchema.safeParse(json);
+    if (!parsed.success) return { kind: "no_verdict", reason: "unparseable" }; // guarded parse — "pass"/garbage → no_verdict
+    return parsed.data.outcome === "fail"
+      ? { kind: "fail", rationale: parsed.data.rationale ?? "a failing test was read from the raw output" }
+      : { kind: "no_verdict", reason: "tool_infrastructure" };
+  };
+
   // The project may be a package INSIDE the repo: worktrees are full-repo
   // checkouts, so the package's path within a worktree is its repo-relative path.
   const repoRoot = execFileSync("git", ["rev-parse", "--show-toplevel"], { cwd: root, encoding: "utf8" }).trim();
@@ -412,19 +460,25 @@ export function buildImplementDeps(root: string, opts: { clock?: { now: () => nu
       if (route === "structural") return structural.success ? structural.value : structural.error;
       if (!structural.success) return structural.error;
       let semantic = await verifyOnce();
-      if (!semantic.success && semantic.error.kind === "verifier_model_call_failed") semantic = await verifyOnce();
+      if (!semantic.success && retryableBoundary(semantic.error)) semantic = await verifyOnce();
       if (!semantic.success) return semantic.error;
       return mergeStructuralSemantic(structural.value, semantic.value, new Set(structuralIds), new Set(semanticIds), intent.compose);
     }
     let result = await verifyOnce();
-    // A non-JSON model response is recoverable noise (one retry, like transport)
-    // — it must not kill a long pipeline run as "no verdict".
-    if (!result.success && result.error.kind === "verifier_model_call_failed") result = await verifyOnce();
+    // An empty/degraded or non-JSON model response is an infrastructure boundary
+    // (RFC App. D.34): retry once (transport-style), then surface it on the
+    // no_verdict axis — never a content reject. The retry condition references the
+    // canonical classifier kinds (one vocabulary, R2), not an ad-hoc string.
+    if (!result.success && retryableBoundary(result.error)) result = await verifyOnce();
     return result.success ? result.value : result.error;
   };
 
-  // Stage-2 Vitest runs inside the worktree package; node_modules are linked
-  // from the main checkout (worktrees are bare source checkouts).
+  // Stage-2 runs inside the worktree package; node_modules are linked from the
+  // main checkout (worktrees are bare source checkouts). Capture is NON-THROWING
+  // (spawnSync): a non-zero exit is DATA (RFC App. D.34, gap #3). Interpretation is
+  // the Dusk-result-schema floor in the Test Runner — this command's reporter is
+  // configured project-side to emit Dusk's own result schema (the Phase-VI adapter
+  // task); until then a raw report resolves to `no_verdict`, never a silent green.
   const vitestRunner: VitestRunner = (files, cwd) => {
     const pkgDir = activeWorktreePackageDir() ?? cwd;
     const worktreeRoot = packageRel && pkgDir.endsWith(packageRel) ? pkgDir.slice(0, pkgDir.length - packageRel.length - 1) : pkgDir;
@@ -434,7 +488,9 @@ export function buildImplementDeps(root: string, opts: { clock?: { now: () => nu
     ] as const) {
       if (!existsSync(target) && existsSync(source)) symlinkSync(source, target, "dir");
     }
-    return execFileSync("pnpm", ["vitest", "run", ...files, "--reporter=json"], { cwd: pkgDir, encoding: "utf8" });
+    const r = spawnSync("pnpm", ["vitest", "run", ...files, "--reporter=json"], { cwd: pkgDir, encoding: "utf8" });
+    const timedOut = (r.error as NodeJS.ErrnoException | undefined)?.code === "ETIMEDOUT" || r.signal === "SIGKILL" || r.signal === "SIGTERM";
+    return { stdout: r.stdout ?? "", exitCode: r.status, timedOut };
   };
 
   return {
@@ -449,7 +505,9 @@ export function buildImplementDeps(root: string, opts: { clock?: { now: () => nu
     config: baseCtx.config,
     perEntryMax: sanityNumber(baseCtx.config, "short_cycle_max_iterations", 20),
     lifetimeMax: sanityNumber(baseCtx.config, "bead_lifetime_iterations", 40),
+    noVerdictMax: sanityNumber(baseCtx.config, "no_verdict_max_iterations", 3),
     vitestRunner,
+    interpretTestOutput,
     ...(opts.baseRef ? { baseRef: opts.baseRef } : {}),
   };
 }

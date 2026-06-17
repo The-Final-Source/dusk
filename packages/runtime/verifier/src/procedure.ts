@@ -2,7 +2,9 @@ import type { DerivedIndex } from "@dusk/core-index";
 import {
   duskError,
   isDuskError,
+  noVerdictError,
   type Intent,
+  type NoVerdictReason,
   type PerTripleVerdict,
   type RuntimeResult,
   type Triple,
@@ -56,6 +58,29 @@ function vacuousAccept(intent: Intent): Verdict {
 function aggregateRationale(decision: VerdictDecision, compose: string, focalVerdicts: FocalVerdict[]): string {
   const fails = focalVerdicts.filter((v) => v === "fail").length;
   return `${decision} under compose:${compose} — ${fails}/${focalVerdicts.length} focal verdicts failed`;
+}
+
+/**
+ * The positive completeness predicate (RFC App. D.34, R8). A model response is
+ * complete iff it positively covers EVERY scoped triple AND every scoped support
+ * — never inferred from the absence of a negative answer. A non-empty scope met
+ * by a degraded `{triples:[]}` is `empty`; a partially-covered scope is
+ * `incomplete`. Either way the boundary is a `no_verdict`, not a fabricated verdict.
+ */
+function verdictCompleteness(
+  parsed: { triples: Array<{ triple_id: string; supports: Array<{ id: string }> }> },
+  toJudge: TripleToJudge[],
+): { complete: true; reason: NoVerdictReason } | { complete: false; reason: NoVerdictReason } {
+  if (toJudge.length > 0 && parsed.triples.length === 0) return { complete: false, reason: "empty" };
+  for (const { triple, support } of toJudge) {
+    const answer = parsed.triples.find((t) => t.triple_id === triple.id);
+    if (!answer) return { complete: false, reason: "incomplete" };
+    for (let i = 0; i < support.length; i++) {
+      const sid = supportId(triple.id, i);
+      if (!answer.supports.find((x) => x.id === sid)) return { complete: false, reason: "incomplete" };
+    }
+  }
+  return { complete: true, reason: "incomplete" };
 }
 
 /**
@@ -113,15 +138,26 @@ export async function verifyIntent(intent: Intent, deps: VerifyDeps): Promise<Ru
   deps.onUsage?.(completion.usage);
 
   const parsed = parseModelResponse(completion.text);
-  if (!parsed) {
-    return { success: false, error: duskError("verifier_model_call_failed", "model response was not parseable JSON", { recoverable: true }) };
+  // Positive completeness check (RFC App. D.34, R8): require positive success
+  // evidence — NEVER infer a verdict from the ABSENCE of a negative signal. A
+  // null/degraded parse, or a parse that does not positively cover every scoped
+  // triple AND support, is an infrastructure `no_verdict` (incomplete) — never a
+  // fabricated focal verdict (the former `?? false` / `?? "vague"`), and never a
+  // false-converge from a degraded `{triples:[]}` (the confirmed live trigger).
+  const completeness = parsed ? verdictCompleteness(parsed, toJudge) : { complete: false as const, reason: "empty" as const };
+  if (!parsed || !completeness.complete) {
+    return {
+      success: false,
+      error: noVerdictError(completeness.reason, `verifier response did not positively cover the scoped triples/supports (${completeness.reason})`),
+    };
   }
 
   const perTriple: PerTripleVerdict[] = [];
   const focalVerdicts: FocalVerdict[] = [];
   for (const { triple, focal, support } of toJudge) {
-    const answer = parsed.triples.find((t) => t.triple_id === triple.id);
-    const affirmativeHolds = answer?.affirmative_holds ?? false;
+    // Completeness is guaranteed above — every scoped triple/support is present.
+    const answer = parsed.triples.find((t) => t.triple_id === triple.id)!;
+    const affirmativeHolds = answer.affirmative_holds;
     const focalVerdict = focalVerdictFromAffirmative(affirmativeHolds, triple.polarity);
     focalVerdicts.push(focalVerdict);
 
@@ -130,7 +166,7 @@ export async function verifyIntent(intent: Intent, deps: VerifyDeps): Promise<Ru
     let passCount = 0;
     support.forEach((s, i) => {
       const sid = supportId(triple.id, i);
-      const verdict = answer?.supports.find((x) => x.id === sid)?.triple_verdict ?? "vague";
+      const verdict = answer.supports.find((x) => x.id === sid)!.triple_verdict;
       supportVerdicts.push(verdict);
       if (verdict === "matches") passCount += 1;
       else failedSupports.push({ file: s.file, lines: s.lines, quote: s.quote, support_triple: s.support_triple, triple_verdict: verdict });
@@ -149,7 +185,7 @@ export async function verifyIntent(intent: Intent, deps: VerifyDeps): Promise<Ru
         support_claims: failedSupports,
         ...(passCount > 0 ? { support_pass_count: passCount } : {}),
       },
-      rationale: answer?.rationale ?? "",
+      rationale: answer.rationale,
     });
   }
 
