@@ -1,40 +1,42 @@
-import type { TestVerdict } from "@dusk/core-schema";
-
-import type { TestResult } from "./vitest.js";
+import type { DuskTestRunResult, TestVerdict } from "@dusk/core-schema";
 
 /**
- * TestVerdict assembly (RFC App. A.5; 9.3). A `covers-X` triple is satisfied iff
- * ≥1 mapped test passes AND no mapped test for it fails. The per-test → triple
- * mapping is at the test-intent file granularity: every captured test in the
- * test-intent's files is mapped to the test-intent's covered triples.
+ * TestVerdict assembly (RFC App. A.5; App. D.34, decision ①). Built from Dusk's
+ * OWN result schema (`DuskTestRunResult`) and the content outcome the mechanical
+ * floor (`readDuskTestResult`) already decided — NOT from the former
+ * `anyPass && !anyFail` silence-inference over a tool's per-test vocabulary. A
+ * `covers-X` triple is satisfied (content `pass`) iff the floor read
+ * `passed>0 ∧ failed==0 ∧ completed`; a content `fail` is `failed>0`. The
+ * absent/incomplete/truncated cases never reach here — they resolve to
+ * `no_verdict` upstream.
  */
 
 export function assembleTestVerdict(input: {
   testIntentPath: string;
   coveredTriples: string[];
-  results: TestResult[];
+  result: DuskTestRunResult;
+  /** The content outcome the Dusk-result-schema floor already decided. */
+  outcome: "pass" | "fail";
 }): TestVerdict {
-  const mapped = input.results.map((r) => r.title);
-  const anyPass = input.results.some((r) => r.status === "passed");
-  const anyFail = input.results.some((r) => r.status === "failed");
-  const tripleSatisfied = anyPass && !anyFail;
-  const duration = input.results.reduce((sum, r) => sum + r.duration, 0);
+  const mapped = input.result.cases.map((c) => c.name);
+  const duration = input.result.cases.reduce((sum, c) => sum + c.duration_ms, 0);
 
   const per_triple = input.coveredTriples.map((triple_id) => ({
     triple_id,
-    verdict: (tripleSatisfied ? "pass" : "fail") as "pass" | "fail",
+    verdict: input.outcome,
     mapped_tests: mapped,
-    rationale: tripleSatisfied ? `${mapped.length} mapped test(s) passed` : "no passing test (or a failure) for this triple",
+    rationale:
+      input.outcome === "pass"
+        ? `${input.result.passed} passing test(s), 0 failing`
+        : `${input.result.failed} failing test(s)`,
   }));
-
-  const decision = per_triple.length > 0 && per_triple.every((t) => t.verdict === "pass") ? "pass" : "fail";
 
   return {
     test_intent_path: input.testIntentPath,
-    decision,
+    decision: input.outcome,
     per_triple,
     mapped_tests: mapped,
-    rationale: decision === "pass" ? "all covered triples satisfied by passing tests" : "one or more covered triples unsatisfied",
+    rationale: input.outcome === "pass" ? "all covered triples satisfied by passing tests" : "one or more covered triples have a failing test",
     duration,
   };
 }
