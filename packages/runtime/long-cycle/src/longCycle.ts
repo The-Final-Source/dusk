@@ -1,4 +1,4 @@
-import { duskError, err, isDuskError, ok, type BoundSpawn, type RuntimeResult, type Verdict } from "@dusk/core-schema";
+import { isDuskError, ok, type BoundSpawn, type NoVerdictReason, type RuntimeResult, type Verdict } from "@dusk/core-schema";
 
 import type { Tuple } from "./universe.js";
 
@@ -26,14 +26,25 @@ export type LongCycleDeps = {
 
 export type LongCycleOutcome =
   | { kind: "clean"; sampledVerdicts: number }
-  | { kind: "confirmed_reject"; regressedIntent: string; confirmationTraceId: string; sampledVerdicts: number };
+  | { kind: "confirmed_reject"; regressedIntent: string; confirmationTraceId: string; sampledVerdicts: number }
+  // App. D.34 (gap #6 / R6/R7/D8): a long-cycle Verifier leg returned no usable
+  // verdict (empty/degraded). It is INFRASTRUCTURE — NEVER counted as a confirming
+  // reject, NEVER as a flaky-dismiss ("no_verdict ≠ accept"), NEVER the former
+  // terminal recoverable:false downgrade. Routes the bead to the no_verdict axis.
+  | { kind: "no_verdict"; reason: NoVerdictReason; sampledVerdicts: number };
 
-async function verifierVerdict(spawn: BoundSpawn, params: Parameters<BoundSpawn>[0]): Promise<RuntimeResult<{ verdict: Verdict; traceId: string }>> {
+type VerifierLeg = { verdict: Verdict; traceId: string } | { noVerdict: NoVerdictReason };
+
+async function verifierVerdict(spawn: BoundSpawn, params: Parameters<BoundSpawn>[0]): Promise<RuntimeResult<VerifierLeg>> {
   const r = await spawn(params);
   if (!r.success) return r;
   const verdict = r.value.verdict;
   if (!verdict || isDuskError(verdict)) {
-    return err(duskError("verifier_model_call_failed", "long-cycle Verifier returned no verdict", { recoverable: false }));
+    const reason: NoVerdictReason =
+      verdict && isDuskError(verdict) && typeof verdict.details?.no_verdict_reason === "string"
+        ? (verdict.details.no_verdict_reason as NoVerdictReason)
+        : "empty";
+    return ok({ noVerdict: reason });
   }
   return ok({ verdict, traceId: r.value.trace.trace_id });
 }
@@ -57,6 +68,8 @@ export async function runLongCycle(deps: LongCycleDeps): Promise<RuntimeResult<L
       intentPath: tuple.intent_path,
     });
     if (!original.success) return original;
+    // A no_verdict on the sampled leg is infrastructure — never a clean pass.
+    if ("noVerdict" in original.value) return ok({ kind: "no_verdict", reason: original.value.noVerdict, sampledVerdicts });
     sampledVerdicts += 1;
 
     if (original.value.verdict.decision !== "reject") continue;
@@ -92,6 +105,11 @@ export async function runLongCycle(deps: LongCycleDeps): Promise<RuntimeResult<L
           : {}),
       });
       if (!conf.success) return conf;
+      // App. D.34 / D8: a no_verdict confirmation is NEITHER a confirming reject
+      // NOR a flaky-dismiss — we cannot confirm or dismiss on degraded infra, so
+      // route the bead to the no_verdict axis. (Forbidden: original reject + two
+      // no_verdict confirmations silently dismissed as flaky.)
+      if ("noVerdict" in conf.value) return ok({ kind: "no_verdict", reason: conf.value.noVerdict, sampledVerdicts });
       confirmations.push(conf.value.verdict);
     }
 
