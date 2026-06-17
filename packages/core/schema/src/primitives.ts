@@ -12,6 +12,22 @@ export const POLARITIES = ["positive", "negative"] as const;
 export const PolaritySchema = z.enum(POLARITIES);
 export type Polarity = z.infer<typeof PolaritySchema>;
 
+/**
+ * Verification channel of a triple (RFC App. D.30). `structural` = verified
+ * MECHANICALLY (its claimant's anchor resolves + the target is decoration-
+ * covered), zero LLM; `semantic` = judged by the LLM Verifier. This is a
+ * property of the CLAIM (is there behavior to judge?), declared by the AUTHOR —
+ * NOT derived from how the file is decorated (D.29 derived it from modality,
+ * which forced comment-bearing config onto the semantic channel where it cannot
+ * converge). Absent ≡ falls back to decoration modality (sidecar→structural,
+ * inline→semantic), preserving every existing intent; an explicit value is
+ * authoritative. Authored, version-controlled, set before any code or model
+ * call — so the Engineer cannot downgrade its own claim to escape a verdict.
+ */
+export const VERIFY_CHANNELS = ["structural", "semantic"] as const;
+export const VerifyChannelSchema = z.enum(VERIFY_CHANNELS);
+export type VerifyChannel = z.infer<typeof VerifyChannelSchema>;
+
 export const FIXED_QUANTIFIERS = ["at-least-one", "each", "exactly-one", "at-most-one", "none"] as const;
 /** Quantifier vocabulary: the fixed set plus the parameterized `at-least-<N>` / `at-most-<N>` forms. */
 export const QuantifierSchema = z
@@ -45,6 +61,8 @@ export const TripleSchema = z
     polarity: PolaritySchema.default("positive"),
     quantifier: QuantifierSchema.optional(),
     scope: z.string().min(1).optional(),
+    /** Author-declared verification channel (RFC App. D.30). Absent ≡ derive from decoration modality. */
+    verify: VerifyChannelSchema.optional(),
   })
   .strict();
 export type Triple = z.infer<typeof TripleSchema>;

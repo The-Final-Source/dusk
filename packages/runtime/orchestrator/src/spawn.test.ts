@@ -8,6 +8,8 @@ import {
 import type { Verdict } from "@dusk/core-schema";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
+import { isDuskError, type VerifierFactory } from "@dusk/core-schema";
+
 import { readRuntimeEnv } from "./env.js";
 import { spawnSubAgent, type SpawnDeps, type TaskCall, type TaskRunner } from "./spawn.js";
 
@@ -142,6 +144,60 @@ describe("2.2 — spawn assembles role + memory + skills before the Task call", 
     if (!result.success) return;
     expect(result.value.assembledPrompt).not.toContain(SENTINEL_DIAGNOSIS);
     expect(result.value.assembledPrompt).toContain("ROLE-BODY-VERIFIER-MARKER");
+  });
+});
+
+describe("D.33 — a model-call failure is surfaced, not crashed (the spawn seam)", () => {
+  const taggedErrorMaxTurns = (): Error =>
+    Object.assign(new Error('claude CLI exited 1:  {"type":"result","subtype":"error_max_turns","stop_reason":"tool_use"}'), {
+      duskModelExit: "error_max_turns",
+    });
+
+  test("a reasoning (taskRunner) model-call failure returns task_tool_call_failed, never throws", async () => {
+    const throwing: TaskRunner = async () => {
+      throw taggedErrorMaxTurns();
+    };
+    const result = await spawnSubAgent({ role: "bead-orchestrator", beadId: "bd_1", sessionId: "s1", input: "route" }, deps({ taskRunner: throwing }));
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.kind).toBe("task_tool_call_failed");
+    expect(result.error.recoverable).toBe(true);
+    expect(result.error.message).toContain("error_max_turns");
+  });
+
+  test("a two-death TransportLegFailure on the reasoning path is also surfaced", async () => {
+    const throwing: TaskRunner = async () => {
+      throw Object.assign(new Error("transport leg failure: two transport-classified deaths"), { name: "TransportLegFailure" });
+    };
+    const result = await spawnSubAgent({ role: "bead-orchestrator", beadId: "bd_1", sessionId: "s1", input: "route" }, deps({ taskRunner: throwing }));
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.kind).toBe("task_tool_call_failed");
+  });
+
+  test("a verifier model-call failure surfaces a verifier_model_call_failed verdict (not a throw)", async () => {
+    const throwing: VerifierFactory = async () => {
+      throw taggedErrorMaxTurns();
+    };
+    const result = await spawnSubAgent(
+      { role: "verifier", beadId: "bd_1", sessionId: "s1", input: "evaluate", intentPath: "notifications/send" },
+      deps({ verifierFactory: throwing }),
+    );
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    const verdict = result.value.verdict;
+    expect(isDuskError(verdict)).toBe(true);
+    if (!verdict || !isDuskError(verdict)) return;
+    expect(verdict.kind).toBe("verifier_model_call_failed");
+  });
+
+  test("a programming bug (TypeError) PROPAGATES — never swallowed into a model-call failure (the honesty bar)", async () => {
+    const buggy: TaskRunner = async () => {
+      throw new TypeError("Cannot read properties of undefined");
+    };
+    await expect(
+      spawnSubAgent({ role: "bead-orchestrator", beadId: "bd_1", sessionId: "s1", input: "route" }, deps({ taskRunner: buggy })),
+    ).rejects.toThrow(TypeError);
   });
 });
 

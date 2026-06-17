@@ -6,7 +6,32 @@ import {
   validateAtomicIntent,
   validateMatrixPredicateNegation,
   validateRelatesToKinds,
+  validateVerifyChannel,
 } from "./validate.js";
+
+describe("validateVerifyChannel — structural channel honesty (RFC App. D.31)", () => {
+  test("verify: structural + polarity: negative is rejected", () => {
+    const v = validateVerifyChannel({ id: "no-x", verify: "structural", polarity: "negative" });
+    expect(v).toHaveLength(1);
+    expect(v[0].code).toBe("verify_channel");
+    expect(v[0].message).toContain("absence");
+  });
+
+  test("verify: structural + a quantifier is rejected", () => {
+    const v = validateVerifyChannel({ id: "one-x", verify: "structural", quantifier: "at-most-one" });
+    expect(v).toHaveLength(1);
+    expect(v[0].message).toContain("cardinality");
+  });
+
+  test("verify: structural + positive + no quantifier is fine", () => {
+    expect(validateVerifyChannel({ id: "shape", verify: "structural", polarity: "positive" })).toEqual([]);
+  });
+
+  test("a semantic (or unset) triple is never constrained — negatives/quantifiers are legal there", () => {
+    expect(validateVerifyChannel({ id: "x", verify: "semantic", polarity: "negative", quantifier: "none" })).toEqual([]);
+    expect(validateVerifyChannel({ id: "x", polarity: "negative" })).toEqual([]);
+  });
+});
 
 /**
  * Delegation-pinning tests (arch-board S3): each Stage-4.5 named entry point

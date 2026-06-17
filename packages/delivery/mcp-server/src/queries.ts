@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import {
   SubAgentTraceSchema,
   duskError,
-  testPyramidSuffixes,
+  isTestIntentPath,
   tracePath,
   verifierEvidenceMaxLines,
   type Intent,
@@ -22,8 +22,6 @@ import type { DuskContext } from "./context.js";
  * resources (design D10). Each returns a `Result`; the MCP boundary translates
  * it into the success shape or a typed `DuskError`.
  */
-
-const TEST_SUFFIXES_RE = /\/(unit-tests|integration-tests|e2e-tests|contract-tests|property-tests)$/;
 
 const tripleIdsOf = (intent: Intent): string[] =>
   intent.compose === "implies" ? (intent.consequent ?? []).map((t) => t.id) : (intent.triples ?? []).map((t) => t.id);
@@ -108,7 +106,7 @@ export function inspectQuery(ctx: DuskContext, scope: string | string[]): Runtim
   });
 
   const test_intents = paths
-    .filter((path) => TEST_SUFFIXES_RE.test(path))
+    .filter((path) => isTestIntentPath(path, ctx.config))
     .map((path) => ({ path, satisfied: ctx.index.isSatisfied(path, isAspectSatisfied).satisfied }));
 
   const low_confidence_supports = paths.flatMap((path) => {

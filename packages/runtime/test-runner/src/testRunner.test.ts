@@ -80,6 +80,40 @@ describe("9.1 — Verifier-rejected tests are excluded from the Vitest invocatio
   });
 });
 
+describe("D.32 — a routed test intent with no body fails loud, never a green Vitest no-op (design D3)", () => {
+  const focalRec = (file: string, line: number, intentPath: string): DecorationRecord => ({
+    file,
+    line,
+    scope: "declaration",
+    declaration_name: "a test",
+    // the focal, NON-test marker the Engineer wrongly stamped — testDiscovery ignores it
+    marker: "intent",
+    intent_path: intentPath,
+    aspect_ids: null,
+    support_triple: null,
+    ignore_clause: null,
+  });
+
+  test("zero test-marker claims → re-enter Step 4 with the explicit missing-marker signal; Vitest never invoked", async () => {
+    // The silent-accept residual: the only claimant is the focal `@intent`, so
+    // testDiscovery is empty. Pre-fix this flowed to runVitest([]) → a green pass.
+    const index = indexWith([focalRec(TEST_FILE, 5, TEST_INTENT)], [testIntent(TEST_INTENT, ["covers-persist-first"])]);
+    const calls: string[][] = [];
+    const result = await runTestRunner(deps(index, makeSpawn([]), (files) => {
+      calls.push(files);
+      return makeVitestJsonReportString([]);
+    }));
+
+    expect(result.success).toBe(true);
+    if (!result.success || result.value.kind !== "reenter_step4") throw new Error("expected reenter_step4");
+    expect(result.value.rejected.length).toBeGreaterThan(0);
+    expect(result.value.rejected[0]).toMatchObject({ test_intent_path: TEST_INTENT, triple_id: "covers-persist-first" });
+    expect(result.value.rejected[0].rationale).toContain("test_intent_no_test_marker");
+    expect(result.value.rejected[0].rationale).toContain("@intent-test-file");
+    expect(calls).toHaveLength(0); // Vitest never invoked → no silent green pass
+  });
+});
+
 describe("9.2 — verified tests run under Vitest and roll up to a TestVerdict (offline wiring)", () => {
   test("pre-pass accept → Vitest invoked on the file → satisfied TestVerdict", async () => {
     const index = indexWith([testRec(TEST_FILE, 5, TEST_INTENT, ["covers-persist-first"])], [testIntent(TEST_INTENT, ["covers-persist-first"])]);

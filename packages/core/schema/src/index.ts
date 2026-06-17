@@ -32,3 +32,4 @@ export * from "./dogfoodReport.js";
 export * from "./pocReport.js";
 export * from "./staticAnalysisReport.js";
 export * from "./iaPaths.js";
+export * from "./modelCallError.js";

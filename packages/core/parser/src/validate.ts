@@ -14,12 +14,42 @@ import { loadIntent, type IntentLoadResult } from "./loadIntent.js";
  */
 
 export type ValidationViolation = {
-  code: "matrix_predicate_negation" | "antecedent_grammar" | "relates_to_kind" | "schema_invalid";
+  code: "matrix_predicate_negation" | "antecedent_grammar" | "relates_to_kind" | "schema_invalid" | "verify_channel";
   path: string;
   message: string;
 };
 
 type TripleLike = { id: string; subject: string; predicate: string; object: string };
+type ChannelTripleLike = { id: string; verify?: string; polarity?: string; quantifier?: string };
+
+/**
+ * The verification CHANNEL must be honest (RFC App. D.31). The structural channel
+ * verifies PRESENCE + decoration coverage — it can witness neither an ABSENCE
+ * (negative polarity) nor a CARDINALITY bound (a quantifier). Marking such a
+ * claim `verify: structural` would make it pass mechanically without verifying
+ * the thing it asserts. These combinations are rejected at authoring time so the
+ * author routes them to the semantic channel (or restates them as a positive
+ * shape claim) — never a silent vacuous pass.
+ */
+export function validateVerifyChannel(triple: ChannelTripleLike): ValidationViolation[] {
+  if (triple.verify !== "structural") return [];
+  const out: ValidationViolation[] = [];
+  if (triple.polarity === "negative") {
+    out.push({
+      code: "verify_channel",
+      path: `triple.${triple.id}.verify`,
+      message: `triple "${triple.id}" is verify: structural with polarity: negative — the structural channel verifies presence/coverage and cannot witness an absence. Mark it verify: semantic, or restate it as a positive shape claim.`,
+    });
+  }
+  if (triple.quantifier) {
+    out.push({
+      code: "verify_channel",
+      path: `triple.${triple.id}.verify`,
+      message: `triple "${triple.id}" is verify: structural with quantifier "${triple.quantifier}" — the structural channel cannot verify a cardinality bound. Mark it verify: semantic.`,
+    });
+  }
+  return out;
+}
 type AntecedentLike = { id: string; subject: string; predicate: string; object: string };
 type RelatesToLike = { kind: string; target: string };
 

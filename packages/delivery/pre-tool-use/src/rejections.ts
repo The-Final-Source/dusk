@@ -1,9 +1,9 @@
 /**
- * The 17 mechanical rejection kinds (12 from RFC App. A.8 + 5 from D.28
- * universal-decoration-coverage) plus the fail-safe kind — 18 entries. The 5
- * D.28 coverage kinds are gate-only and NOT part of the v1 10-check→12-kind
- * matrix, so the v1 count of 12 still stands (App. A.8 carries a v1.x note
- * pointing here).
+ * The 18 mechanical rejection kinds (12 from RFC App. A.8 + 5 from D.28
+ * universal-decoration-coverage + 1 from D.32 test-pyramid-routing) plus the
+ * fail-safe kind — 19 entries. The D.28 coverage kinds and the D.32 reverse-of-
+ * Check-9 kind are gate-only and NOT part of the v1 10-check→12-kind matrix, so
+ * the v1 count of 12 still stands (App. A.8 carries a v1.x note pointing here).
  */
 export const REJECTION_KINDS = [
   // 12 from RFC App. A.8
@@ -25,6 +25,9 @@ export const REJECTION_KINDS = [
   "unresolved_anchor",
   "overlapping_anchors",
   "uncovered_target_lines",
+  // 1 from D.32 test-pyramid-routing — the reverse of Check 9 (a focal non-test
+  // marker may not claim a test-suffix intent; gate-only, v1.x)
+  "non_test_marker_on_test_intent",
   // fail-safe
   "hook_internal_error",
 ] as const;

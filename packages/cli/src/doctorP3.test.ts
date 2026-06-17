@@ -102,12 +102,14 @@ describe("14.4/14.5 — dusk implement usage + 14.7 --help", () => {
 
   test("--help on each new command exits 0 with a usage substring", () => {
     void DAY_MS;
-    for (const args of [["implement", "--help"], ["doctor", "--help"]]) {
-      const r = run(args, mg.repoDir);
-      expect(r.code).toBe(0);
-      expect(r.out.length).toBeGreaterThan(0);
-    }
-    expect(run(["implement", "--help"], mg.repoDir).out).toContain("dusk implement");
-    expect(run(["doctor", "--help"], mg.repoDir).out).toContain("--cleanup-worktrees");
+    // One cold CLI spawn per command (not two) — capture once, assert exit code
+    // AND substring on the same output. A substring match subsumes the old
+    // non-empty check, so coverage is unchanged at half the out-of-process cost.
+    const implementHelp = run(["implement", "--help"], mg.repoDir);
+    const doctorHelp = run(["doctor", "--help"], mg.repoDir);
+    expect(implementHelp.code).toBe(0);
+    expect(implementHelp.out).toContain("dusk implement");
+    expect(doctorHelp.code).toBe(0);
+    expect(doctorHelp.out).toContain("--cleanup-worktrees");
   });
 });

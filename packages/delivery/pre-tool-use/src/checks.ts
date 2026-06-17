@@ -1,6 +1,6 @@
 import { basename } from "node:path";
 
-import { SidecarBodySchema, type Intent } from "@dusk/core-schema";
+import { SidecarBodySchema, isTestIntentPath, type Intent } from "@dusk/core-schema";
 import { parseDecorations, parseDotIntent, type DecorationRecord } from "@dusk/core-decoration";
 import { findIllegalNegation } from "@dusk/core-parser";
 
@@ -211,9 +211,20 @@ export function runChecks(content: string, file: string, ctx: ProjectContext): {
 
     // Check 9 — @intent-test path ends in a configured pyramid suffix.
     if (record.marker === "intent-test" || record.marker === "intent-test-file") {
-      if (!ctx.suffixes.some((suffix) => record.intent_path.endsWith(`/${suffix}`))) {
+      if (!isTestIntentPath(record.intent_path, ctx.config)) {
         rejections.push({ kind: "non_test_path_on_intent_test", file, line: record.line, message: `${record.marker} path "${record.intent_path}" does not end in a configured test-pyramid suffix`, details: { intent_path: record.intent_path } });
       }
+    }
+
+    // Reverse of Check 9 (RFC App. D.32, design D4) — a focal NON-test marker may
+    // not be the claimant of a test-suffix intent: the body-locating marker the
+    // Stage-1 pre-pass needs MUST be a test marker. Enforced at write time, the
+    // earliest, most actionable point. Scoped exactly: fires ONLY on a focal
+    // `intent`/`intent-file` whose `intent_path` IS the test-suffix intent — so
+    // `@intent-support`, and `@intent` claiming a NON-test intent inside a test
+    // file, stay legitimate.
+    if ((record.marker === "intent" || record.marker === "intent-file") && isTestIntentPath(record.intent_path, ctx.config)) {
+      rejections.push({ kind: "non_test_marker_on_test_intent", file, line: record.line, message: `${record.marker} claims test-suffix intent "${record.intent_path}" — a test file claims its test intent with @intent-test-file ${record.intent_path} (file scope) or @intent-test (declaration scope), never @intent`, hint: "use @intent-test-file <path> or @intent-test", details: { intent_path: record.intent_path } });
     }
 
     // Supersedes warning (non-blocking).

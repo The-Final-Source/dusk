@@ -1,0 +1,176 @@
+import { describe, test, expect } from "vitest";
+
+import { IntentSchema, type Intent, type Verdict } from "@dusk/core-schema";
+import { parseFileIntentSidecar } from "@dusk/core-decoration";
+import { buildDerivedIndex } from "@dusk/core-index";
+
+import { mergeStructuralSemantic, structuralVerdict } from "./structural.js";
+
+function mk(id: string, aspectIds: string[]): Intent {
+  return IntentSchema.parse({
+    id,
+    description: "d",
+    obligation: "must",
+    triples: aspectIds.map((aid) => ({ id: aid, subject: "s", predicate: "p", object: "o" })),
+  });
+}
+const mapOf = (...intents: Intent[]): Map<string, Intent> => new Map(intents.map((i) => [i.id, i]));
+
+const PKG = '{\n  "name": "demo",\n  "version": "1.0.0"\n}\n';
+const sidecar = (claims: unknown[]): string => JSON.stringify({ schema_version: 1, target: "package.json", claims });
+const readerFor = (sidecarSource: string) => (f: string): string => {
+  if (f === "package.json") return PKG;
+  if (f === "package.json.intent") return sidecarSource;
+  throw new Error(`unexpected read: ${f}`);
+};
+const indexFor = (sidecarSource: string, intent: Intent) =>
+  buildDerivedIndex(parseFileIntentSidecar(sidecarSource, PKG, "package.json.intent", "package.json").records, mapOf(intent));
+
+describe("structuralVerdict — zero-LLM mechanical satisfaction (RFC App. D.29)", () => {
+  test("a fully-covered structural triple PASSES on the mechanical channel (converges iteration 1)", () => {
+    const src = sidecar([{ anchor: "", marker: "intent-file", intent_path: "project/stack" }]);
+    const intent = mk("project/stack", ["a"]);
+    const res = structuralVerdict("project/stack", { index: indexFor(src, intent), intents: mapOf(intent), readFile: readerFor(src) });
+    expect(res.success).toBe(true);
+    const v = (res as { value: Verdict }).value;
+    expect(v.decision).toBe("accept");
+    expect(v.per_triple[0].focal_verdict).toBe("pass");
+    expect(v.per_triple[0].channel).toBe("mechanical");
+  });
+
+  test("an uncovered non-trivial line FAILS the triple with an actionable rationale", () => {
+    // Only /name is claimed → the "version" line is uncovered.
+    const src = sidecar([{ anchor: "/name", marker: "intent", intent_path: "project/stack" }]);
+    const intent = mk("project/stack", ["a"]);
+    const res = structuralVerdict("project/stack", { index: indexFor(src, intent), intents: mapOf(intent), readFile: readerFor(src) });
+    expect(res.success).toBe(true);
+    const v = (res as { value: Verdict }).value;
+    expect(v.decision).toBe("reject");
+    expect(v.per_triple[0].focal_verdict).toBe("fail");
+    expect(v.per_triple[0].rationale).toContain("uncovered");
+  });
+
+  test("a triple with NO structural claimant FAILS (uncovered aspect) rather than silently passing", () => {
+    const intent = mk("project/stack", ["a"]);
+    // empty record set → no structural claimant for "a"
+    const res = structuralVerdict("project/stack", { index: buildDerivedIndex([], mapOf(intent)), intents: mapOf(intent), readFile: () => "" });
+    expect(res.success).toBe(true);
+    const v = (res as { value: Verdict }).value;
+    expect(v.per_triple[0].focal_verdict).toBe("fail");
+    expect(v.per_triple[0].rationale).toContain("no structural claimant");
+  });
+
+  test("an inline-backed structural triple PASSES on presence — no sidecar read (D.30)", () => {
+    // A comment-bearing config file (vitest.config.ts) the author marked
+    // `verify: structural`: the inline decoration IS the anchor, so the triple
+    // passes on presence in the live index — structuralVerdict must NOT try to
+    // read a <file>.intent sidecar (there is none).
+    const intent = IntentSchema.parse({
+      id: "cfg/vitest",
+      description: "d",
+      obligation: "must",
+      triples: [{ id: "native-esm", subject: "s", predicate: "p", object: "o", verify: "structural" }],
+    });
+    const inlineRecord = {
+      file: "vitest.config.ts",
+      line: 4,
+      scope: "declaration" as const,
+      declaration_name: null,
+      marker: "intent" as const,
+      intent_path: "cfg/vitest",
+      aspect_ids: ["native-esm"],
+      support_triple: null,
+      ignore_clause: null,
+      anchor: null,
+      verify: "semantic" as const, // modality stamp; the triple is what makes it structural
+    };
+    const index = buildDerivedIndex([inlineRecord], mapOf(intent));
+    const throwOnAnyRead = (f: string): string => {
+      throw new Error(`structuralVerdict must not read files for an inline claim (tried: ${f})`);
+    };
+    const res = structuralVerdict("cfg/vitest", { index, intents: mapOf(intent), readFile: throwOnAnyRead });
+    expect(res.success).toBe(true);
+    const v = (res as { value: Verdict }).value;
+    expect(v.decision).toBe("accept");
+    expect(v.per_triple[0].focal_verdict).toBe("pass");
+    expect(v.per_triple[0].channel).toBe("mechanical");
+  });
+
+  test("an unresolvable intent path is a recoverable error", () => {
+    const res = structuralVerdict("missing/intent", { index: buildDerivedIndex([], new Map()), intents: new Map(), readFile: () => "" });
+    expect(res.success).toBe(false);
+    expect((res as { error: { kind: string } }).error.kind).toBe("intent_path_unresolved");
+  });
+});
+
+describe("structuralVerdict — D.31 honesty hardening (compose + polarity/quantifier backstop)", () => {
+  const intentWith = (overrides: Record<string, unknown>, triple: Record<string, unknown>): Intent =>
+    IntentSchema.parse({ id: "cfg/x", description: "d", obligation: "must", ...overrides, triples: [{ id: "a", subject: "s", predicate: "p", object: "o", ...triple }] });
+
+  test("compose: none INVERTS — a passing structural triple yields reject (was silently accept)", () => {
+    const src = sidecar([{ anchor: "", marker: "intent-file", intent_path: "cfg/x" }]);
+    const intent = intentWith({ compose: "none" }, { verify: "structural" });
+    const res = structuralVerdict("cfg/x", { index: indexFor(src, intent), intents: mapOf(intent), readFile: readerFor(src) });
+    expect(res.success).toBe(true);
+    const v = (res as { value: Verdict }).value;
+    expect(v.per_triple[0].focal_verdict).toBe("pass");
+    expect(v.decision).toBe("reject"); // none: a holding focal claim must reject
+  });
+
+  test("a negative-polarity structural triple FAILS LOUD (cannot verify an absence)", () => {
+    const src = sidecar([{ anchor: "", marker: "intent-file", intent_path: "cfg/x" }]);
+    const intent = intentWith({}, { verify: "structural", polarity: "negative" });
+    const res = structuralVerdict("cfg/x", { index: indexFor(src, intent), intents: mapOf(intent), readFile: readerFor(src) });
+    const v = (res as { value: Verdict }).value;
+    expect(v.per_triple[0].focal_verdict).toBe("fail");
+    expect(v.per_triple[0].rationale).toContain("negative");
+  });
+
+  test("a quantified structural triple FAILS LOUD (cannot verify cardinality)", () => {
+    const src = sidecar([{ anchor: "", marker: "intent-file", intent_path: "cfg/x" }]);
+    const intent = intentWith({}, { verify: "structural", quantifier: "at-most-one" });
+    const res = structuralVerdict("cfg/x", { index: indexFor(src, intent), intents: mapOf(intent), readFile: readerFor(src) });
+    const v = (res as { value: Verdict }).value;
+    expect(v.per_triple[0].focal_verdict).toBe("fail");
+    expect(v.per_triple[0].rationale).toContain("quantified");
+  });
+});
+
+describe("mergeStructuralSemantic — mixed-intent per-triple combination", () => {
+  const pt = (id: string, fv: "pass" | "fail", channel: "mechanical" | "semantic") => ({
+    triple_id: id,
+    focal_verdict: fv,
+    channel,
+    support_quality: "ok" as const,
+    polarity: "positive" as const,
+    evidence: { support_claims: [] },
+    rationale: `${id}:${fv}`,
+  });
+  const verdict = (per_triple: ReturnType<typeof pt>[]): Verdict => ({
+    intent_path: "x/y",
+    decision: per_triple.some((t) => t.focal_verdict === "fail") ? "reject" : "accept",
+    per_triple,
+    aggregate_rationale: "r",
+  });
+
+  test("a triple claimed BOTH ways must pass both — structural fail overrides a semantic pass", () => {
+    const structural = verdict([pt("both", "fail", "mechanical")]);
+    const semantic = verdict([pt("both", "pass", "semantic")]);
+    const merged = mergeStructuralSemantic(structural, semantic, new Set(["both"]), new Set(["both"]), "all");
+    expect(merged.per_triple[0].focal_verdict).toBe("fail");
+    expect(merged.per_triple[0].channel).toBe("semantic");
+    expect(merged.decision).toBe("reject");
+  });
+
+  test("structural-only and semantic-only triples each take their own channel's verdict", () => {
+    const structural = verdict([pt("cfg", "pass", "mechanical"), pt("code", "fail", "mechanical")]);
+    const semantic = verdict([pt("cfg", "fail", "semantic"), pt("code", "pass", "semantic")]);
+    const merged = mergeStructuralSemantic(structural, semantic, new Set(["cfg"]), new Set(["code"]), "all");
+    const byId = new Map(merged.per_triple.map((t) => [t.triple_id, t]));
+    expect(byId.get("cfg")?.focal_verdict).toBe("pass"); // structural-only → structural verdict
+    expect(byId.get("cfg")?.channel).toBe("mechanical");
+    expect(byId.get("code")?.focal_verdict).toBe("pass"); // semantic-only → semantic verdict
+    expect(byId.get("code")?.channel).toBe("semantic");
+    expect(merged.decision).toBe("accept");
+  });
+});

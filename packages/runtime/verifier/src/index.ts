@@ -7,3 +7,4 @@ export * from "./supportQuality.js";
 export * from "./composeAgg.js";
 export * from "./modelClient.js";
 export * from "./procedure.js";
+export * from "./structural.js";

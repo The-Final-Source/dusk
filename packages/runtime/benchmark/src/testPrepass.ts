@@ -47,6 +47,23 @@ export async function realTestPrepassVerdict(intentPath: string, deps: TestPrepa
     return { success: false, error: duskError("intent_path_unresolved", `test intent not found: ${intentPath}`, { recoverable: true }) };
   }
   const claims = deps.index.testDiscovery(intentPath);
+  // Fail loud + legible on a missing body (RFC App. D.32, design D3). The intent
+  // routed here by its authored suffix (D1), but no `@intent-test`/
+  // `@intent-test-file` marker locates the test body — so there is nothing for
+  // the pre-pass to judge. An empty body sent to the model could still come back
+  // `genuinely_verifies: true` → a silent accept; so this guard MUST pre-empt the
+  // model call, not rely on its verdict. Recoverable, so the short cycle can
+  // self-correct by adding the test marker.
+  if (claims.length === 0) {
+    return {
+      success: false,
+      error: duskError(
+        "test_intent_no_test_marker",
+        `test intent '${intentPath}' has no test-body marker: decorate the test file's body with @intent-test-file ${intentPath} (file scope) or @intent-test (declaration scope), never @intent`,
+        { recoverable: true, details: { intent_path: intentPath, expected_markers: ["intent-test", "intent-test-file"] } },
+      ),
+    };
+  }
   const files = [...new Set(claims.map((c) => c.file))].sort();
   const triples = intent.triples ?? [];
 

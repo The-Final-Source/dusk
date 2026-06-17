@@ -2,7 +2,8 @@ import { execFileSync, spawn as spawnChild } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, symlinkSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 
-import { duskError, verifierEvidenceMaxLines, type SpawnOutcome, type VerifierFactory } from "@dusk/core-schema";
+import { duskError, isTestIntentPath, verifierEvidenceMaxLines, type DuskConfig, type SpawnOutcome, type VerifierFactory } from "@dusk/core-schema";
+import type { DerivedIndex } from "@dusk/core-index";
 import {
   computeSidecarCoverage,
   createIgnoreMatcher,
@@ -28,6 +29,8 @@ import {
   DEFAULT_VERIFIER_SYSTEM_PROMPT,
   claudeCodeAvailable,
   claudeCodeModelClient,
+  mergeStructuralSemantic,
+  structuralVerdict,
   verifyIntent,
 } from "@dusk/runtime-verifier";
 import type { VitestRunner } from "@dusk/runtime-test-runner";
@@ -195,7 +198,15 @@ export const ENGINEER_FILE_INSTRUCTION =
   "[{ \"anchor\": \"<JSON Pointer, or \\\"\\\" for the whole file>\", \"marker\": \"intent\"|\"intent-file\", " +
   "\"intent_path\": \"<intent>\" }], \"ignore\": [] }`. Use the whole-file anchor `\"\"` with marker `intent-file` " +
   "unless distinct keys serve distinct intents. NEVER put a comment inside a JSON file; NEVER leave a written " +
-  "comment-less file without its sidecar. When you are done, reply with a 1-2 sentence summary of what you changed.";
+  "comment-less file without its sidecar.\n\n" +
+  "## Test files (test-pyramid intents)\n\nA TEST intent is one whose path ends in a configured test-pyramid suffix " +
+  "(`…/unit-tests`, `…/integration-tests`, `…/e2e-tests`). A file implementing a test-suffix intent MUST claim it with a " +
+  "TEST marker — `// @intent-test-file <test-intent-path>` (the whole file is the test body) or `// @intent-test " +
+  "<test-intent-path> [covers-…]` (a specific test block) — and NEVER with `@intent`. The test marker is what lets the " +
+  "Stage-1 pre-pass FIND the test body it judges; a focal `@intent` on a test-suffix intent is rejected at the gate " +
+  "(`non_test_marker_on_test_intent`). (`@intent-support`, and `@intent` claiming a NON-test intent, are still fine " +
+  "inside a test file.) See the dusk/engineer/test-file-decoration skill.\n\n" +
+  "When you are done, reply with a 1-2 sentence summary of what you changed.";
 
 /**
  * Run a headless file-capable Claude Code agent and return its final text.
@@ -263,6 +274,33 @@ function runHeadlessAgent(
     child.stdin.write(prompt);
     child.stdin.end();
   });
+}
+
+export type VerifierRoute = "prepass" | "structural" | "mixed" | "semantic";
+
+/**
+ * Which instrument judges an intent's claims (D.32 / RFC §3.4, App. D.29).
+ *
+ * The FIRST fork is test-vs-not, decided by the AUTHORED suffix (the single
+ * source of truth, D1) — NEVER by the decoration marker (`testDiscovery`). So a
+ * test-suffix intent always routes to the Stage-1 test-body pre-pass and can
+ * never fall through to ordinary verification; the silent-accept is structurally
+ * impossible regardless of whether the Engineer stamped `@intent` or
+ * `@intent-test-file` (the marker still LOCATES the body inside the pre-pass —
+ * D2 — and a routed test intent with no marker fails loud there — D3).
+ *
+ * Within the ordinary (non-test) path the structural/semantic channel is an
+ * orthogonal axis (D6): all-structural converges with zero LLM; mixed runs both
+ * and merges per triple_id; otherwise semantic.
+ */
+export function chooseVerifierRoute(
+  intentPath: string,
+  index: Pick<DerivedIndex, "structuralAspects" | "semanticAspects">,
+  config: DuskConfig,
+): VerifierRoute {
+  if (isTestIntentPath(intentPath, config)) return "prepass";
+  if (index.structuralAspects(intentPath).length === 0) return "semantic";
+  return index.semanticAspects(intentPath).length === 0 ? "structural" : "mixed";
 }
 
 /**
@@ -341,9 +379,14 @@ export function buildImplementDeps(root: string, opts: { clock?: { now: () => nu
     const ctx = pkgDir ? loadProjectContext(pkgDir, { modelClient, systemPrompt: DEFAULT_VERIFIER_SYSTEM_PROMPT }) : baseCtx;
     const intent = ctx.intents.get(vctx.intentPath) ?? baseCtx.intents.get(vctx.intentPath);
     if (!intent) return duskError("intent_path_unresolved", `intent not found: ${vctx.intentPath}`, { recoverable: true });
-    // Test intents are judged by the Stage-1 test-body pre-pass instrument
-    // (full test bodies, RFC §3.4) — never by single-line claim evidence.
-    if (ctx.index.testDiscovery(vctx.intentPath).length > 0) {
+    // The instrument is chosen by `chooseVerifierRoute` (D.32 / D1): the
+    // test-vs-not fork follows the AUTHORED suffix, not the decoration marker, so
+    // a test-suffix intent is ALWAYS judged by the Stage-1 test-body pre-pass
+    // (full test bodies, RFC §3.4) and can never fall through to ordinary
+    // single-line claim evidence. The marker still LOCATES the body inside the
+    // pre-pass (D2); a routed test intent with no marker fails loud there (D3).
+    const route = chooseVerifierRoute(vctx.intentPath, ctx.index, ctx.config);
+    if (route === "prepass") {
       const prepass = await realTestPrepassVerdict(vctx.intentPath, { index: ctx.index, intents: ctx.intents, readFile: ctx.readFile, modelClient });
       return prepass.success ? prepass.value : prepass.error;
     }
@@ -356,6 +399,23 @@ export function buildImplementDeps(root: string, opts: { clock?: { now: () => nu
         systemPrompt: DEFAULT_VERIFIER_SYSTEM_PROMPT,
         onUsage: vctx.reportUsage,
       });
+    // Structural triples (per-file `<file>.intent` sidecars, `verify: "structural"`)
+    // are satisfied MECHANICALLY — anchor resolves + coverage holds — never by the
+    // semantic LLM (RFC App. D.29). The index partitions them out of the semantic
+    // evidence set, so the LLM path would fail them forever and loop a config
+    // intent until budget. Route by channel: all-structural → zero-LLM verdict
+    // (converges iteration 1); mixed → run both and merge per triple_id.
+    if (route === "structural" || route === "mixed") {
+      const structuralIds = ctx.index.structuralAspects(vctx.intentPath);
+      const semanticIds = ctx.index.semanticAspects(vctx.intentPath);
+      const structural = structuralVerdict(vctx.intentPath, { index: ctx.index, intents: ctx.intents, readFile: ctx.readFile });
+      if (route === "structural") return structural.success ? structural.value : structural.error;
+      if (!structural.success) return structural.error;
+      let semantic = await verifyOnce();
+      if (!semantic.success && semantic.error.kind === "verifier_model_call_failed") semantic = await verifyOnce();
+      if (!semantic.success) return semantic.error;
+      return mergeStructuralSemantic(structural.value, semantic.value, new Set(structuralIds), new Set(semanticIds), intent.compose);
+    }
     let result = await verifyOnce();
     // A non-JSON model response is recoverable noise (one retry, like transport)
     // — it must not kill a long pipeline run as "no verdict".

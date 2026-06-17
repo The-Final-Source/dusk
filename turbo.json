@@ -19,7 +19,7 @@
     "test": {
       "dependsOn": ["^build"],
       "env": ["DUSK_RUN_CORRECTNESS"],
-      "passThroughEnv": ["DUSK_RUN_CORRECTNESS", "DUSK_VERIFIER_MODEL", "ANTHROPIC_API_KEY"]
+      "passThroughEnv": ["DUSK_RUN_CORRECTNESS", "DUSK_VERIFIER_MODEL", "ANTHROPIC_API_KEY", "VITEST_MAX_FORKS", "VITEST_MAX_THREADS"]
     },
     "typecheck": {
       "dependsOn": ["^build"]

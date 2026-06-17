@@ -39,7 +39,7 @@ export type ClassifiedResponse = {
   at: string;
 };
 
-export type SkillHint = "polarity-decision" | "implies-antecedent-grammar" | "typed-relates-to";
+export type SkillHint = "polarity-decision" | "implies-antecedent-grammar" | "typed-relates-to" | "verify-channel";
 
 export type QuestionSpec =
   | { type: "framing" }

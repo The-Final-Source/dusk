@@ -29,6 +29,11 @@ export const DUSK_ERROR_KINDS = [
   // Verifier (Phase 2)
   "verifier_evidence_too_large",
   "verifier_model_call_failed",
+  // Test-pyramid routing (RFC App. D.32) — a routed test intent whose body
+  // cannot be located (no @intent-test/@intent-test-file claimant). A
+  // verdict-channel kind, distinct from the gate kind
+  // `non_test_marker_on_test_intent`; both are needed (no collision).
+  "test_intent_no_test_marker",
   // Index / decoration (Phase 2)
   "intent_path_unresolved",
   "decoration_parse_error",

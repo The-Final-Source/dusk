@@ -198,7 +198,11 @@ export async function runShortCycle(deps: ShortCycleDeps): Promise<RuntimeResult
 
     // 6. Bead-Orchestrator tick trace (carries stuckness_detector_state + the v9
     // stuck-bead debugging fields; diagnosis flag auto-computed from its memory).
-    await deps.spawn({
+    // The tick is a model-call spawn (the taskRunner ELSE branch); a surfaced
+    // model-call failure here MUST be propagated, not silently dropped — else the
+    // spawn seam's returned failure (RFC App. D.33) would let the loop continue as
+    // if the tick succeeded (a silent false-success).
+    const orchestratorTick = await deps.spawn({
       role: "bead-orchestrator",
       beadId: deps.beadId,
       sessionId: deps.sessionId,
@@ -212,6 +216,7 @@ export async function runShortCycle(deps: ShortCycleDeps): Promise<RuntimeResult
         engineer_change_summary: engineerChangeSummary(engineer.value.output),
       },
     });
+    if (!orchestratorTick.success) return orchestratorTick;
 
     // 7. Converged → exit to Step 5.
     if (converged) {

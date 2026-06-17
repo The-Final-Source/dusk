@@ -25,6 +25,17 @@ export const VERDICT_DECISIONS = ["accept", "reject"] as const;
 export const VerdictDecisionSchema = z.enum(VERDICT_DECISIONS);
 export type VerdictDecision = z.infer<typeof VerdictDecisionSchema>;
 
+/**
+ * Which channel produced a per-triple verdict (RFC App. D.29). `mechanical` =
+ * the zero-LLM structural evaluator (anchor resolves + decoration coverage
+ * holds); `semantic` = the LLM Verifier judged the architecture. Additive with a
+ * `semantic` default — absent ≡ `semantic`, so existing verdicts are unchanged.
+ * Adherence reporting NEVER blends the two channels.
+ */
+export const VERDICT_CHANNELS = ["mechanical", "semantic"] as const;
+export const VerdictChannelSchema = z.enum(VERDICT_CHANNELS);
+export type VerdictChannel = z.infer<typeof VerdictChannelSchema>;
+
 const LineRangeSchema = z.tuple([z.number().int(), z.number().int()]);
 const SupportTripleSchema = z.tuple([z.string(), z.string(), z.string()]);
 
@@ -67,6 +78,8 @@ export const PerTripleVerdictSchema = z
   .object({
     triple_id: z.string(),
     focal_verdict: FocalVerdictSchema,
+    /** Mechanical (structural coverage) vs semantic (LLM-judged). Absent ≡ "semantic". */
+    channel: VerdictChannelSchema.optional(),
     support_quality: SupportQualitySchema,
     /** Original polarity preserved for post-hoc inversion attribution (Phase 5 audit). */
     polarity: PolaritySchema,

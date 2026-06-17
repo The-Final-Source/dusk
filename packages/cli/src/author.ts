@@ -31,19 +31,18 @@ export type AuthorCliOptions = {
 };
 
 export function buildAmbientRuntime(root: string, clock: { now: () => number }): AuthorRuntime {
-  // maxTurns 8: the Author's large multi-skill prompt can burn the default 3-turn
-  // budget on denied Read/Grep tool attempts before emitting its framing JSON
-  // (surfacing as error_max_turns). The extra headroom lets it recover in-budget.
   // timeoutMs 300s: Stage-4 drafting can emit a large generation (multiple intents
   // + triples across an accepted practice decomposition) that exceeds the default
-  // 120s CLI wall-clock — twice, exhausting the transport retry. (The extra turn
-  // budget also consumes more wall-clock, so the two go together.) The Verifier
-  // keeps the 120s default; only this heavier Author path is widened.
-  const modelClient = claudeCodeModelClient({ model: "claude-sonnet-4-6", maxTurns: 8, timeoutMs: 300_000 });
+  // 120s CLI wall-clock. The Verifier keeps the 120s default; only this heavier
+  // Author path is widened. (The tool-loop that used to burn the turn budget into
+  // error_max_turns is now prevented at the source by `--tools ""` per D.33, so no
+  // maxTurns headroom is needed here.)
+  const modelClient = claudeCodeModelClient({ model: "claude-sonnet-4-6", timeoutMs: 300_000 });
   const taskRunner: TaskRunner = async (call) => {
-    // Mirror the implement pipeline: a transport blip (CLI timeout / non-zero
-    // exit, incl. a transient error_max_turns) is null observation, not content —
-    // retry it once rather than failing the whole dialog turn.
+    // Mirror the implement pipeline: a genuine transport blip (CLI timeout / spawn
+    // failure) is a null observation, not content — retry it once rather than
+    // failing the whole dialog turn. (A deterministic error_max_turns is now
+    // classified non-transport per D.33, so it is surfaced, not cold-retried.)
     const completion = await withTransportRetry(() => modelClient.complete({ system: call.prompt, user: "Proceed.", temperature: 0 }));
     return { output: completion.text, model: "claude-sonnet-4-6", promptTokens: completion.usage.promptTokens, completionTokens: completion.usage.completionTokens, costUsd: completion.usage.costUsd ?? 0, latencyMs: 0 };
   };

@@ -15,7 +15,9 @@ export const SidecarClaimSchema = z
     anchor: z.string(),
     marker: z.enum(DECORATION_MARKERS),
     intent_path: z.string().min(1),
-    aspect_ids: z.array(z.string().min(1)).optional(),
+    // Omit to claim the whole intent; an EMPTY array claims nothing and is a
+    // silent under-coverage trap (D.31/G12) — require ≥1 when the key is present.
+    aspect_ids: z.array(z.string().min(1)).min(1).optional(),
   })
   .strict();
 

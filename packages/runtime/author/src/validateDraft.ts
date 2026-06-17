@@ -4,6 +4,7 @@ import {
   validateAtomicIntent,
   validateMatrixPredicateNegation,
   validateRelatesToKinds,
+  validateVerifyChannel,
 } from "@dusk/core-parser";
 
 /**
@@ -19,7 +20,7 @@ export type DraftViolation = {
   draft_id: string;
   path: string;
   message: string;
-  skill_hint: "polarity-decision" | "implies-antecedent-grammar" | "typed-relates-to" | null;
+  skill_hint: "polarity-decision" | "implies-antecedent-grammar" | "typed-relates-to" | "verify-channel" | null;
 };
 
 const BOOKKEEPING_KEYS = [
@@ -72,6 +73,14 @@ export function validateDraft(draft: DraftIntent): DraftViolation[] {
   // 3 — five typed relates_to kinds, never `refines` (RFC §2.1).
   for (const v of validateRelatesToKinds(draft)) {
     out.push({ code: v.code, draft_id: draftId, path: v.path, message: v.message, skill_hint: "typed-relates-to" });
+  }
+
+  // 4 — verification-channel honesty: structural can verify neither an absence
+  //     (negative polarity) nor a cardinality bound (quantifier) (RFC App. D.31).
+  for (const triple of [...(draft.triples ?? []), ...(draft.consequent ?? [])]) {
+    for (const v of validateVerifyChannel(triple)) {
+      out.push({ code: v.code, draft_id: draftId, path: v.path, message: v.message, skill_hint: "verify-channel" });
+    }
   }
 
   if (out.length > 0) return out;

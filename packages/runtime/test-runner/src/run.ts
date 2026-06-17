@@ -32,8 +32,32 @@ export type TestRunnerOutcome =
   | { kind: "verdict"; verdict: TestVerdict; invokedFiles: string[] }
   | { kind: "reenter_step4"; rejected: RejectedTest[]; invokedFiles: string[] };
 
+/** RFC App. D.32 marker hint — the explicit signal a routed test intent has no locatable body. */
+export const NO_TEST_MARKER_KIND = "test_intent_no_test_marker";
+
 export async function runTestRunner(deps: TestRunnerDeps): Promise<RuntimeResult<TestRunnerOutcome>> {
   const claims = discoverTestClaims(deps.index, deps.testIntentPath);
+
+  // Fail loud + legible on a missing test body (RFC App. D.32, design D3). The
+  // intent routed here by its authored suffix, but no @intent-test /
+  // @intent-test-file marker locates a test body. An empty file list would flow
+  // to runVitest([]) → zero files run → a SILENT GREEN pass (no triple ever
+  // judged), the worst residual. Pre-empt it: re-enter Step 4 with the explicit
+  // `test_intent_no_test_marker` signal so the Engineer adds the marker — never a
+  // green no-op.
+  if (claims.length === 0) {
+    const intent = deps.index.intents.get(deps.testIntentPath);
+    const tripleIds = intent
+      ? (intent.compose === "implies" ? (intent.consequent ?? []) : (intent.triples ?? [])).map((t) => t.id)
+      : [];
+    const rationale = `${NO_TEST_MARKER_KIND}: '${deps.testIntentPath}' has no @intent-test/@intent-test-file marker locating its test body — decorate the test file with @intent-test-file ${deps.testIntentPath} (file scope) or @intent-test (declaration scope), never @intent`;
+    const rejected = (tripleIds.length > 0 ? tripleIds : [deps.testIntentPath]).map((triple_id) => ({
+      test_intent_path: deps.testIntentPath,
+      triple_id,
+      rationale,
+    }));
+    return ok({ kind: "reenter_step4", rejected, invokedFiles: [] });
+  }
 
   // Stage 1 — Verifier pre-pass on each test body; collect rejected claims.
   const rejectedFiles = new Set<string>();
