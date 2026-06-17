@@ -5,7 +5,7 @@ import { buildDerivedIndex, type DerivedIndex } from "@dusk/core-index";
 import type { DecorationRecord } from "@dusk/core-decoration";
 import { DuskConfigSchema, type Intent, type TestVerifierLivelockReport, type VerifierFactory } from "@dusk/core-schema";
 import { readRuntimeEnv } from "@dusk/runtime-orchestrator";
-import { createMockGitWorktree, fixedClock, makeScriptedVerdictFactory, makeVitestJsonReportString, type MockGitWorktree } from "@dusk/test-harness";
+import { createMockGitWorktree, fixedClock, makeScriptedVerdictFactory, makeDuskTestCapture, type MockGitWorktree } from "@dusk/test-harness";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import { duskCancel, duskImplement, duskResolveLivelock, duskTest, type WriteSurfaceDeps } from "./writeSurface.js";
@@ -47,7 +47,7 @@ const deps = (sessionId: string): WriteSurfaceDeps => ({
   config: DuskConfigSchema.parse({}),
   perEntryMax: 20,
   lifetimeMax: 40,
-  vitestRunner: (files) => makeVitestJsonReportString(files.map((f) => ({ file: f, title: "t", status: "passed" as const, duration: 1 }))),
+  vitestRunner: (files) => makeDuskTestCapture(files.map((f) => ({ file: f, title: "t", status: "passed" as const, duration: 1 }))),
 });
 
 describe("13.1 — dusk_implement", () => {

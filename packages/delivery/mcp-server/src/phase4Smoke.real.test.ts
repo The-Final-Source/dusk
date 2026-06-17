@@ -15,7 +15,7 @@ import {
 import { createAuthorRuntime, makeModelAuthorGenerator, readDialogState, type AuthorRuntime } from "@dusk/runtime-author";
 import { clearSnapshot, readRuntimeEnv, runImplement, spawnSubAgent, type RunImplementDeps, type TaskRunner } from "@dusk/runtime-orchestrator";
 import { claudeCodeAvailable, claudeCodeModelClient } from "@dusk/runtime-verifier";
-import { createMockGitWorktree, isTransportError, makeScriptedVerdictFactory, makeVitestJsonReportString, type MockGitWorktree } from "@dusk/test-harness";
+import { createMockGitWorktree, isTransportError, makeScriptedVerdictFactory, makeDuskTestCapture, type MockGitWorktree } from "@dusk/test-harness";
 import { describe, expect, test } from "vitest";
 
 /**
@@ -102,7 +102,7 @@ async function runPrimaryOnce(iteration: number): Promise<boolean> {
       config: DuskConfigSchema.parse({}),
       perEntryMax: 20,
       lifetimeMax: 40,
-      vitestRunner: (files) => makeVitestJsonReportString(files.map((f) => ({ file: f, title: "t", status: "passed" as const, duration: 1 }))),
+      vitestRunner: (files) => makeDuskTestCapture(files.map((f) => ({ file: f, title: "t", status: "passed" as const, duration: 1 }))),
     });
 
     // ---- 1. Pause for authoring with the enriched seed. ----
