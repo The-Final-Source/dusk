@@ -10,6 +10,11 @@ describe("createIgnoreMatcher", () => {
   test("prunes dependency + generated dirs and their contents", () => {
     expect(isIgnored("node_modules")).toBe(true);
     expect(isIgnored("node_modules/foo/index.js")).toBe(true);
+    // NESTED dirs must prune too — a monorepo's per-package node_modules (whose
+    // pnpm symlink cycles otherwise hang the walk) and nested build output.
+    expect(isIgnored("packages/api/node_modules")).toBe(true);
+    expect(isIgnored("packages/api/node_modules/.pnpm/x/index.js")).toBe(true);
+    expect(isIgnored("packages/web/dist/bundle.js")).toBe(true);
     expect(isIgnored("dist")).toBe(true);
     expect(isIgnored("dist/bundle.js")).toBe(true);
     expect(isIgnored(".ia/runtime")).toBe(true);
@@ -33,7 +38,7 @@ describe("createIgnoreMatcher", () => {
   test("honors project additions merged via loadIgnoreGlobs", () => {
     const globs = loadIgnoreGlobs({ decoration: { ignore: ["generated/**", "*.snap"] } });
     const m = createIgnoreMatcher(globs);
-    expect(globs).toContain("node_modules/**"); // defaults preserved
+    expect(globs).toContain("**/node_modules/**"); // defaults preserved
     expect(m("generated/schema.json")).toBe(true);
     expect(m("x/y/foo.snap")).toBe(true);
     expect(m("src/handler.ts")).toBe(false);
