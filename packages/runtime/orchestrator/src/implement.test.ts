@@ -3,12 +3,12 @@ import { join } from "node:path";
 
 import { buildDerivedIndex, type DerivedIndex } from "@dusk/core-index";
 import type { DecorationRecord } from "@dusk/core-decoration";
-import { DuskConfigSchema, type Intent, type VerifierFactory } from "@dusk/core-schema";
+import { DuskConfigSchema, duskError, type Intent, type VerifierFactory } from "@dusk/core-schema";
 import {
   createMockGitWorktree,
   fixedClock,
   makeScriptedVerdictFactory,
-  makeVitestJsonReportString,
+  makeDuskTestCapture,
   readTraces,
   type MockGitWorktree,
 } from "@dusk/test-harness";
@@ -92,7 +92,7 @@ function deps(): RunImplementDeps {
     config: DuskConfigSchema.parse({}),
     perEntryMax: 20,
     lifetimeMax: 40,
-    vitestRunner: (files) => makeVitestJsonReportString(files.map((f) => ({ file: f, title: "shape test", status: "passed" as const, duration: 2 }))),
+    vitestRunner: (files) => makeDuskTestCapture(files.map((f) => ({ file: f, title: "shape test", status: "passed" as const, duration: 2 }))),
   };
 }
 
@@ -120,6 +120,34 @@ describe("13.1 — fresh request walks the full pipeline", () => {
     // The work landed on main (worktrees removed by Step 8).
     expect(mg.worktreePaths()).toHaveLength(0);
   });
+});
+
+// RFC App. D.34 — both honesty duals, model-independently (zero-model, scripted).
+describe("App. D.34 — both honesty duals hold model-independently", () => {
+  // A Verifier factory that always returns a degraded/empty boundary (no throw —
+  // the live shape: returns-without-throwing).
+  const noVerdictFactory: VerifierFactory = async () =>
+    duskError("infrastructure_no_verdict", "degraded/empty verifier under load", { recoverable: true, details: { no_verdict_reason: "empty" } });
+
+  test("Dual A — a sustained empty/degraded Verifier pauses on the finite infrastructure axis (never a futile loop, never a crash, resumable)", async () => {
+    const result = await runImplement(
+      { request: "add the api/widget shape", scopeHint: ["api/widget"] },
+      { ...deps(), verifierFactory: noVerdictFactory, noVerdictMax: 2 },
+    );
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.kind).toBe("infrastructure_no_verdict"); // the recovery axis — NOT a content reject
+    expect(result.error.recoverable).toBe(true); // a pause, not a terminal failure
+    expect(result.error.recovery_hint ?? "").toContain("resume"); // R7a: legible, resumable
+    // No bead committed (the loop did not silent-green); worktrees still present (not merged).
+    expect(mg.worktreePaths().length).toBeGreaterThan(0);
+  });
+
+  // Dual B (a Stage-2 `decision:"fail"` re-enters Step 4 and blocks commit — the
+  // silent green) is covered deterministically at the Test Runner boundary in
+  // `@dusk/runtime-test-runner` (`run.ts`: a failing Dusk-schema result → a
+  // `reenter_step4` outcome, never a `verdict`), which the orchestrator routes
+  // through the already-tested livelock-observation block.
 });
 
 describe("13.1 — exactly one of request / resume_token", () => {

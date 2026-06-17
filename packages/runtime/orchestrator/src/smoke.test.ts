@@ -12,7 +12,7 @@ import {
   createMockGitWorktree,
   fixedClock,
   makeScriptedVerdictFactory,
-  makeVitestJsonReportString,
+  makeDuskTestCapture,
   readTraces,
   tracesForRole,
   type MockGitWorktree,
@@ -73,7 +73,7 @@ const deps = (sessionId: string, buildIndex: () => DerivedIndex, over: Partial<R
   config: DuskConfigSchema.parse({}),
   perEntryMax: 20,
   lifetimeMax: 40,
-  vitestRunner: (files) => makeVitestJsonReportString(files.map((f) => ({ file: f, title: "t", status: "passed" as const, duration: 1 }))),
+  vitestRunner: (files) => makeDuskTestCapture(files.map((f) => ({ file: f, title: "t", status: "passed" as const, duration: 1 }))),
   ...over,
 });
 

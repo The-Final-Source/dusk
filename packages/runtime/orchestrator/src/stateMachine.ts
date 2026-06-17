@@ -4,10 +4,12 @@ import type { DerivedIndex } from "@dusk/core-index";
 import {
   duskError,
   err,
+  noVerdictError,
   ok,
   type BoundSpawn,
   type CommitTrailers,
   type DuskConfig,
+  type NoVerdictReason,
   type RuntimeResult,
   type SpawnOutcome,
 } from "@dusk/core-schema";
@@ -20,9 +22,9 @@ import { runLongCycle, affectedUniverse, type ImportGraph } from "@dusk/runtime-
 import { detectLivelock, resolveTickPrecedence, type IterationObservation } from "@dusk/runtime-livelock-detection";
 import type { SlotFocus, TestVerifierLivelockReport } from "@dusk/core-schema";
 import { runMerge, topoOrder } from "@dusk/runtime-merge";
-import { freezeResumePath, runRecoveryLadder } from "@dusk/runtime-recovery-ladder";
+import { freezeResumePath, level3Freeze, runRecoveryLadder } from "@dusk/runtime-recovery-ladder";
 import { runShortCycle, type GateResult } from "@dusk/runtime-short-cycle";
-import { runTestRunner, type VitestRunner } from "@dusk/runtime-test-runner";
+import { runTestRunner, type TestOutputInterpreter, type VitestRunner } from "@dusk/runtime-test-runner";
 import { createWorktreesForDag, planWorktrees, worktreePathFor } from "@dusk/runtime-worktree";
 
 import { endActiveRun, setBeadStatus, startActiveRun, upsertBead, type BeadStatus } from "./activeRun.js";
@@ -71,10 +73,15 @@ export type RunImplementDeps = {
   config: DuskConfig;
   perEntryMax: number;
   lifetimeMax: number;
+  /** Finite infrastructure-recovery axis ceiling (RFC App. D.34, R10) — consecutive
+   * `no_verdict` outcomes before a legible, resumable `paused_infrastructure`. */
+  noVerdictMax?: number;
   verifierModel?: string;
   testRunnerModel?: string;
   importGraph?: ImportGraph;
   vitestRunner?: VitestRunner;
+  /** Agentic bridge for schema-absent Stage-2 raw output (RFC App. D.34, decision ①). */
+  interpretTestOutput?: TestOutputInterpreter;
   baseRef?: string;
   rebuildIndex?: boolean;
   gate?: (engineer: SpawnOutcome) => GateResult;
@@ -210,6 +217,17 @@ export async function runImplement(req: RunImplementRequest, deps: RunImplementD
         lowConfidenceSupports,
       }),
     );
+  } catch (e) {
+    // RFC App. D.34 / R9: no non-content outcome may crash the run. A synchronous
+    // throw in the per-bead pipeline (a guarded-parse miss, a runner throw) surfaces
+    // as a legible DuskError — NEVER an exit-1 stack trace. HONEST (design D6): a
+    // genuine programming bug (TypeError, assertion) is surfaced LOUD as
+    // `internal_error`; it is never relabelled as a content or `no_verdict` outcome.
+    return err(
+      duskError("internal_error", `dusk_implement crashed in the per-bead pipeline: ${e instanceof Error ? e.message : String(e)}`, {
+        recoverable: false,
+      }),
+    );
   } finally {
     endActiveRun();
   }
@@ -240,6 +258,52 @@ async function processBead(input: ProcessBeadInput): Promise<RuntimeResult<Proce
   // Test-driven re-entry history feeds the livelock detector (RFC §3.4.1; 10.3).
   const livelockObservations: IterationObservation[] = [];
   let testReentryCount = 0;
+  // RFC App. D.34 (R10) — the finite infrastructure-recovery axis. `no_verdict`
+  // outcomes (degraded model/test infra) increment this counter; they are NEVER
+  // pushed to `livelockObservations` (infra noise must not trip the 3-reject
+  // detector). Exhaustion → a legible, resumable `paused_infrastructure`. It is a
+  // per-bead total (no reset on a re-convergence): a transient blip that recovers
+  // yields one `no_verdict` then a commit (no pause); only SUSTAINED infra
+  // degradation reaches the ceiling — which is exactly what must not loop.
+  const noVerdictMax = deps.noVerdictMax ?? 3;
+  let noVerdictCount = 0;
+  /** Write the resume record + freeze-state.md and surface a legible infra pause (R7a/R10). */
+  const pauseInfrastructure = (reason: NoVerdictReason, lifetime: number): RuntimeResult<ProcessBeadOk> => {
+    setBeadStatus(input.run, beadId, "paused_infrastructure", "Step 4 — infrastructure-recovery axis exhausted");
+    let freezePath: string | undefined;
+    try {
+      const fr = level3Freeze({
+        rootDir: deps.rootDir,
+        beadId,
+        beadMemory: "",
+        lastVerdicts: [],
+        diagnosisHistory: diagnosisHistory.map((text, i) => ({ iter: i + 1, text })),
+        resume: { bead_id: beadId, intent_paths: input.node.intent_paths, lifetime_iter: lifetime, branch: `dusk/${beadId}` },
+      });
+      freezePath = fr.freezePath;
+    } catch {
+      // Best-effort freeze; the pause is still legible (and the run still ends
+      // cleanly) without a resume record.
+    }
+    return err(
+      noVerdictError(
+        reason,
+        `bead ${beadId} paused on the infrastructure-recovery axis after ${noVerdictMax} consecutive no_verdict outcomes (reason: ${reason}); resolve the model/test infrastructure, then resume`,
+        {
+          bead_id: beadId,
+          step: 4,
+          ...(freezePath ? { details: { freeze_path: freezePath } } : {}),
+          recovery_hint: `${freezePath ? `inspect ${freezePath}, then ` : ""}\`dusk implement --resume ${beadId}\``,
+        },
+      ),
+    );
+  };
+  /** Tick the infra counter; return a pause when exhausted, else null (retry the boundary). */
+  const onNoVerdict = (reason: NoVerdictReason, lifetime: number): RuntimeResult<ProcessBeadOk> | null => {
+    lifetimeIter = lifetime;
+    noVerdictCount += 1;
+    return noVerdictCount >= noVerdictMax ? pauseInfrastructure(reason, lifetime) : null;
+  };
   const resolveTriple = (testIntentPath: string, tripleId: string): { subject: string; predicate: string; object: string; polarity: "positive" | "negative" } => {
     const t = snapshot.index.intents.get(testIntentPath)?.triples?.find((x) => x.id === tripleId);
     return t ? { subject: t.subject, predicate: t.predicate, object: t.object, polarity: t.polarity } : { subject: "", predicate: "", object: "", polarity: "positive" };
@@ -262,6 +326,15 @@ async function processBead(input: ProcessBeadInput): Promise<RuntimeResult<Proce
       gate: deps.gate,
     });
     if (!short.success) return short;
+
+    // RFC App. D.34 (gap #2 / R6): an empty/degraded Verifier is INFRASTRUCTURE —
+    // route to the finite no_verdict axis (retry, bounded), NEVER a content reject
+    // and NEVER the former futile re-draft loop on correct code.
+    if (short.value.kind === "no_verdict") {
+      const paused = onNoVerdict(short.value.reason, short.value.lifetimeIters);
+      if (paused) return paused;
+      continue; // bounded retry — re-enter Step 4
+    }
 
     if (short.value.kind === "per_entry_exhausted") {
       lifetimeIter = short.value.lifetimeIters;
@@ -309,6 +382,13 @@ async function processBead(input: ProcessBeadInput): Promise<RuntimeResult<Proce
       verifierInputFor: (t) => `Re-verify ${t.intent_path} in ${t.claimant}.`,
     });
     if (!long.success) return long;
+    // RFC App. D.34 (gap #6 / D8): a degraded long-cycle Verifier is INFRASTRUCTURE
+    // — route to the no_verdict axis, NEVER a flaky-dismiss or a clean pass.
+    if (long.value.kind === "no_verdict") {
+      const paused = onNoVerdict(long.value.reason, lifetimeIter);
+      if (paused) return paused;
+      continue; // bounded retry — re-enter Step 4
+    }
     if (long.value.kind === "confirmed_reject") {
       continue; // re-enter Step 4 with the regressed intent (lifetime continues)
     }
@@ -327,8 +407,20 @@ async function processBead(input: ProcessBeadInput): Promise<RuntimeResult<Proce
         prepassInput: (claim) => `Does the test in ${claim.file} verify ${claim.coveredTriples.join(", ")}?`,
         cwd: deps.rootDir,
         vitestRunner: deps.vitestRunner,
+        ...(deps.interpretTestOutput ? { interpretTestOutput: deps.interpretTestOutput } : {}),
       });
       if (!tr.success) return tr;
+      // RFC App. D.34 (gap #1 / R7): a Stage-2 content `fail` now arrives as
+      // `reenter_step4` (the never-consumed `decision` is consumed at the runner)
+      // — re-draft + BLOCK commit via the EXISTING livelock-observation block. A
+      // `no_verdict` is INFRASTRUCTURE — the finite axis, NEVER a livelock
+      // observation (infra noise must not trip the 3-reject detector).
+      if (tr.value.kind === "no_verdict") {
+        const paused = onNoVerdict(tr.value.reason, lifetimeIter);
+        if (paused) return paused;
+        reentered = true; // bounded retry — re-enter Step 4; NO livelock observation pushed
+        break;
+      }
       if (tr.value.kind === "reenter_step4") {
         reentered = true;
         // Accumulate this re-entry's rejections as livelock observations.
