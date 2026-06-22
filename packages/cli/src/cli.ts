@@ -12,6 +12,7 @@ import { runStaticAnalysis } from "./doctorStaticAnalysis.js";
 import { runImplementCli } from "./implement.js";
 import { AUTHOR_HELP, runAuthorCli } from "./author.js";
 import { MCP_HELP, runMcpServer } from "./mcp.js";
+import { renderVersion, VERSION_HELP } from "./version.js";
 import type { ConflictChoice } from "./settingsMerge.js";
 
 const HELP = `dusk — Intent Architecture CLI
@@ -30,6 +31,7 @@ Usage:
   dusk doctor --check-hook    Verify the gate is installed (--repair to fix)
   dusk doctor --static-analysis [--strict-unknowns] [path]   Decoration-erosion (S ⊄ D) drift report
   dusk doctor --cleanup-worktrees | --gc-implement-checkpoints | --gc-dialogs   Reap stale runtime state
+  dusk version                Show the build's git commit/branch + whether it is STALE vs the repo
   dusk --help                 Show this help
 `;
 
@@ -64,6 +66,11 @@ function flagValue(args: string[], flag: string): string | undefined {
 
 async function run(command: string | undefined, rest: string[]): Promise<number> {
   const root = process.cwd();
+  if (command === "version" || command === "--version" || command === "-v") {
+    if (wantsHelp(rest)) return process.stdout.write(VERSION_HELP), 0;
+    process.stdout.write(renderVersion());
+    return 0;
+  }
   if (!command || command === "help" || wantsHelp([command])) {
     process.stdout.write(HELP);
     return 0;

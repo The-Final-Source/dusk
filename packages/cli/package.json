@@ -15,7 +15,7 @@
     "dusk": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/stampBuild.mjs",
     "dev": "tsc --watch",
     "test": "tsc && vitest run",
     "typecheck": "tsc --noEmit"
