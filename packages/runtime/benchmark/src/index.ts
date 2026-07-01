@@ -36,3 +36,36 @@ export {
   DogfoodEventSchema,
   type DogfoodEvent,
 } from "./dogfood.js";
+// Phase-6 audit tooling (greenfield POC) — §5.1–5.3 primitives + the §6 PocReport
+// evaluator. Zero-model pure passes.
+export {
+  classifyApplicationSource,
+  isTrailerRequired,
+  PYRAMID_SUFFIXES,
+  type SourceClass,
+  type ClassifySourceResult,
+} from "./applicationSource.js";
+export {
+  parseGitLog,
+  auditTrailers,
+  hasFullTrailers,
+  GIT_LOG_FORMAT,
+  REQUIRED_TRAILER_KEYS,
+  CONDITIONAL_TRAILER_KEYS,
+  HUMAN_INPUT_WHITELIST,
+  type ParsedCommit,
+  type HumanAction,
+  type HumanInputKind,
+  type TrailerViolation,
+  type TrailerAuditResult,
+  type AuditInput,
+} from "./trailerAudit.js";
+export {
+  checkProvenance,
+  readAuthorTraceIds,
+  readFinalizeCreatedIds,
+  type ProvenanceViolation,
+  type ProvenanceResult,
+  type CheckProvenanceInput,
+} from "./provenanceCheck.js";
+export { evaluatePoc, type PocEvaluatorInput, type PocEvaluation } from "./pocEvaluator.js";

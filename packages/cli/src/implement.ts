@@ -311,21 +311,15 @@ export function chooseVerifierRoute(
   return index.semanticAspects(intentPath).length === 0 ? "structural" : "mixed";
 }
 
-export async function runImplementCli(root: string, rest: string[], opts: { clock?: { now: () => number } } = {}): Promise<ImplementCliResult> {
-  const { request, resume, scopeHint, baseRef } = parseArgs(rest);
-  if (!request && !resume) {
-    return { ok: false, text: "usage: dusk implement <request> [--scope <intent,..>] [--base-ref <ref>] | dusk implement --resume <bead-id|resume-token>\n" };
-  }
-  if (!claudeCodeAvailable()) {
-    return { ok: false, text: "dusk implement needs the Claude Code CLI (`claude`) on PATH (it runs the pipeline on the ambient model — no API key required).\n" };
-  }
-
-  // An L3-frozen bead is resumed from its preserved freeze-state.md (§recovery-ladder).
-  if (resume && resume.startsWith("bd_")) {
-    const freezePath = join(root, ".ia/runtime/beads", resume, "freeze-state.md");
-    if (!existsSync(freezePath)) return { ok: false, text: `no frozen bead at ${freezePath}\n` };
-  }
-
+/**
+ * Assemble the real-dependency `RunImplementDeps` the 9-step pipeline runs on:
+ * the ambient-model client (with the transport-failure retry wrapper), the
+ * worktree-aware Engineer task runner, the fresh-per-call Verifier factory, and
+ * the worktree Vitest runner. Extracted so both `dusk implement` and the MCP
+ * stdio server (`dusk mcp`) drive the pipeline through identical wiring rather
+ * than two divergent assemblies. Pure construction — issues no model calls.
+ */
+export function buildImplementDeps(root: string, opts: { clock?: { now: () => number }; baseRef?: string } = {}): RunImplementDeps {
   const clock = opts.clock ?? { now: () => Date.now() };
   const model = "claude-sonnet-4-6";
   // The pre-registered transport-failure amendment applies to every real-model
@@ -499,7 +493,7 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
     return { stdout: r.stdout ?? "", exitCode: r.status, timedOut };
   };
 
-  const deps: RunImplementDeps = {
+  return {
     rootDir: root,
     sessionId: `cli_${clock.now()}`,
     env: readRuntimeEnv(),
@@ -514,8 +508,26 @@ export async function runImplementCli(root: string, rest: string[], opts: { cloc
     noVerdictMax: sanityNumber(baseCtx.config, "no_verdict_max_iterations", 3),
     vitestRunner,
     interpretTestOutput,
-    ...(baseRef ? { baseRef } : {}),
+    ...(opts.baseRef ? { baseRef: opts.baseRef } : {}),
   };
+}
+
+export async function runImplementCli(root: string, rest: string[], opts: { clock?: { now: () => number } } = {}): Promise<ImplementCliResult> {
+  const { request, resume, scopeHint, baseRef } = parseArgs(rest);
+  if (!request && !resume) {
+    return { ok: false, text: "usage: dusk implement <request> [--scope <intent,..>] [--base-ref <ref>] | dusk implement --resume <bead-id|resume-token>\n" };
+  }
+  if (!claudeCodeAvailable()) {
+    return { ok: false, text: "dusk implement needs the Claude Code CLI (`claude`) on PATH (it runs the pipeline on the ambient model — no API key required).\n" };
+  }
+
+  // An L3-frozen bead is resumed from its preserved freeze-state.md (§recovery-ladder).
+  if (resume && resume.startsWith("bd_")) {
+    const freezePath = join(root, ".ia/runtime/beads", resume, "freeze-state.md");
+    if (!existsSync(freezePath)) return { ok: false, text: `no frozen bead at ${freezePath}\n` };
+  }
+
+  const deps = buildImplementDeps(root, { ...(opts.clock ? { clock: opts.clock } : {}), ...(baseRef ? { baseRef } : {}) });
 
   // A bead-id resumes an L3-frozen bead from its preserved state; a resume token
   // continues a checkpoint-paused run.

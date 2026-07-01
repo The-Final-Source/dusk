@@ -11,6 +11,8 @@ import { BENCHMARK_HELP, runBenchmarkCli } from "./benchmark.js";
 import { runStaticAnalysis } from "./doctorStaticAnalysis.js";
 import { runImplementCli } from "./implement.js";
 import { AUTHOR_HELP, runAuthorCli } from "./author.js";
+import { MCP_HELP, runMcpServer } from "./mcp.js";
+import { renderVersion, VERSION_HELP } from "./version.js";
 import type { ConflictChoice } from "./settingsMerge.js";
 
 const HELP = `dusk — Intent Architecture CLI
@@ -24,10 +26,12 @@ Usage:
   dusk skills                 Introspect installed role-bound skills, grouped by role
   dusk implement <request>    Run the 9-step pipeline (mirror of dusk_implement); --resume <id> to continue
   dusk author <request>       Open an intent-authoring dialog (mirror of dusk_author_*); --continue / --finalize
+  dusk mcp                    Serve the dusk_* tools over stdio for an MCP host (Claude Code, etc.)
   dusk benchmark              Run the seeded-violations benchmark / fresh-Verifier audit / dogfood evaluation
   dusk doctor --check-hook    Verify the gate is installed (--repair to fix)
   dusk doctor --static-analysis [--strict-unknowns] [path]   Decoration-erosion (S ⊄ D) drift report
   dusk doctor --cleanup-worktrees | --gc-implement-checkpoints | --gc-dialogs   Reap stale runtime state
+  dusk version                Show the build's git commit/branch + whether it is STALE vs the repo
   dusk --help                 Show this help
 `;
 
@@ -62,6 +66,11 @@ function flagValue(args: string[], flag: string): string | undefined {
 
 async function run(command: string | undefined, rest: string[]): Promise<number> {
   const root = process.cwd();
+  if (command === "version" || command === "--version" || command === "-v") {
+    if (wantsHelp(rest)) return process.stdout.write(VERSION_HELP), 0;
+    process.stdout.write(renderVersion());
+    return 0;
+  }
   if (!command || command === "help" || wantsHelp([command])) {
     process.stdout.write(HELP);
     return 0;
@@ -128,6 +137,11 @@ async function run(command: string | undefined, rest: string[]): Promise<number>
       const result = await runAuthorCli(root, rest);
       process.stdout.write(result.text);
       return result.ok ? 0 : 1;
+    }
+    case "mcp": {
+      if (wantsHelp(rest)) return process.stdout.write(MCP_HELP), 0;
+      // The stdio transport owns stdout (JSON-RPC); write nothing else there.
+      return await runMcpServer(root);
     }
     case "benchmark": {
       if (wantsHelp(rest)) return process.stdout.write(BENCHMARK_HELP), 0;

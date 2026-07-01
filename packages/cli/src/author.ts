@@ -1,6 +1,7 @@
 import { createAuthorRuntime, makeModelAuthorGenerator, type AuthorRuntime } from "@dusk/runtime-author";
 import { readRuntimeEnv, spawnSubAgent, type TaskRunner } from "@dusk/runtime-orchestrator";
 import { claudeCodeAvailable, claudeCodeModelClient } from "@dusk/runtime-verifier";
+import { withTransportRetry } from "@dusk/runtime-benchmark";
 
 /**
  * `dusk author` (Phase-4 CLI surface) — the direct-invocation mirror of the
@@ -29,10 +30,20 @@ export type AuthorCliOptions = {
   clock?: { now: () => number };
 };
 
-function buildAmbientRuntime(root: string, clock: { now: () => number }): AuthorRuntime {
-  const modelClient = claudeCodeModelClient({ model: "claude-sonnet-4-6" });
+export function buildAmbientRuntime(root: string, clock: { now: () => number }): AuthorRuntime {
+  // timeoutMs 300s: Stage-4 drafting can emit a large generation (multiple intents
+  // + triples across an accepted practice decomposition) that exceeds the default
+  // 120s CLI wall-clock. The Verifier keeps the 120s default; only this heavier
+  // Author path is widened. (The tool-loop that used to burn the turn budget into
+  // error_max_turns is now prevented at the source by `--tools ""` per D.33, so no
+  // maxTurns headroom is needed here.)
+  const modelClient = claudeCodeModelClient({ model: "claude-sonnet-4-6", timeoutMs: 300_000 });
   const taskRunner: TaskRunner = async (call) => {
-    const completion = await modelClient.complete({ system: call.prompt, user: "Proceed.", temperature: 0 });
+    // Mirror the implement pipeline: a genuine transport blip (CLI timeout / spawn
+    // failure) is a null observation, not content — retry it once rather than
+    // failing the whole dialog turn. (A deterministic error_max_turns is now
+    // classified non-transport per D.33, so it is surfaced, not cold-retried.)
+    const completion = await withTransportRetry(() => modelClient.complete({ system: call.prompt, user: "Proceed.", temperature: 0 }));
     return { output: completion.text, model: "claude-sonnet-4-6", promptTokens: completion.usage.promptTokens, completionTokens: completion.usage.completionTokens, costUsd: completion.usage.costUsd ?? 0, latencyMs: 0 };
   };
   const sessionId = `cli_author_${clock.now()}`;

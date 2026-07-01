@@ -119,6 +119,50 @@ describe("3.x — scripted full flow advances through every stage (P4-T1)", () =
   });
 });
 
+describe("3.x — Stage 3 surfaces the practice proposal in next_question (regression)", () => {
+  test("normal path (post-tension-resolution): next_question carries the proposal, not just the bare question", async () => {
+    const repo = createTempRepo({ git: false });
+    const runtime = makeRuntime(repo, FULL_SCRIPT);
+    const started = await runtime.start({ request: "add cursor encoding for paginated lists" });
+    if (!started.success) throw new Error("start failed");
+    const id = started.value.dialog_id;
+    await runtime.continue({ dialog_id: id, response: "yes that framing is correct" });
+    const atStage3 = await runtime.continue({
+      dialog_id: id,
+      response: "extend the parent",
+      payload: { resolutions: [{ target: "api/pagination/cursor-only", resolution: "extend the parent" }] },
+    });
+    expect(atStage3.success).toBe(true);
+    if (!atStage3.success || !("next_question" in atStage3.value)) throw new Error("expected a stage-3 question");
+    expect(atStage3.value.stage).toBe(3);
+    expect(atStage3.value.next_question).toContain("Industry practice: split encode/decode");
+    expect(atStage3.value.next_question).toContain("Accept this practice proposal?");
+    repo.cleanup();
+  });
+
+  test("zero-tension fast path: next_question carries the proposal too", async () => {
+    const repo = createTempRepo({ git: false });
+    const script: ScriptedAuthorResponse[] = [
+      { expectStage: 1, question: "Framing?" },
+      { expectStage: 2, question: "Tensions?", tensions: [] },
+      { expectStage: 3, question: "Accept this practice proposal?", practiceProposal: "Industry practice: opaque base64url tokens." },
+      { expectStage: 4, question: "Pick layers.", draftPatch: IMPL_DRAFT },
+    ];
+    const runtime = makeRuntime(repo, script);
+    const started = await runtime.start({ request: "a rule" });
+    if (!started.success) throw new Error("start failed");
+    const id = started.value.dialog_id;
+    // tensions:[] auto-advances Stage 2 → Stage 3 in a single continue.
+    const atStage3 = await runtime.continue({ dialog_id: id, response: "yes" });
+    expect(atStage3.success).toBe(true);
+    if (!atStage3.success || !("next_question" in atStage3.value)) throw new Error("expected a stage-3 question");
+    expect(atStage3.value.stage).toBe(3);
+    expect(atStage3.value.next_question).toContain("Industry practice: opaque base64url tokens.");
+    expect(atStage3.value.next_question).toContain("Accept this practice proposal?");
+    repo.cleanup();
+  });
+});
+
 describe("3.2 — Stage-1 framing loopback (P4-T11)", () => {
   test("a rejected framing regenerates without advancing; a confirmation then advances", async () => {
     const repo = createTempRepo({ git: false });

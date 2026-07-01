@@ -141,6 +141,9 @@ importers:
       '@dusk/runtime-worktree':
         specifier: workspace:*
         version: link:../runtime/worktree
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.18.0
+        version: 1.29.0(zod@3.25.76)
       yaml:
         specifier: ^2.5.0
         version: 2.8.2

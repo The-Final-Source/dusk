@@ -10,14 +10,16 @@
 
 /** Built-in defaults, grouped (so the silent exemptions are explicit, not buried). */
 export const DEFAULT_DECORATION_IGNORE: readonly string[] = [
-  // dependencies
-  "node_modules/**",
-  ".git/**",
-  // generated / build output
+  // dependencies — `**/<dir>/**` prunes the dir AND its contents at ANY depth.
+  // A root-anchored `node_modules/**` misses a monorepo's nested
+  // `packages/*/node_modules`, whose pnpm `.pnpm` symlink cycles hang the walk.
+  "**/node_modules/**",
+  "**/.git/**",
+  // generated / build output (also pruned at any depth)
   ".ia/runtime/**",
-  "dist/**",
-  "build/**",
-  "coverage/**",
+  "**/dist/**",
+  "**/build/**",
+  "**/coverage/**",
   "**/*.lock",
   // secrets
   ".env*",
